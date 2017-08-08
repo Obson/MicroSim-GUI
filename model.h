@@ -67,7 +67,7 @@ public:
     void restart();
 
     Government *gov();
-    // Bank *bank();
+    Bank *bank();
 
     int period();
 

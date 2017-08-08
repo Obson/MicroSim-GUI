@@ -54,12 +54,12 @@ void Account::credit(int amount, Account *creditor)
 
 void Account::loan(int amount, Account *creditor)
 {
-//    balance += amount;
-//    if (creditor == model()->bank()) {
-//        owed_to_bank += amount;
-//    } else {
-//        qCritical() << "Only bank loans allowed at present";
-//    }
+    balance += amount;
+    if (creditor == model()->bank()) {
+        owed_to_bank += amount;
+    } else {
+        qCritical() << "Only bank loans allowed at present";
+    }
 }
 
 int Account::getId() const

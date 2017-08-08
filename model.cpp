@@ -388,10 +388,10 @@ Government *Model::gov()
     return _gov;
 }
 
-//Bank *Model::bank()
-//{
-//    return _bank;
-//}
+Bank *Model::bank()
+{
+    return _bank;
+}
 
 Firm *Model::createFirm()
 {
@@ -475,19 +475,21 @@ int Model::payWorkers(int amount, int max_tot, Account *source, Reason reason, i
 
                     if (get_loan)
                     {
-                        //int shortfall = amount - (max_tot - amt_paid);
+                        int shortfall = amount - (max_tot - amt_paid);
+
+                        // qDebug() << "Model::payWorkers(): borrowing to make up shortfall of" << shortfall;
 
                         // Apply a bank loan to cover the shortfall
-                        //_bank->lend(shortfall, source);
+                        _bank->lend(shortfall, source);
 
                         // Pay the full amount
-                        //workers[i]->credit(amount, source);
+                        workers[i]->credit(amount, source);
 
                         // Increase max allowed by amount of loan
-                        //max_tot += shortfall;
+                        max_tot += shortfall;
 
                         // Record stats
-                        //amt_paid += amount;
+                        amt_paid += amount;
                     }
                     else
                     {
