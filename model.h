@@ -36,7 +36,8 @@ enum class ParamType {
     reserve,
     prop_inv,
     boe_int,
-    bus_int
+    bus_int,
+    loan_prob
 };
 
 class Model : public QObject
@@ -66,6 +67,7 @@ public:
     void restart();
 
     Government *gov();
+    // Bank *bank();
 
     int period();
 
@@ -178,6 +180,8 @@ public:
     int getBoeRate();       // BoE lending rate
     int getBusRate();       // retail lending rate
 
+    int getLoanProb();
+
     static int getId();
 
     int num_hired;
@@ -188,14 +192,19 @@ private:
 
     QVector<Firm*> firms;
     QVector<Worker*> workers;
-    QVector<Bank*> banks;
+
+    // We only need one bank
+    // QVector<Bank*> banks;
 
     int _period;
     Government *_gov;
+    Bank *_bank;
 
     // Constants
+
     QString _name;
     QString _notes;
+
     int _iterations;
     int _population;
     int _gov_exp_rate = -1;
@@ -203,8 +212,8 @@ private:
     // See getPropertyValue
     int _exp, _bens, _rcpts, _gov_bal, _num_firms, _num_emps, _num_unemps,
     _num_gov_emps, _num_hired, _num_fired, _prod_bal, _wages, _consumption,
-    _bonuses, _dedns, _inc_tax, _sales_tax, _dom_bal, _deficit, _pop_size;
-
+    _bonuses, _dedns, _inc_tax, _sales_tax, _dom_bal, _deficit, _pop_size,
+    _loan_prob;
 
 protected:
 
@@ -255,6 +264,7 @@ protected:
         Pair prop_inv;
         Pair boe_int;
         Pair bus_int;
+        Pair loan_prob;
         Pair invalid;           // Just a marker -- value immaterial
     };
 

@@ -35,6 +35,8 @@ public:
     // functionality, e.g. diagnostics
     virtual void credit(int amount, Account *creditor = nullptr);
 
+    virtual void loan(int amount, Account *creditor);
+
     // Every derived class must provide a trigger function, which will be
     // called once per period.
     virtual void trigger(int period) = 0;
@@ -51,7 +53,8 @@ protected:
     // Government is derived from Account
     // Government *gov;
 
-    int balance;
+    int balance = 0;
+    int owed_to_bank = 0;
     int last_triggered = -1;
 
     // If this account is a bank, the bank loan refers to its account at the
@@ -61,10 +64,11 @@ protected:
     // is (normally) lower than that charged to its customers. The difference
     // will be distributed to workers designated as staff and shareholders of
     // the bank.
-    struct Loan {
-        int amount = 0;
-        int interest_rate = 0;
-    } bank_loan;
+
+    //struct Loan {
+    //    int amount = 0;
+    //    int interest_rate = 0;
+    //} bank_loan;
 
     bool transferTo(Account *recipient, int amount, Account *creditor);
 
@@ -269,6 +273,8 @@ class Bank: public Account
 public:
     Bank(Model *model);
 
+    void lend(int amount, Account *recipient);
+    void trigger(int period);
 };
 
 

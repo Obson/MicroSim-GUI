@@ -86,7 +86,7 @@ void ParameterWizard::setCurrentModel(QString model_name)
     qDebug() << "ParameterWizard::modelChanged(): adding default page";
     setPage(default_page, new DefaultPage(this));
     qDebug() << "ParameterWizard::modelChanged(): restarting";
-    restart();
+    //restart();
 
     // and then extra pages if needed
 }
@@ -159,6 +159,13 @@ DefaultPage::DefaultPage(ParameterWizard *w)
     sb_boe_loan_int = wiz->getSpinBox(0,99);
     sb_bus_loan_int = wiz->getSpinBox(0,99);
 
+    cb_loan_prob = new QComboBox;
+    cb_loan_prob->addItem(tr("Never"));
+    cb_loan_prob->addItem(tr("Rarely"));
+    cb_loan_prob->addItem(tr("Sometimes"));
+    cb_loan_prob->addItem(tr("Usually"));
+    cb_loan_prob->addItem(tr("Always"));
+
     QFormLayout *layout = new QFormLayout;
     layout->addRow(new QLabel(tr("Population size")), pop_size);
     layout->addRow(new QLabel(tr("Standard wage")), std_wage);
@@ -173,6 +180,7 @@ DefaultPage::DefaultPage(ParameterWizard *w)
     layout->addRow(new QLabel(tr("Unemployment benefit (%)")), sb_ubr);
     layout->addRow(new QLabel(tr("BOE lending rate (%)")), sb_boe_loan_int);
     layout->addRow(new QLabel(tr("Retail lending rate (%)")), sb_bus_loan_int);
+    layout->addRow(new QLabel(tr("Borrow if needed to pay wages")), cb_loan_prob);
     setLayout(layout);
 }
 
@@ -201,6 +209,7 @@ void DefaultPage::initializePage()
     sb_ubr->setValue(settings.value(model + "/default/unempl-benefit-rate", 15).toInt());
     sb_boe_loan_int->setValue(settings.value(model + "/default/boe-interest", 1).toInt());
     sb_bus_loan_int->setValue(settings.value(model + "/default/bus-interest", 3).toInt());
+    cb_loan_prob->setCurrentIndex(settings.value(model + "/default/loan-prob", 4).toInt());
 
     // TODO: Add tool-tips to each of these
 }
@@ -230,6 +239,8 @@ bool DefaultPage::validatePage()
 
     settings.setValue(model + "/default/boe-interest", sb_boe_loan_int->value());
     settings.setValue(model + "/default/bus-interest", sb_bus_loan_int->value());
+
+    settings.setValue(model + "/default/loan-prob", cb_loan_prob->currentIndex());
 
     return true;
 }

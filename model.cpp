@@ -23,10 +23,7 @@ QMap<ParamType,QString> Model::parameter_keys
     {ParamType::prop_inv, "prop-invest"},
     {ParamType::boe_int, "boe-interest"},
     {ParamType::bus_int, "bus-interest"},
-
-
-    // boe-iterest
-    // bus-interest
+    {ParamType::loan_prob, "loan-prob"},
 };
 
 int Model::loadAllModels()
@@ -75,6 +72,8 @@ Model *Model::createModel(QString name)
     settings.setValue(parameter_keys[ParamType::prop_inv],          75);
     settings.setValue(parameter_keys[ParamType::boe_int],            1);
     settings.setValue(parameter_keys[ParamType::bus_int],            3);
+    settings.setValue(parameter_keys[ParamType::loan_prob],          4);
+
     settings.endGroup();
 
     // Create a model using the default parameters
@@ -131,6 +130,7 @@ Model::Model(QString model_name)
     // Government::gov_firm().
     qDebug() << "Model::Model():" << model_name << "creating Government";
     _gov = new Government(this);
+    _bank = new Bank(this);
 
     // -------------------------------------------------------------------------
     // To add a new property it must be added to the enum class Property in the
@@ -212,7 +212,7 @@ void Model::readDefaultParameters()
     p->prop_con.val = settings.value("default/" + parameter_keys[ParamType::prop_con]).toInt();
 
     p->inc_tax_rate.val = settings.value("default/" + parameter_keys[ParamType::inc_tax_rate]).toInt();
-    //qDebug() << "p->inc_tax_rate.val =" << p->inc_tax_rate.val;
+    qDebug() << "p->inc_tax_rate.val =" << p->inc_tax_rate.val;
 
     p->sales_tax_rate.val = settings.value("default/" + parameter_keys[ParamType::sales_tax_rate]).toInt();
     p->firm_creation_prob.val = settings.value("default/" + parameter_keys[ParamType::firm_creation_prob]).toInt();
@@ -229,6 +229,8 @@ void Model::readDefaultParameters()
     p->boe_int.val = settings.value("default/" + parameter_keys[ParamType::boe_int]).toInt();
     p->bus_int.val = settings.value("default/" + parameter_keys[ParamType::bus_int]).toInt();
 
+    p->loan_prob.val = settings.value("default/" + parameter_keys[ParamType::loan_prob]).toInt();
+
     settings.endGroup();
 
     // Conditional parameter sets must be appended, but the default set must
@@ -242,6 +244,8 @@ void Model::readDefaultParameters()
     // settings.beginReadArray(_name + "/conditions");
     // ...
     // settings.endArray();
+
+    qDebug() << "Model::readDefaultParameters(): completed OK";
 }
 
 QString Model::name()
@@ -384,6 +388,11 @@ Government *Model::gov()
     return _gov;
 }
 
+//Bank *Model::bank()
+//{
+//    return _bank;
+//}
+
 Firm *Model::createFirm()
 {
     Firm *firm = new Firm(this);
@@ -426,8 +435,64 @@ int Model::payWorkers(int amount, int max_tot, Account *source, Reason reason, i
 
                 if (max_tot - amt_paid < amount)
                 {
-                    // qDebug() << "Model::payWorkers(): firing because funds insufficient";
-                    fire(workers[i], period);
+                    // TODO: Rather than just firing workers we can't afford we
+                    // should sometimes get a bank loan
+                    int prob = getLoanProb();
+                    int r = 0;
+                    if (prob < 4 && prob > 0) {
+                        int r = qrand() % 4;
+                    }
+
+                    bool get_loan = false;
+
+                    switch (prob)
+                    {
+                    case 0: // never
+                        break;
+
+                    case 1: // rarely
+                        if (r == 0) {   // one chance in four
+                            get_loan = true;
+                        }
+                        break;
+
+                    case 2: // sometimes
+                        if (r < 2) {    // two chances: 0, 1
+                            get_loan = true;
+                        }
+                        break;
+
+                    case 3: // usually
+                        if (r < 3) {    // three chances: 0, 1, 2
+                            get_loan = true;
+                        }
+                        break;
+
+                    case 4: // always
+                        get_loan = true;
+                        break;
+                    }
+
+                    if (get_loan)
+                    {
+                        //int shortfall = amount - (max_tot - amt_paid);
+
+                        // Apply a bank loan to cover the shortfall
+                        //_bank->lend(shortfall, source);
+
+                        // Pay the full amount
+                        //workers[i]->credit(amount, source);
+
+                        // Increase max allowed by amount of loan
+                        //max_tot += shortfall;
+
+                        // Record stats
+                        //amt_paid += amount;
+                    }
+                    else
+                    {
+                        fire(workers[i], period);
+                    }
                 }
                 else
                 {
@@ -864,7 +929,9 @@ int Model::getParameterVal(ParamType type)
                                              : ((type == ParamType::prop_inv) ? parameter_sets[i]->prop_inv
                                                 : ((type == ParamType::boe_int) ? parameter_sets[i]->boe_int
                                                    : ((type == ParamType::bus_int) ? parameter_sets[i]->bus_int
-                                                      : parameter_sets[i]->invalid
+                                                      : ((type == ParamType::loan_prob) ? parameter_sets[i]->loan_prob
+                                                         : parameter_sets[i]->invalid
+                                                   )
                                                 )
                                              )
                                           )
@@ -957,6 +1024,11 @@ int Model::getBoeRate()
 int Model::getBusRate()
 {
     return getParameterVal(ParamType::bus_int);
+}
+
+int Model::getLoanProb()
+{
+    return getParameterVal(ParamType::loan_prob);
 }
 
 int Model::getGovExpRate()

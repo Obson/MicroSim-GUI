@@ -9,6 +9,8 @@
 #include <QLineEdit>
 #include <QListWidgetItem>
 
+#include <QComboBox>
+
 class ParameterWizard : public QWizard
 {
     //friend class StartPage;
@@ -72,6 +74,8 @@ private:
     QSpinBox *sb_ubr;           // unempl benefit rate
     QSpinBox *sb_boe_loan_int;
     QSpinBox *sb_bus_loan_int;
+
+    QComboBox *cb_loan_prob;
 };
 
 class ExtraPage : public QWizardPage

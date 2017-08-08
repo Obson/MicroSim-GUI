@@ -79,7 +79,6 @@ void Firm::trigger(int period)
 // employees and the associated deductions) less the proportion designated
 // for investment (i.e. reserved for paying any additional employees). Then
 // hire new workers if funds permit.
-
 void Firm::epilogue(int period)
 {
     if (balance > committed) {

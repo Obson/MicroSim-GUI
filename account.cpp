@@ -11,7 +11,8 @@ Account::Account(Model *model)
 {
     _model = model;
     id = nextId();
-    balance = 0;
+    //balance = 0;
+    //owed_to_bank = 0;
 }
 
 Model *Account::model()
@@ -49,6 +50,16 @@ bool Account::transferTo(Account *recipient, int amount, Account *creditor)
 void Account::credit(int amount, Account *creditor)
 {
     balance += amount;
+}
+
+void Account::loan(int amount, Account *creditor)
+{
+//    balance += amount;
+//    if (creditor == model()->bank()) {
+//        owed_to_bank += amount;
+//    } else {
+//        qCritical() << "Only bank loans allowed at present";
+//    }
 }
 
 int Account::getId() const
