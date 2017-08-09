@@ -37,14 +37,17 @@ SOURCES += \
     firm.cpp \
     government.cpp \
     bank.cpp \
-    model.cpp
+    model.cpp \
+    optionsdialog.cpp
 
 HEADERS += \
     mainwindow.h \
     parameterwizard.h \
     newmodeldlg.h \
     account.h \
-    model.h
+    model.h \
+    optionsdialog.h
 
 FORMS += \
-    newmodeldlg.ui
+    newmodeldlg.ui \
+    optionsdialog.ui

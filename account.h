@@ -30,12 +30,13 @@ public:
     Model *model();             // returns model that 'owns' this account
 
     virtual int getBalance();
+    virtual int getAmountOwed();
 
     // This function is declared as virtual to allow derived class to add
     // functionality, e.g. diagnostics
     virtual void credit(int amount, Account *creditor = nullptr);
 
-    virtual void loan(int amount, Account *creditor);
+    virtual void loan(int amount, int rate, Account *creditor);
 
     // Every derived class must provide a trigger function, which will be
     // called once per period.
@@ -55,6 +56,7 @@ protected:
 
     int balance = 0;
     int owed_to_bank = 0;
+    int interest_rate = 0;
     int last_triggered = -1;
 
     // If this account is a bank, the bank loan refers to its account at the
@@ -273,7 +275,7 @@ class Bank: public Account
 public:
     Bank(Model *model);
 
-    void lend(int amount, Account *recipient);
+    void lend(int amount, int rate, Account *recipient);
     void trigger(int period);
 };
 

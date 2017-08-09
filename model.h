@@ -21,9 +21,9 @@ class Bank;
 
 QT_CHARTS_USE_NAMESPACE
 
+// Only potentially conditional parameters are listed here
 enum class ParamType {
     pop_size,
-    iters,
     emp_rate,
     std_wage,
     prop_con,
@@ -37,7 +37,7 @@ enum class ParamType {
     prop_inv,
     boe_int,
     bus_int,
-    loan_prob
+    loan_prob,
 };
 
 class Model : public QObject
@@ -112,6 +112,7 @@ public:
         num_emps,
         pc_emps,
         num_unemps,
+        pc_unemps,
         num_gov_emps,
         num_hired,
         num_fired,
@@ -123,6 +124,8 @@ public:
         inc_tax,
         sales_tax,
         dom_bal,
+        amount_owed,
+        bus_size,
         zero,
         num_properties
     };
@@ -157,6 +160,7 @@ public:
     int getSalesTaxPaid();
     int getWorkersBal(Model::Status status);
     int population();
+    int getAmountOwed();
 
     // ------------------------------------------------------------------------
     // Parameters
@@ -207,13 +211,15 @@ private:
 
     int _iterations;
     int _population;
+    int _startups;
+
     int _gov_exp_rate = -1;
 
     // See getPropertyValue
     int _exp, _bens, _rcpts, _gov_bal, _num_firms, _num_emps, _num_unemps,
     _num_gov_emps, _num_hired, _num_fired, _prod_bal, _wages, _consumption,
     _bonuses, _dedns, _inc_tax, _sales_tax, _dom_bal, _deficit, _pop_size,
-    _loan_prob;
+    _loan_prob, _amount_owed, _bus_size;
 
 protected:
 

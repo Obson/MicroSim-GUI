@@ -8,6 +8,8 @@
 #include <QtCharts/QChartView>
 #include <QtCharts/QLineSeries>
 #include <QValueAxis>
+#include <QMenuBar>
+#include <QAction>
 
 #include "model.h"
 
@@ -26,8 +28,12 @@ public:
     MainWindow();
     ~MainWindow();
 
+    void show();
+
 signals:
     void modelChanged(QString);
+    void windowShown();
+    void windowLoaded();
 
 protected:
 
@@ -53,14 +59,21 @@ protected:
     void saveCVS();
     void copy();
     void editParameters();
+    void createFirstModel();
     void createNewModel();
     void remove();
     void about();
     void aboutQt();
     void nyi();
     void errorMessage(QString);
+    void setOptions();
+    void showHelp();
+
+    void closeEvent(QCloseEvent *event);
 
     void propertyChanged(QListWidgetItem *item);
+
+    QMenuBar *myMenuBar;
 
     QMenu *fileMenu;
     QMenu *editMenu;
@@ -74,13 +87,19 @@ protected:
     QAction *removeAction;
     QAction *aboutAction;
     QAction *aboutQtAction;
+    QAction *setOptionsAction;
+    QAction *helpAction;
 
     bool isModelSelected();
 
 private:
+
     Ui::MainWindow *ui;
     ParameterWizard *wiz;
     Model *_current_model;
+
+    bool first_time_shown;
+    bool first_time_loaded;
 
     QStringList prop_names;
 

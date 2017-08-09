@@ -24,7 +24,6 @@ private:
 
     QString model_name;
     QString notes;
-    int     iterations;
 
     void accept();
 };

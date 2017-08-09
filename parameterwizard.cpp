@@ -1,11 +1,8 @@
 #include "parameterwizard.h"
 #include <QFormLayout>
-//#include <QVBoxLayout>
-//#include <QHBoxLayout>
 #include <QLabel>
 #include <QTextEdit>
 #include <QLineEdit>
-//#include <QSpinBox>
 #include <QComboBox>
 #include <QtDebug>
 #include <QtGlobal>

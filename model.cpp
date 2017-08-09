@@ -8,7 +8,6 @@ Model *Model::current = nullptr;
 
 QMap<ParamType,QString> Model::parameter_keys
 {
-    {ParamType::iters, "iterations"},
     {ParamType::pop_size, "population-size"},
     {ParamType::emp_rate, "employment-rate"},
     {ParamType::std_wage, "std-wage"},
@@ -56,8 +55,18 @@ Model *Model::createModel(QString name)
     qDebug() << "Model::createModel(): setting default parameters for model" << name;
     // Store default parameters
     QSettings settings;
-    settings.beginGroup(name + "/default");
-    settings.setValue(parameter_keys[ParamType::iters],             100);
+
+    // Note that global parameters (model-wide) are not listed in ParamType
+    // because they have no conditional values and so cannot be looked up in
+    // the general parameter retrieval function getParameterVal(). They are
+    // therefore dealt with as special cases without the convenience of being
+    // listed in parameter_keys[ParamType].
+    settings.beginGroup(name);
+
+    // Add any model-specific parameters with default values here,,,
+
+    settings.beginGroup("/default");
+    // settings.setValue(parameter_keys[ParamType::iters],             100);
     settings.setValue(parameter_keys[ParamType::pop_size],          10000);
     settings.setValue(parameter_keys[ParamType::emp_rate],          95);
     settings.setValue(parameter_keys[ParamType::std_wage],          500);
@@ -74,6 +83,7 @@ Model *Model::createModel(QString name)
     settings.setValue(parameter_keys[ParamType::bus_int],            3);
     settings.setValue(parameter_keys[ParamType::loan_prob],          4);
 
+    settings.endGroup();
     settings.endGroup();
 
     // Create a model using the default parameters
@@ -150,6 +160,7 @@ Model::Model(QString model_name)
               << Property::num_emps
               << Property::pc_emps
               << Property::num_unemps
+              << Property::pc_unemps
               << Property::num_gov_emps
               << Property::num_hired
               << Property::num_fired
@@ -162,6 +173,8 @@ Model::Model(QString model_name)
               << Property::inc_tax
               << Property::sales_tax
               << Property::dom_bal
+              << Property::amount_owed
+              << Property::bus_size
               << Property::zero
               << Property::num_properties;      // dummy
 
@@ -183,55 +196,48 @@ void Model::readDefaultParameters()
 {
     // Get parameters from settings. Currently we don't do anything with the
     // notes but this will probably change.
-    QSettings settings; bool ok;
+    QSettings settings;
 
-    // Focus the settings on the current model
+    // Global settings
+    _iterations = settings.value("iterations", 100).toInt();
+    _startups = settings.value("startups", 10). toInt();
+
+    // Model-specific settings
     settings.beginGroup(_name);
 
-    // Get top-level settings for this model
     _notes = settings.value("notes").toString();
-    _iterations = settings.value("iterations").toInt(&ok);
 
-    Q_ASSERT(ok);
-
-    qDebug() << "Model::readDefaultParameters(): _notes =" << _notes << ", _iterations =" << _iterations;
-
-    // Read the default (unconditional) parameter set
-    Params *p = new Params;
+    // Default model-specific settings
+    settings.beginGroup("default");
 
     // For the default parameter set we only care about the val component of
     // each pair (and that's all that will have been stored for default
     // parameters). For conditional parameters we will have to read in both
     // elements of the pair.
 
-    p->pop_size.val = settings.value("default/" + parameter_keys[ParamType::pop_size]).toInt();
+    Params *p = new Params;     // default parameter set
 
-    p->iters.val = settings.value("default/" + parameter_keys[ParamType::iters]).toInt();
-    p->emp_rate.val = settings.value("default/" + parameter_keys[ParamType::emp_rate]).toInt();
-    p->std_wage.val = settings.value("default/" + parameter_keys[ParamType::std_wage]).toInt();
-    p->prop_con.val = settings.value("default/" + parameter_keys[ParamType::prop_con]).toInt();
-
-    p->inc_tax_rate.val = settings.value("default/" + parameter_keys[ParamType::inc_tax_rate]).toInt();
-    qDebug() << "p->inc_tax_rate.val =" << p->inc_tax_rate.val;
-
-    p->sales_tax_rate.val = settings.value("default/" + parameter_keys[ParamType::sales_tax_rate]).toInt();
-    p->firm_creation_prob.val = settings.value("default/" + parameter_keys[ParamType::firm_creation_prob]).toInt();
-
-
-    p->dedns.val = settings.value("default/" + parameter_keys[ParamType::dedns]).toInt();
-    qDebug() << "Model::readDefaultParameters(): p->dedns.val =" << p->dedns.val << ", key =" << parameter_keys[ParamType::dedns];
-
-    p->unemp_ben_rate.val = settings.value("default/" + parameter_keys[ParamType::unemp_ben_rate]).toInt();
-    p->active_pop.val = settings.value("default/" + parameter_keys[ParamType::active_pop]).toInt();
-    p->reserve.val = settings.value("default/" + parameter_keys[ParamType::reserve]).toInt();
-    p->prop_inv.val = settings.value("default/" + parameter_keys[ParamType::prop_inv]).toInt();
-
-    p->boe_int.val = settings.value("default/" + parameter_keys[ParamType::boe_int]).toInt();
-    p->bus_int.val = settings.value("default/" + parameter_keys[ParamType::bus_int]).toInt();
-
-    p->loan_prob.val = settings.value("default/" + parameter_keys[ParamType::loan_prob]).toInt();
+    p->pop_size.val           = settings.value(parameter_keys[ParamType::pop_size]).toInt();
+    p->emp_rate.val           = settings.value(parameter_keys[ParamType::emp_rate]).toInt();
+    p->std_wage.val           = settings.value(parameter_keys[ParamType::std_wage]).toInt();
+    p->prop_con.val           = settings.value(parameter_keys[ParamType::prop_con]).toInt();
+    p->inc_tax_rate.val       = settings.value(parameter_keys[ParamType::inc_tax_rate]).toInt();
+    p->sales_tax_rate.val     = settings.value(parameter_keys[ParamType::sales_tax_rate]).toInt();
+    p->firm_creation_prob.val = settings.value(parameter_keys[ParamType::firm_creation_prob]).toInt();
+    p->dedns.val              = settings.value(parameter_keys[ParamType::dedns]).toInt();
+    p->unemp_ben_rate.val     = settings.value(parameter_keys[ParamType::unemp_ben_rate]).toInt();
+    p->active_pop.val         = settings.value(parameter_keys[ParamType::active_pop]).toInt();
+    p->reserve.val            = settings.value(parameter_keys[ParamType::reserve]).toInt();
+    p->prop_inv.val           = settings.value(parameter_keys[ParamType::prop_inv]).toInt();
+    p->boe_int.val            = settings.value(parameter_keys[ParamType::boe_int]).toInt();
+    p->bus_int.val            = settings.value(parameter_keys[ParamType::bus_int]).toInt();
+    p->loan_prob.val          = settings.value(parameter_keys[ParamType::loan_prob]).toInt();
 
     settings.endGroup();
+    settings.endGroup();
+
+    qDebug() << "p->inc_tax_rate.val =" << p->inc_tax_rate.val;
+    qDebug() << "Model::readDefaultParameters(): p->dedns.val =" << p->dedns.val << ", key =" << parameter_keys[ParamType::dedns];
 
     // Conditional parameter sets must be appended, but the default set must
     // always be the first, so clear the list
@@ -257,14 +263,17 @@ void Model::restart()
 {
     readDefaultParameters();
 
-    // Clear all series and set starting values to zero, except poputalation
+    // Clear all series and set starting values to zero, except population
     // size, which starts off at its parametric value. This may apply to others
     // as well (TODO).
     for (int i = 0; i < static_cast<int>(Property::zero); i++)
     {
         Property prop = prop_list[i];
         series[prop]->clear();
-        series[prop]->append(0, prop == Property::pop_size ? getPopSize() : 0);
+        series[prop]->append(0,
+                             prop == Property::pop_size
+                             ? getPopSize() : (prop == Property::num_firms
+                                               ? _startups + 1 : 0));
     }
 
     int num_workers = workers.count();
@@ -283,6 +292,12 @@ void Model::restart()
         delete firms[i];
     }
     firms.clear();
+    firms.reserve(100);
+
+    for (int i = 0; i < _startups; i++)
+    {
+        createFirm();
+    }
 
     // Reset the Government, which will re-create the gov firm as the first
     // firm in the list
@@ -368,7 +383,6 @@ void Model::run()
         }
 
         // Create a new firm, possibly
-        QSettings settings;
         if (qrand() % 100 < getFCP())
         {
             //qDebug() << "Model::run(): _name =" << _name << "creating new firm";
@@ -395,6 +409,7 @@ Bank *Model::bank()
 
 Firm *Model::createFirm()
 {
+    //qDebug() << "Model::createFirm(): creating new firm";
     Firm *firm = new Firm(this);
     firms.append(firm);
 
@@ -440,7 +455,7 @@ int Model::payWorkers(int amount, int max_tot, Account *source, Reason reason, i
                     int prob = getLoanProb();
                     int r = 0;
                     if (prob < 4 && prob > 0) {
-                        int r = qrand() % 4;
+                        r = qrand() % 4;
                     }
 
                     bool get_loan = false;
@@ -480,7 +495,7 @@ int Model::payWorkers(int amount, int max_tot, Account *source, Reason reason, i
                         // qDebug() << "Model::payWorkers(): borrowing to make up shortfall of" << shortfall;
 
                         // Apply a bank loan to cover the shortfall
-                        _bank->lend(shortfall, source);
+                        _bank->lend(shortfall, getBusRate(), source);
 
                         // Pay the full amount
                         workers[i]->credit(amount, source);
@@ -595,7 +610,7 @@ int Model::getPropertyVal(Property p)
         // We are displaying this as a positive debt rather than a negative
         // balance just so we can avoid displaying negative quamtities (with
         // exception of negative deficits) and keep the x-axis at the bottom
-        // as ther's no simple provision for displaying it at y = 0.
+        // as there's no simple provision for displaying it at y = 0.
         _gov_bal = -(gov()->getBalance());
         return _gov_bal;
 
@@ -613,6 +628,9 @@ int Model::getPropertyVal(Property p)
     case Property::num_unemps:
         _num_unemps = getNumUnemployed();
         return _num_unemps;
+
+    case Property::pc_unemps:
+        return (_pop_size > 0 ? (_num_unemps * 100) / _pop_size : 0);
 
     case Property::num_gov_emps:
         _num_gov_emps = getNumEmployedBy(gov()->gov_firm());
@@ -660,6 +678,14 @@ int Model::getPropertyVal(Property p)
     case Property::dom_bal:
         _dom_bal = getWorkersBal(Status::any);
         return _dom_bal;
+
+    case Property::amount_owed:
+        _amount_owed = getAmountOwed();
+        return _amount_owed;
+
+    case Property::bus_size:
+        _bus_size = _num_emps / _num_firms;
+        return _bus_size;
 
     case Property::zero:
         return 0;
@@ -903,6 +929,19 @@ int Model::getWorkersBal(Model::Status status)
     return tot;
 }
 
+// TODO: At present only businesses can get loans, but this should be extended
+// to workers in due course. We also need to allow banks to get loans from the
+// central bank -- i.e. from the government.
+int Model::getAmountOwed()
+{
+    int tot = 0;
+    for (int i = 0; i < firms.count(); i++)
+    {
+        tot += firms[i]->getAmountOwed();
+    }
+    return tot;
+}
+
 // ----------------------------------------------------------------------------
 // These functions retrieve model parameters
 // ----------------------------------------------------------------------------
@@ -916,8 +955,7 @@ int Model::getParameterVal(ParamType type)
 
     int i = 0;      // only default parameter set at prsent
 
-    Pair p = (type == ParamType::iters) ? parameter_sets[i]->iters
-            : ((type == ParamType::pop_size) ? parameter_sets[i]->pop_size
+    Pair p = (type == ParamType::pop_size) ? parameter_sets[i]->pop_size
                : ((type == ParamType::emp_rate) ? parameter_sets[i]->emp_rate
                   : ((type == ParamType::std_wage) ? parameter_sets[i]->std_wage
                      : ((type == ParamType::prop_con) ? parameter_sets[i]->prop_con
@@ -946,7 +984,6 @@ int Model::getParameterVal(ParamType type)
                      )
                   )
                )
-            )
          );
 
 

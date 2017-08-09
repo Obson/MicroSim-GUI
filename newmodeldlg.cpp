@@ -11,16 +11,12 @@ NewModelDlg::NewModelDlg(QWidget *parent) :
     ui(new Ui::NewModelDlg)
 {
     ui->setupUi(this);
+    //ui->buttonBox->button((QDialogButtonBox::Ok))->setEnabled(false);
 }
 
 NewModelDlg::~NewModelDlg()
 {
     delete ui;
-
-    QValidator *validIters = new QIntValidator(3, 10000, this);
-    ui->leIterations->setValidator(validIters);
-
-    ui->buttonBox->button((QDialogButtonBox::Ok))->setEnabled(false);
 }
 
 QString NewModelDlg::getName()
@@ -33,23 +29,15 @@ QString NewModelDlg::getNotes()
     return notes;
 }
 
-int NewModelDlg::getIters()
-{
-    return iterations;
-}
-
 void NewModelDlg::accept()
 {
-    bool ok;
-
+    bool ok = false;
     model_name = ui->leName->text().simplified();
-    iterations = ui->leIterations->text().trimmed().toInt(&ok);
     notes      = ui->teNotes->toPlainText().simplified();
 
-    if (model_name.size() > 0 && ok && iterations > 2 && iterations < 1000)
+    if (model_name.size() > 0)
     {
         // Check that the model name isn't a duplicate
-
         QSettings settings;
         QStringList models;
         int size = settings.beginReadArray("models");
@@ -89,9 +77,6 @@ void NewModelDlg::accept()
         // Write the notes to settings
         settings.setValue(model_name + "/notes", notes);
 
-        // Write number of iterations to settings
-        settings.setValue(model_name + "/iterations", iterations);
-
         // Close the dialog
         QDialog::accept();
         return;
@@ -101,19 +86,10 @@ void NewModelDlg::accept()
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Warning);
         msgBox.setWindowTitle(tr("Error"));
-
-        if (!ok || iterations < 3 || iterations > 999)
-        {
-            msgBox.setText(tr("Please enter a valid number of iterations"));
-            msgBox.setInformativeText(tr("The number of iterations must be greater "
-                                         "than 2 and less than 1000"));
-        }
-        else
-        {
-            msgBox.setText(tr("Please enter a valid model name"));
-            msgBox.setInformativeText(tr("Model names must be unique and must "
-                                         "contain at least one non-space character"));
-        }
+        msgBox.setText(tr("Please enter a valid model name"));
+        msgBox.setInformativeText(tr("Model names must be unique and must "
+                                     "contain at least one non-space character"
+                                     ));
         msgBox.exec();
         return;
     }

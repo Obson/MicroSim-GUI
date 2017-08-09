@@ -22,6 +22,7 @@
 
 #include "account.h"
 #include <cassert>
+#include <QDebug>
 
 Firm::Firm(Model *model) : Account(model)
 {
@@ -53,6 +54,21 @@ void Firm::trigger(int period)
     {
         last_triggered = period;
         balance += amount_granted;
+
+        // Pay interest on bank loans. TODO: At present we never pay off the
+        // loan. We should have a parameter that indicates the factor by which
+        // the balance has to exceed the outstanding loan before we will repay
+        // it. Or something...
+        int interest = (owed_to_bank * interest_rate) / 100;
+
+        // If interest is greater than balance we'll just skip the payment and
+        // hope for better luck next time. A bank is unlikely to foreclose
+        // unless this happens a lot...
+        if (interest > 0 && interest <= balance)
+        {
+            // qDebug() << "Firm::trigger(): id" << getId() << ", loan outstanding" << owed_to_bank << ", interest" << interest;
+            transferTo(model()->bank(), interest, this);
+        }
 
         int amt_paid = model()->payWorkers(model()->getStdWage() * (100 - model()->getPreTaxDedns()) / 100,
                                        balance,

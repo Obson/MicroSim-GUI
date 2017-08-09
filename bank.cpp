@@ -5,9 +5,9 @@ Bank::Bank(Model *model) : Account(model)
 
 }
 
-void Bank::lend(int amount, Account *recipient)
+void Bank::lend(int amount, int rate, Account *recipient)
 {
-    recipient->loan(amount, this);
+    recipient->loan(amount, rate, this);
     balance -= amount;
 }
 

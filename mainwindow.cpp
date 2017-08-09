@@ -9,17 +9,23 @@
 #include <QValueAxis>
 #include <QCategoryAxis>
 #include <QColor>
+#include <QMenu>
+#include <QMenuBar>
 
 #include "account.h"
+#include "optionsdialog.h"
 
 MainWindow::MainWindow()
 {
     _current_model = nullptr;
+    first_time_shown = true;
 
     // Set up list of property names.
-    // Qt Limitation: can only initialise a QMap from an initializer list it
+
+    // Qt Limitation: can only initialise a QMap from an initializer list if
     // is declared as static. And of course this is no help when it has to
     // point to instance members.
+
     property_map[tr("Population size")] = Model::Property::pop_size;
     property_map[tr("Govt exp excl benefits")] = Model::Property::gov_exp;
     property_map[tr("Govt exp incl benefits")] = Model::Property::gov_exp_plus;
@@ -33,7 +39,7 @@ MainWindow::MainWindow()
     property_map[tr("Number of govt employees")] = Model::Property::num_gov_emps;
     property_map[tr("Percent employed")] = Model::Property::pc_emps;
     property_map[tr("Number unemployed")] = Model::Property::num_unemps;
-    property_map[tr("Percent unemployed")] = Model::Property::num_unemps;
+    property_map[tr("Percent unemployed")] = Model::Property::pc_unemps;
     property_map[tr("Percent active")] = Model::Property::num_emps;
     property_map[tr("Number of new hires")] = Model::Property::num_hired;
     property_map[tr("Number of new fires")] = Model::Property::num_fired;
@@ -45,6 +51,8 @@ MainWindow::MainWindow()
     property_map[tr("Income tax paid")] = Model::Property::inc_tax;
     property_map[tr("Sales tax paid")] = Model::Property::sales_tax;
     property_map[tr("Domestic sector balance")] = Model::Property::dom_bal;
+    property_map[tr("Bank loans")] = Model::Property::amount_owed;
+    property_map[tr("Average business size")] = Model::Property::bus_size;
     property_map[tr("Zero reference line")] = Model::Property::zero;
 
     // If non-zero, points to currently selected listwidget item
@@ -68,8 +76,8 @@ MainWindow::MainWindow()
 
     setWindowTitle(tr("MicroSim"));
     setUnifiedTitleAndToolBarOnMac(true);
-    setMinimumSize(1000, 700);
-    resize(1000, 700);
+    setMinimumSize(1280, 700);
+    resize(1280, 700);
 
     // The left margin is to prevent the control being right against the side
     // of the window. May not really be a good idea. The border and padding
@@ -80,6 +88,25 @@ MainWindow::MainWindow()
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::show()
+{
+    QMainWindow::show();
+    QApplication::processEvents();
+
+    emit windowShown();
+
+    if (first_time_shown == true)
+    {
+       emit windowLoaded();
+       first_time_shown = false;
+    }
+}
+
+void MainWindow::showHelp()
+{
+    nyi();
 }
 
 void MainWindow::createActions()
@@ -102,35 +129,50 @@ void MainWindow::createActions()
     connect(changeAction, &QAction::triggered, this,
             &MainWindow::editParameters);
 
-    newAction = new QAction(tr("&New model..."));
+    newAction = new QAction(tr("&New..."), this);
+    newAction->setStatusTip(tr("Create a new model"));
     connect(newAction, &QAction::triggered, this, &MainWindow::createNewModel);
 
     removeAction = new QAction(tr("&Remove model..."));
     removeAction->setDisabled(!isModelSelected());
     connect(removeAction, &QAction::triggered, this, &MainWindow::remove);
 
-    aboutAction = new QAction(tr("About"), this);
+    setOptionsAction = new QAction(tr("&Preferences"));
+    connect(setOptionsAction, &QAction::triggered, this, &MainWindow::setOptions);
+
+    aboutAction = new QAction(tr("&About"), this);
     connect(aboutAction, &QAction::triggered, this, &MainWindow::about);
 
-    aboutQtAction = new QAction(tr("About Qt"), this);
+    aboutQtAction = new QAction(tr("A&bout Qt"), this);
     connect(aboutQtAction, &QAction::triggered, this, &MainWindow::aboutQt);
+
+    helpAction = new QAction(tr("&Manual"), this);
+    connect(helpAction, &QAction::triggered, this, &MainWindow::showHelp);
+
+    connect(this, &MainWindow::windowShown, this, &MainWindow::createFirstModel);
 }
 
 void MainWindow::createMenus()
 {
-    fileMenu = menuBar()->addMenu(tr("&File"));
+    myMenuBar = new QMenuBar(0);
+
+    fileMenu = myMenuBar->addMenu(tr("&File"));
+    fileMenu->addAction(newAction);
+    fileMenu->addAction(removeAction);
     fileMenu->addAction(clearModelsAction);
     fileMenu->addAction(saveCVSAction);
 
-    editMenu = menuBar()->addMenu(tr("&Edit"));
+    editMenu = myMenuBar->addMenu(tr("&Edit"));
     editMenu->addAction(copyAction);
     editMenu->addAction(changeAction);
-    editMenu->addAction(newAction);
-    editMenu->addAction(removeAction);
+    editMenu->addAction(setOptionsAction);
 
-    helpMenu = menuBar()->addMenu(tr("&Help"));
+    helpMenu = myMenuBar->addMenu(tr("&Help"));
     helpMenu->addAction(aboutAction);
     helpMenu->addAction(aboutQtAction);
+    helpMenu->addAction(helpAction);
+
+    setMenuBar(myMenuBar);
 }
 
 void MainWindow::clearModels()
@@ -186,6 +228,26 @@ void MainWindow::errorMessage(QString msg)
     exit(999);
 }
 
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    // TODO: We save the state here -- we need a similar procedure to restore it when the program starts
+
+    // Save current config to settings
+    QSettings settings;
+    settings.beginGroup("State");
+
+    for (int i = 0, n = 0; i < propertyList->count(); i++)
+    {
+        QListWidgetItem *item;
+        item = propertyList->item(i);
+        QString text = item->text();
+        bool selected = item->checkState();
+        settings.setValue(text, selected ? true : false);
+    }
+
+    settings.endGroup();
+}
+
 #include "model.h"
 
 void MainWindow::createNewModel()
@@ -199,8 +261,8 @@ void MainWindow::createNewModel()
                     "NewModelDlg returns" << QDialog::Accepted;
 
         QString name = dlg.getName();
-        QString notes = dlg.getNotes();
-        int iters = dlg.getIters();
+        // QString notes = dlg.getNotes();
+        // int iters = dlg.getIters();
 
         _current_model = Model::createModel(name);
         qDebug() << "MainWindow::createNewModel(): name =" << name;
@@ -288,7 +350,17 @@ void MainWindow::about()
 
 void MainWindow::aboutQt()
 {
+    nyi();
+}
 
+void MainWindow::setOptions()
+{
+    OptionsDialog dlg(this);
+    dlg.setModal(true);
+    if (dlg.exec() == QDialog::Accepted && _current_model != nullptr)
+    {
+        drawChart();
+    }
 }
 
 void MainWindow::createStatusBar()
@@ -310,7 +382,7 @@ void MainWindow::createDockWindows()
 {
     // Create property list
     QDockWidget *dock = new QDockWidget(tr("Properties"), this);
-    dock->setAllowedAreas(Qt::LeftDockWidgetArea);
+    dock->setAllowedAreas(Qt::RightDockWidgetArea);
     propertyList = new QListWidget(dock);
 
     // Populate the property list
@@ -328,7 +400,7 @@ void MainWindow::createDockWindows()
     // Add to dock
     dock->setWidget(propertyList);
     dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
-    addDockWidget(Qt::LeftDockWidgetArea, dock);
+    addDockWidget(Qt::RightDockWidgetArea, dock);
 
     // Create the model list
     dock = new QDockWidget(tr("Models"), this);
@@ -347,12 +419,17 @@ void MainWindow::createDockWindows()
     wiz = new ParameterWizard(this);
     wiz->setModal(true);
 
-    // Not sure whether this is the best place for this -- check...
-    Model::loadAllModels();
-
     // Connect signals for changing selection and double-click
     connect(modelList, &QListWidget::currentItemChanged, this, &MainWindow::changeModel);
     connect(modelList, &QListWidget::itemDoubleClicked, this, &MainWindow::editParameters);
+}
+
+void MainWindow::createFirstModel()
+{
+    if (0 == Model::loadAllModels())
+    {
+        createNewModel();
+    }
 }
 
 int MainWindow::loadModelList()
