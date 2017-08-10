@@ -194,6 +194,49 @@ Model::Model(QString model_name)
     // TODO: Add conditional parameters
 }
 
+int Model::scale(Property p)
+{
+    int val = getPropertyVal(p);
+
+    switch(p)
+    {
+    case Property::current_period:
+    case Property::num_firms:
+    case Property::pc_emps:
+    case Property::pc_unemps:
+    case Property::pc_active:
+    case Property::deficit_pc:
+    case Property::hundred:
+    case Property::zero:
+    case Property::num_properties:
+        return val;
+
+    case Property::pop_size:
+    case Property::gov_exp:
+    case Property::bens_paid:
+    case Property::gov_exp_plus:
+    case Property::gov_recpts:
+    case Property::deficit:
+    case Property::gov_bal:
+    case Property::num_emps:
+    case Property::num_unemps:
+    case Property::num_gov_emps:
+    case Property::num_hired:
+    case Property::num_fired:
+    case Property::prod_bal:
+    case Property::wages:
+    case Property::consumption:
+    case Property::bonuses:
+    case Property::dedns:
+    case Property::inc_tax:
+    case Property::sales_tax:
+    case Property::dom_bal:
+    case Property::amount_owed:
+    case Property::bus_size:
+        return val * _scale;
+    }
+}
+
 void Model::readDefaultParameters()
 {
     // Get parameters from settings. Currently we don't do anything with the
@@ -205,7 +248,7 @@ void Model::readDefaultParameters()
     _startups = settings.value("startups", 10).toInt();
     _first_period = settings.value("start-period", 1).toInt();
     _scale = settings.value("nominal-population", 1000).toInt() / 1000;
-    _population = 1000; // TODO: *** Scale population ***
+    _population = 1000;
 
     // Model-specific settings
     settings.beginGroup(_name);
@@ -387,8 +430,8 @@ void Model::run()
             {
                 //qDebug() << "Model::run(): i =" << i;
                 Property prop = prop_list[i];
-                int val = getPropertyVal(prop);
-                series[prop]->append(_period, val);
+                //int val = getPropertyVal(prop);
+                series[prop]->append(_period, scale(prop));
             }
         }
 

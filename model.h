@@ -140,6 +140,7 @@ public:
     // significant as it allows us to store values and use them in later
     // composite properties (e,g, deficit).
     QMap<Property, QLineSeries*> series;
+    QMap<Property, bool> scalable;
 
     // Retrieve the current (periodic) value associated with a given Property
     int getPropertyVal(Property p);
@@ -228,6 +229,8 @@ private:
 protected:
 
     Model(QString model_name);
+    int scale(Property p);
+
 
     enum class Opr
     {

@@ -51,3 +51,6 @@ HEADERS += \
 FORMS += \
     newmodeldlg.ui \
     optionsdialog.ui
+
+DISTFILES += \
+    README.md
