@@ -62,3 +62,5 @@ Having transferred the required sum into the government owned businesses the gov
 
 ## Parameters of a Model ##
 
+![Parameter Wizard](http://obson.net/wp-content/uploads/2017/08/parameter-wizard.jpeg)
+
