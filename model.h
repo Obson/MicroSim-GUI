@@ -113,6 +113,7 @@ public:
         pc_emps,
         num_unemps,
         pc_unemps,
+        pc_active,
         num_gov_emps,
         num_hired,
         num_fired,
@@ -126,6 +127,7 @@ public:
         dom_bal,
         amount_owed,
         bus_size,
+        hundred,
         zero,
         num_properties
     };
@@ -212,6 +214,8 @@ private:
     int _iterations;
     int _population;
     int _startups;
+    int _first_period;
+    int _scale;
 
     int _gov_exp_rate = -1;
 
@@ -219,7 +223,7 @@ private:
     int _exp, _bens, _rcpts, _gov_bal, _num_firms, _num_emps, _num_unemps,
     _num_gov_emps, _num_hired, _num_fired, _prod_bal, _wages, _consumption,
     _bonuses, _dedns, _inc_tax, _sales_tax, _dom_bal, _deficit, _pop_size,
-    _loan_prob, _amount_owed, _bus_size;
+    _loan_prob, _amount_owed, _bus_size, _pc_active;
 
 protected:
 

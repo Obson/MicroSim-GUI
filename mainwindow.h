@@ -70,11 +70,13 @@ protected:
     void showHelp();
 
     void closeEvent(QCloseEvent *event);
+    void restoreState();
 
     void propertyChanged(QListWidgetItem *item);
 
     QMenuBar *myMenuBar;
 
+    QMenu *applicationMenu;
     QMenu *fileMenu;
     QMenu *editMenu;
     QMenu *helpMenu;

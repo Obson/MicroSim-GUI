@@ -133,11 +133,6 @@ DefaultPage::DefaultPage(ParameterWizard *w)
 {
     wiz = w;
 
-    QValidator *valid_pop_size = new QIntValidator(0, 999999999, this);
-    pop_size = new QLineEdit(this);
-    pop_size->setText("0");
-    pop_size->setValidator(valid_pop_size);
-
     QValidator *valid_std_wage = new QIntValidator(0, 999999999, this);
     std_wage = new QLineEdit(this);
     std_wage->setText("0");
@@ -164,7 +159,6 @@ DefaultPage::DefaultPage(ParameterWizard *w)
     cb_loan_prob->addItem(tr("Always"));
 
     QFormLayout *layout = new QFormLayout;
-    layout->addRow(new QLabel(tr("Population size")), pop_size);
     layout->addRow(new QLabel(tr("Standard wage")), std_wage);
     layout->addRow(new QLabel(tr("Target employment rate (%)")), sb_emp_rate);
     layout->addRow(new QLabel(tr("Propensity to consume (%)")), sb_prop_con);
@@ -193,7 +187,6 @@ void DefaultPage::initializePage()
     // Read the default parameters from settings.We use 'sensible' default
     // defaults so they will have a workable model to start with
     QSettings settings;
-    pop_size->setText(settings.value(model + "/default/population-size", 10000).toString());
     std_wage->setText(settings.value(model + "/default/standard-wage", 500).toString());
     sb_emp_rate->setValue(settings.value(model + "/default/employment-rate", 95).toInt());
     sb_prop_con->setValue(settings.value(model + "/default/propensity-to-consume", 75).toInt());
@@ -222,7 +215,6 @@ bool DefaultPage::validatePage()
     QString model = wiz->current_model;
 
     QSettings settings;
-    settings.setValue(model + "/default/population-size", pop_size->text().toInt());
     settings.setValue(model + "/default/standard-wage", std_wage->text().toInt());
     settings.setValue(model + "/default/employment-rate", sb_emp_rate->value());
     settings.setValue(model + "/default/propensity-to-consume", sb_prop_con->value());
@@ -270,7 +262,6 @@ ExtraPage::ExtraPage(ParameterWizard *w)
     top_layout->addWidget(hdg_2);
 
     QFormLayout *bottom_layout = new QFormLayout;
-    bottom_layout->addRow(new QLabel(tr("Population size")), new QLineEdit);
     bottom_layout->addRow(new QLabel(tr("Standard wage")), new QLineEdit);
     bottom_layout->addRow(new QLabel(tr("Target employment rate (%)")), wiz->getSpinBox(0, 100));
     bottom_layout->addRow(new QLabel(tr("Propensity to consume (%)")), wiz->getSpinBox(0, 100));

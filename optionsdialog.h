@@ -17,6 +17,9 @@ public:
 
     int iterations();
     int startups();
+    int startPeriod();
+    int std_wage();
+    int population();
 
     void accept();
 

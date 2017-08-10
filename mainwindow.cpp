@@ -40,7 +40,7 @@ MainWindow::MainWindow()
     property_map[tr("Percent employed")] = Model::Property::pc_emps;
     property_map[tr("Number unemployed")] = Model::Property::num_unemps;
     property_map[tr("Percent unemployed")] = Model::Property::pc_unemps;
-    property_map[tr("Percent active")] = Model::Property::num_emps;
+    property_map[tr("Percent active")] = Model::Property::pc_active;
     property_map[tr("Number of new hires")] = Model::Property::num_hired;
     property_map[tr("Number of new fires")] = Model::Property::num_fired;
     property_map[tr("Business sector balance")] = Model::Property::prod_bal;
@@ -53,6 +53,7 @@ MainWindow::MainWindow()
     property_map[tr("Domestic sector balance")] = Model::Property::dom_bal;
     property_map[tr("Bank loans")] = Model::Property::amount_owed;
     property_map[tr("Average business size")] = Model::Property::bus_size;
+    property_map[tr("100 reference line")] = Model::Property::hundred;
     property_map[tr("Zero reference line")] = Model::Property::zero;
 
     // If non-zero, points to currently selected listwidget item
@@ -150,11 +151,14 @@ void MainWindow::createActions()
     connect(helpAction, &QAction::triggered, this, &MainWindow::showHelp);
 
     connect(this, &MainWindow::windowShown, this, &MainWindow::createFirstModel);
+    connect(this, &MainWindow::windowLoaded, this, &MainWindow::restoreState);
 }
 
 void MainWindow::createMenus()
 {
     myMenuBar = new QMenuBar(0);
+
+    applicationMenu = myMenuBar->addMenu(tr("&MicroSim"));
 
     fileMenu = myMenuBar->addMenu(tr("&File"));
     fileMenu->addAction(newAction);
@@ -165,10 +169,11 @@ void MainWindow::createMenus()
     editMenu = myMenuBar->addMenu(tr("&Edit"));
     editMenu->addAction(copyAction);
     editMenu->addAction(changeAction);
+    setOptionsAction->setMenuRole(QAction::ApplicationSpecificRole);
     editMenu->addAction(setOptionsAction);
 
     helpMenu = myMenuBar->addMenu(tr("&Help"));
-    helpMenu->addAction(aboutAction);
+    applicationMenu->addAction(aboutAction);
     helpMenu->addAction(aboutQtAction);
     helpMenu->addAction(helpAction);
 
@@ -217,7 +222,7 @@ void MainWindow::nyi()
 
 void MainWindow::errorMessage(QString msg)
 {
-    QMessageBox msgBox(this);
+    QMessageBox msgBox;
     msgBox.setText(tr("Program Error"));
     msgBox.setInformativeText(msg);
     msgBox.setDetailedText(tr("The program will now close down"));
@@ -230,8 +235,6 @@ void MainWindow::errorMessage(QString msg)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    // TODO: We save the state here -- we need a similar procedure to restore it when the program starts
-
     // Save current config to settings
     QSettings settings;
     settings.beginGroup("State");
@@ -248,6 +251,36 @@ void MainWindow::closeEvent(QCloseEvent *event)
     settings.endGroup();
 }
 
+void MainWindow::restoreState()
+{
+    QSettings settings;
+    settings.beginGroup("State");
+    for (int i = 0, n = 0; i < propertyList->count(); i++)
+    {
+        QListWidgetItem *item;
+        item = propertyList->item(i);
+        QString text = item->text();
+        bool checked = settings.value(text, false).toBool();
+        item->setCheckState(checked ? Qt::Checked : Qt::Unchecked);
+    }
+    settings.endGroup();
+
+    QString s = settings.value("current_model", "").toString();
+    if (s.isEmpty())
+    {
+        errorMessage("Cannot find model " + s);
+    }
+    else
+    {
+        QList<QListWidgetItem*> items = modelList->findItems(s, Qt::MatchExactly);
+        if (items.count() == 1) {
+            items[0]->setSelected(true);
+            changeModel(items[0]);
+        }
+    }
+
+}
+
 #include "model.h"
 
 void MainWindow::createNewModel()
@@ -261,8 +294,6 @@ void MainWindow::createNewModel()
                     "NewModelDlg returns" << QDialog::Accepted;
 
         QString name = dlg.getName();
-        // QString notes = dlg.getNotes();
-        // int iters = dlg.getIters();
 
         _current_model = Model::createModel(name);
         qDebug() << "MainWindow::createNewModel(): name =" << name;
@@ -359,6 +390,7 @@ void MainWindow::setOptions()
     dlg.setModal(true);
     if (dlg.exec() == QDialog::Accepted && _current_model != nullptr)
     {
+
         drawChart();
     }
 }
@@ -518,7 +550,18 @@ void MainWindow::drawChart()    // uses _current_model
             QLineSeries *ser = _current_model->series[prop];
             ser->setName(series_name);
             chart->addSeries(ser);
-            ser->setColor(prop == Model::Property::zero ? Qt::black : nextColour(n++));
+
+            switch(prop)
+            {
+            case Model::Property::zero:
+            case Model::Property::hundred:
+                ser->setColor(Qt::black);
+                ser->setPen(QPen(Qt::DotLine));
+                break;
+            default:
+                ser->setColor(nextColour(n++));
+                break;
+            }
         }
     }
 

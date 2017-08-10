@@ -162,6 +162,7 @@ Model::Model(QString model_name)
               << Property::num_unemps
               << Property::pc_unemps
               << Property::num_gov_emps
+              << Property::pc_active
               << Property::num_hired
               << Property::num_fired
               << Property::prod_bal
@@ -175,6 +176,7 @@ Model::Model(QString model_name)
               << Property::dom_bal
               << Property::amount_owed
               << Property::bus_size
+              << Property::hundred
               << Property::zero
               << Property::num_properties;      // dummy
 
@@ -200,7 +202,10 @@ void Model::readDefaultParameters()
 
     // Global settings
     _iterations = settings.value("iterations", 100).toInt();
-    _startups = settings.value("startups", 10). toInt();
+    _startups = settings.value("startups", 10).toInt();
+    _first_period = settings.value("start-period", 1).toInt();
+    _scale = settings.value("nominal-population", 1000).toInt() / 1000;
+    _population = 1000; // TODO: *** Scale population ***
 
     // Model-specific settings
     settings.beginGroup(_name);
@@ -270,10 +275,12 @@ void Model::restart()
     {
         Property prop = prop_list[i];
         series[prop]->clear();
+        /*
         series[prop]->append(0,
                              prop == Property::pop_size
                              ? getPopSize() : (prop == Property::num_firms
                                                ? _startups + 1 : 0));
+        */
     }
 
     int num_workers = workers.count();
@@ -315,7 +322,7 @@ void Model::run()
     // more valid
     qsrand(42);
 
-    for (int _period = 1; _period <= _iterations; _period++)
+    for (int _period = 1; _period <= _iterations + _first_period; _period++)
     {
         //qDebug() << "Model::run(): _name =" << _name << ", period =" << _period;
 
@@ -373,13 +380,16 @@ void Model::run()
         }
 
         // Append the values from this iteration to the series
-        //qDebug() << "Model::run(): _name =" << _name << "appending results to series";
-        for (int i = 0; i < static_cast<int>(Property::num_properties); i++)
+        // RqDebug() << "Model::run(): _period =" << _period << ", _iterations =" << _iterations;
+        if (_period >= _first_period)
         {
-            //qDebug() << "Model::run(): i =" << i;
-            Property prop = prop_list[i];
-            int val = getPropertyVal(prop);
-            series[prop]->append(_period, val);
+            for (int i = 0; i < static_cast<int>(Property::num_properties); i++)
+            {
+                //qDebug() << "Model::run(): i =" << i;
+                Property prop = prop_list[i];
+                int val = getPropertyVal(prop);
+                series[prop]->append(_period, val);
+            }
         }
 
         // Create a new firm, possibly
@@ -450,8 +460,6 @@ int Model::payWorkers(int amount, int max_tot, Account *source, Reason reason, i
 
                 if (max_tot - amt_paid < amount)
                 {
-                    // TODO: Rather than just firing workers we can't afford we
-                    // should sometimes get a bank loan
                     int prob = getLoanProb();
                     int r = 0;
                     if (prob < 4 && prob > 0) {
@@ -636,6 +644,11 @@ int Model::getPropertyVal(Property p)
         _num_gov_emps = getNumEmployedBy(gov()->gov_firm());
         return _num_gov_emps;
 
+    case Property::pc_active:
+        // We are assuming granularity is 1000
+        _pc_active = (_num_emps + _num_unemps) / 10;
+        return _pc_active;
+
     case Property::num_hired:
         _num_hired = getNumHired();
         return _num_hired;
@@ -686,6 +699,9 @@ int Model::getPropertyVal(Property p)
     case Property::bus_size:
         _bus_size = _num_emps / _num_firms;
         return _bus_size;
+
+    case Property::hundred:
+        return 100;
 
     case Property::zero:
         return 0;
@@ -953,7 +969,7 @@ int Model::getParameterVal(ParamType type)
 
     // qDebug() << "Model::getParameterVal()";
 
-    int i = 0;      // only default parameter set at prsent
+    int i = 0;      // only default parameter set at present
 
     Pair p = (type == ParamType::pop_size) ? parameter_sets[i]->pop_size
                : ((type == ParamType::emp_rate) ? parameter_sets[i]->emp_rate

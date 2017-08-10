@@ -35,7 +35,8 @@ void NewModelDlg::accept()
     model_name = ui->leName->text().simplified();
     notes      = ui->teNotes->toPlainText().simplified();
 
-    if (model_name.size() > 0)
+    QString upper = model_name.toUpper();
+    if (model_name.size() > 0 && upper != "GENERAL" && upper != "STATE")
     {
         // Check that the model name isn't a duplicate
         QSettings settings;
@@ -83,13 +84,15 @@ void NewModelDlg::accept()
     }
     else
     {
-        QMessageBox msgBox;
+        QMessageBox msgBox(this);
+        msgBox.setWindowModality(Qt::WindowModal);
         msgBox.setIcon(QMessageBox::Warning);
         msgBox.setWindowTitle(tr("Error"));
-        msgBox.setText(tr("Please enter a valid model name"));
-        msgBox.setInformativeText(tr("Model names must be unique and must "
-                                     "contain at least one non-space character"
-                                     ));
+        msgBox.setText(tr("You have not entered a valid model name!"));
+        // TODO: remove the reserved words (general and state) from model names by prefixing them with 'u-' or something
+        msgBox.setDetailedText(tr("Model names must be unique and must contain "
+                                  "at least one non-space character. 'General' "
+                                  "and 'state' are not allowed as model names."));
         msgBox.exec();
         return;
     }

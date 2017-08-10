@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// TODO: Set up version control to use GitHub.
+// TODO: Set up version control remote access to GitHub.
 
 void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
