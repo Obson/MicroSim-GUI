@@ -133,11 +133,6 @@ DefaultPage::DefaultPage(ParameterWizard *w)
 {
     wiz = w;
 
-    QValidator *valid_std_wage = new QIntValidator(0, 999999999, this);
-    std_wage = new QLineEdit(this);
-    std_wage->setText("0");
-    std_wage->setValidator(valid_std_wage);
-
     sb_emp_rate = wiz->getSpinBox(0, 100);
     sb_prop_con = wiz->getSpinBox(0, 100);
     sb_dedns = wiz->getSpinBox(0, 100);
@@ -159,7 +154,6 @@ DefaultPage::DefaultPage(ParameterWizard *w)
     cb_loan_prob->addItem(tr("Always"));
 
     QFormLayout *layout = new QFormLayout;
-    layout->addRow(new QLabel(tr("Standard wage")), std_wage);
     layout->addRow(new QLabel(tr("Target employment rate (%)")), sb_emp_rate);
     layout->addRow(new QLabel(tr("Propensity to consume (%)")), sb_prop_con);
     layout->addRow(new QLabel(tr("Pre-tax deductions (%)")), sb_dedns);
@@ -187,7 +181,6 @@ void DefaultPage::initializePage()
     // Read the default parameters from settings.We use 'sensible' default
     // defaults so they will have a workable model to start with
     QSettings settings;
-    std_wage->setText(settings.value(model + "/default/standard-wage", 500).toString());
     sb_emp_rate->setValue(settings.value(model + "/default/employment-rate", 95).toInt());
     sb_prop_con->setValue(settings.value(model + "/default/propensity-to-consume", 75).toInt());
     sb_dedns->setValue(settings.value(model + "/default/pre-tax-dedns-rate", 10).toInt());
@@ -206,16 +199,11 @@ void DefaultPage::initializePage()
 
 bool DefaultPage::validatePage()
 {
-    // pop_size and std_wage have their own validators so need no further
-    // validation. All the other controls are spinboxes whick cannot go out of
-    // range either. All we need to do here is update the settings...
-
     qDebug() << "DefaultPage::validatePage()";
 
     QString model = wiz->current_model;
 
     QSettings settings;
-    settings.setValue(model + "/default/standard-wage", std_wage->text().toInt());
     settings.setValue(model + "/default/employment-rate", sb_emp_rate->value());
     settings.setValue(model + "/default/propensity-to-consume", sb_prop_con->value());
     settings.setValue(model + "/default/pre-tax-dedns-rate", sb_dedns->value());

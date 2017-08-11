@@ -209,7 +209,6 @@ private:
         Pair iters;
         Pair count;
         Pair emp_rate;
-        Pair std_wage;
         Pair prop_con;
         Pair inc_tax_rate;
         Pair sales_tax_rate;

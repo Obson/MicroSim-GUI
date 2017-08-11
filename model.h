@@ -23,9 +23,7 @@ QT_CHARTS_USE_NAMESPACE
 
 // Only potentially conditional parameters are listed here
 enum class ParamType {
-    pop_size,
     emp_rate,
-    std_wage,
     prop_con,
     inc_tax_rate,
     sales_tax_rate,
@@ -100,7 +98,8 @@ public:
     enum class Property
     {
         current_period,
-        pop_size,
+        pop_size,           // although constant, we treat this as a property
+                            // as it's sometimes useful to show it on a graph
         gov_exp,
         bens_paid,
         gov_exp_plus,
@@ -170,7 +169,6 @@ public:
     // ------------------------------------------------------------------------
 
     int getIters();         // number of iterations (periods)
-    int getPopSize();       // max available population size
     int getActivePop();     // proportion of population that is economically active
     int getGovExpRate();    // government expenditure (currency units per period)
     int getTargetEmpRate(); // target rate of employment (%)
@@ -217,6 +215,7 @@ private:
     int _startups;
     int _first_period;
     int _scale;
+    int _std_wage;
 
     int _gov_exp_rate = -1;
 
@@ -261,11 +260,9 @@ protected:
 
     struct Params
     {
-        Pair pop_size;
         Pair iters;
         Pair count;
         Pair emp_rate;
-        Pair std_wage;
         Pair prop_con;
         Pair inc_tax_rate;
         Pair sales_tax_rate;

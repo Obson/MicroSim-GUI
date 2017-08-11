@@ -8,9 +8,7 @@ Model *Model::current = nullptr;
 
 QMap<ParamType,QString> Model::parameter_keys
 {
-    {ParamType::pop_size, "population-size"},
     {ParamType::emp_rate, "employment-rate"},
-    {ParamType::std_wage, "std-wage"},
     {ParamType::prop_con, "propensity-to-consume"},
     {ParamType::inc_tax_rate, "income-tax-rate"},
     {ParamType::sales_tax_rate, "sales-tax-rate"},
@@ -66,10 +64,7 @@ Model *Model::createModel(QString name)
     // Add any model-specific parameters with default values here,,,
 
     settings.beginGroup("/default");
-    // settings.setValue(parameter_keys[ParamType::iters],             100);
-    settings.setValue(parameter_keys[ParamType::pop_size],          10000);
     settings.setValue(parameter_keys[ParamType::emp_rate],          95);
-    settings.setValue(parameter_keys[ParamType::std_wage],          500);
     settings.setValue(parameter_keys[ParamType::prop_con],          80);
     settings.setValue(parameter_keys[ParamType::inc_tax_rate],      10);
     settings.setValue(parameter_keys[ParamType::sales_tax_rate],    15);
@@ -243,11 +238,14 @@ void Model::readDefaultParameters()
     // notes but this will probably change.
     QSettings settings;
 
+    qDebug() << "Model::readDefaultParameters(): file is" << settings.fileName();
+
     // Global settings
     _iterations = settings.value("iterations", 100).toInt();
     _startups = settings.value("startups", 10).toInt();
     _first_period = settings.value("start-period", 1).toInt();
     _scale = settings.value("nominal-population", 1000).toInt() / 1000;
+    _std_wage = settings.value("unit-wage", 500).toInt();
     _population = 1000;
 
     // Model-specific settings
@@ -265,9 +263,7 @@ void Model::readDefaultParameters()
 
     Params *p = new Params;     // default parameter set
 
-    p->pop_size.val           = settings.value(parameter_keys[ParamType::pop_size]).toInt();
     p->emp_rate.val           = settings.value(parameter_keys[ParamType::emp_rate]).toInt();
-    p->std_wage.val           = settings.value(parameter_keys[ParamType::std_wage]).toInt();
     p->prop_con.val           = settings.value(parameter_keys[ParamType::prop_con]).toInt();
     p->inc_tax_rate.val       = settings.value(parameter_keys[ParamType::inc_tax_rate]).toInt();
     p->sales_tax_rate.val     = settings.value(parameter_keys[ParamType::sales_tax_rate]).toInt();
@@ -1014,52 +1010,25 @@ int Model::getParameterVal(ParamType type)
 
     int i = 0;      // only default parameter set at present
 
-    Pair p = (type == ParamType::pop_size) ? parameter_sets[i]->pop_size
-               : ((type == ParamType::emp_rate) ? parameter_sets[i]->emp_rate
-                  : ((type == ParamType::std_wage) ? parameter_sets[i]->std_wage
-                     : ((type == ParamType::prop_con) ? parameter_sets[i]->prop_con
-                        : ((type == ParamType::inc_tax_rate) ? parameter_sets[i]->inc_tax_rate
-                           : ((type == ParamType::sales_tax_rate) ? parameter_sets[i]->sales_tax_rate
-                              : ((type == ParamType::firm_creation_prob) ? parameter_sets[i]->firm_creation_prob
-                                 : ((type == ParamType::dedns) ? parameter_sets[i]->dedns
-                                    : ((type == ParamType::unemp_ben_rate) ? parameter_sets[i]->unemp_ben_rate
-                                       : ((type == ParamType::active_pop) ? parameter_sets[i]->active_pop
-                                          : ((type == ParamType::reserve) ? parameter_sets[i]->reserve
-                                             : ((type == ParamType::prop_inv) ? parameter_sets[i]->prop_inv
-                                                : ((type == ParamType::boe_int) ? parameter_sets[i]->boe_int
-                                                   : ((type == ParamType::bus_int) ? parameter_sets[i]->bus_int
-                                                      : ((type == ParamType::loan_prob) ? parameter_sets[i]->loan_prob
-                                                         : parameter_sets[i]->invalid
-                                                   )
-                                                )
-                                             )
-                                          )
-                                       )
-                                    )
-                                 )
-                              )
-                           )
-                        )
-                     )
-                  )
-               )
-         );
+    Pair p = (type == ParamType::emp_rate) ? parameter_sets[i]->emp_rate
+             : ((type == ParamType::prop_con) ? parameter_sets[i]->prop_con
+             : ((type == ParamType::inc_tax_rate) ? parameter_sets[i]->inc_tax_rate
+             : ((type == ParamType::sales_tax_rate) ? parameter_sets[i]->sales_tax_rate
+             : ((type == ParamType::firm_creation_prob) ? parameter_sets[i]->firm_creation_prob
+             : ((type == ParamType::dedns) ? parameter_sets[i]->dedns
+             : ((type == ParamType::unemp_ben_rate) ? parameter_sets[i]->unemp_ben_rate
+             : ((type == ParamType::active_pop) ? parameter_sets[i]->active_pop
+             : ((type == ParamType::reserve) ? parameter_sets[i]->reserve
+             : ((type == ParamType::prop_inv) ? parameter_sets[i]->prop_inv
+             : ((type == ParamType::boe_int) ? parameter_sets[i]->boe_int
+             : ((type == ParamType::bus_int) ? parameter_sets[i]->bus_int
+             : ((type == ParamType::loan_prob) ? parameter_sets[i]->loan_prob
+             : parameter_sets[i]->invalid
+             ))))))))))));
 
 
     // qDebug() << "Model::getParameterVal(): returning" << p.val;
     return p.val;
-}
-
-// Population size is currently fixed, but it could be subject to change so
-// treat it a a standard potentially conditional parameter
-int Model::getPopSize()
-{
-    // At present population size is a special case. It's a property of the
-    // model and can in principle change, but for now the only mechanism that
-    // can change it is through conditional parameters. At some point we may
-    // allow it to be determined formulaically.
-    _population = getParameterVal(ParamType::pop_size);
-    return _population;
 }
 
 int Model::getTargetEmpRate()
@@ -1069,7 +1038,7 @@ int Model::getTargetEmpRate()
 
 int Model::getStdWage()
 {
-    return getParameterVal(ParamType::std_wage);
+    return _std_wage;
 }
 
 int Model::getPropCon()
@@ -1131,19 +1100,29 @@ int Model::getLoanProb()
 
 int Model::getGovExpRate()
 {
+    // TODO: *** IMPORTANT ***
+    // This calculation gives the rate of expenditure required to sustain the
+    // economy at the given level assuming the government's only receipts are
+    // income tax. If the government is the only employer this expenditure can
+    // be supplied by direct subsidy, but this would not be politically
+    // acceptable where most firms are private. In this case the bulk (and in
+    // aggregate, all) of the funds will be supplied initially as bank loans
+    // and therefore financed via the Treasury.
+    //   We should probably input a target 'government industry size' and aim
+    // to finance that, rather than the whole of the working population
+    // directly.
+
     //int active_pop = (population() * getActivePop()) / 100;
+
     int target_emp = (population() * getTargetEmpRate()) / 100;
-    //qDebug() << "Model::getGovExpRate(): target_emp =" << target_emp;
     int basic_wage = target_emp * getStdWage();
     int corrected_for_tax = (basic_wage * getIncTaxRate()) / 100;
-    int prop_inv = getPropInv();
-    int rate = (corrected_for_tax * 100) / prop_inv;
+
+    //int prop_inv = getPropInv();
+    //int rate = (corrected_for_tax * 100) / prop_inv;
+
     _gov_exp_rate = corrected_for_tax;
     return _gov_exp_rate;   // recalculated each time params are read
-/*
-    _gov_exp_rate = 5000;
-    return _gov_exp_rate;
-*/
 }
 
 int Model::getActivePop()
