@@ -189,7 +189,7 @@ private:
 
     struct Condition
     {
-        Property property = pr_dflt;
+        Model::Property property = Model::Property::zero;
         Opr opr;
         int val;            // possibly extend to allow expressions later
     };
