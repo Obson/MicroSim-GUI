@@ -69,6 +69,10 @@ public:
 
     int period();
 
+    int min_value(int);
+    int max_value(int);
+    int total(int);
+
     Firm *createFirm();
     Firm *selectRandomFirm();
 
@@ -140,6 +144,12 @@ public:
     // composite properties (e,g, deficit).
     QMap<Property, QLineSeries*> series;
     QMap<Property, bool> scalable;
+
+    int _num_properties = static_cast<int>(Property::num_properties);
+
+    int min_val[static_cast<int>(Property::num_properties)];
+    int max_val[static_cast<int>(Property::num_properties)];
+    int sum[static_cast<int>(Property::num_properties)];
 
     // Retrieve the current (periodic) value associated with a given Property
     int getPropertyVal(Property p);
@@ -229,7 +239,6 @@ protected:
 
     Model(QString model_name);
     int scale(Property p);
-
 
     enum class Opr
     {

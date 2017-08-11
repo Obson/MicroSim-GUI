@@ -12,6 +12,7 @@
 #include <QAction>
 
 #include "model.h"
+#include "controlwidget.h"
 
 namespace Ui {
 class MainWindow;
@@ -68,6 +69,7 @@ protected:
     void errorMessage(QString);
     void setOptions();
     void showHelp();
+    void showStats();
 
     void closeEvent(QCloseEvent *event);
     void restoreState();
@@ -196,6 +198,9 @@ private:
     };
 
     QList<Params*> paramList;
+
+    ControlWidget *ctrl;
+
 };
 
 #endif // MAINWINDOW_H

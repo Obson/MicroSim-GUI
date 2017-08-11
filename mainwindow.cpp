@@ -11,6 +11,8 @@
 #include <QColor>
 #include <QMenu>
 #include <QMenuBar>
+#include <QDockWidget>
+#include <QDialogButtonBox>
 
 #include "account.h"
 #include "optionsdialog.h"
@@ -77,8 +79,8 @@ MainWindow::MainWindow()
 
     setWindowTitle(tr("MicroSim"));
     setUnifiedTitleAndToolBarOnMac(true);
-    setMinimumSize(1280, 700);
-    resize(1280, 700);
+    setMinimumSize(1280, 800);
+    resize(1280, 800);
 
     // The left margin is to prevent the control being right against the side
     // of the window. May not really be a good idea. The border and padding
@@ -403,6 +405,7 @@ void MainWindow::createStatusBar()
 
 void MainWindow::propertyChanged(QListWidgetItem *item)
 {
+    qDebug() << "MainWindow::propertyChanged";
     // Allow the property to be changed even when there's no model selected.
     if (_current_model != nullptr)
     {
@@ -428,6 +431,7 @@ void MainWindow::createDockWindows()
         propertyList->addItem(item);
     }
     connect(propertyList, &QListWidget::itemChanged, this, &MainWindow::propertyChanged);
+    connect(propertyList, &QListWidget::currentItemChanged, this, &MainWindow::showStats);
 
     // Add to dock
     dock->setWidget(propertyList);
@@ -447,6 +451,15 @@ void MainWindow::createDockWindows()
     dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
     addDockWidget(Qt::LeftDockWidgetArea, dock);
 
+    // Create the bottom area
+    dock = new QDockWidget("Controls and Statistics", this);
+    dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
+    ctrl = new ControlWidget(this);
+    ctrl->setFixedHeight(120);
+    dock->setWidget(ctrl);
+    dock->setAllowedAreas(Qt::BottomDockWidgetArea);
+    addDockWidget(Qt::BottomDockWidgetArea, dock);
+
     // Create the parameter wizard
     wiz = new ParameterWizard(this);
     wiz->setModal(true);
@@ -454,6 +467,29 @@ void MainWindow::createDockWindows()
     // Connect signals for changing selection and double-click
     connect(modelList, &QListWidget::currentItemChanged, this, &MainWindow::changeModel);
     connect(modelList, &QListWidget::itemDoubleClicked, this, &MainWindow::editParameters);
+
+    // Signals from bottom-area buttons
+    connect(ctrl, &ControlWidget::setupModel, this, &MainWindow::editParameters);
+    // ...
+
+}
+
+void MainWindow::showStats()
+{
+    QSettings settings;
+    int range = settings.value("iterations").toInt();
+    QListWidgetItem *it = propertyList->currentItem();
+    QString key = it->text();
+    Model::Property prop = property_map[key];
+    int ix = static_cast<int>(prop);
+    int min = _current_model->min_value(ix);
+    int max = _current_model->max_value(ix);
+    int total = _current_model->total(ix);
+    int mean = total / range;
+
+    qDebug() << "MainWindow::showStats(): min =" << min << ", max =" << max << ", total =" << total << ", range =" << range << ", mean =" << mean;
+
+    ctrl->setStats("<b>" + key + "</b>", min, max, mean);
 }
 
 void MainWindow::createFirstModel()

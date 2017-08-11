@@ -38,7 +38,8 @@ SOURCES += \
     government.cpp \
     bank.cpp \
     model.cpp \
-    optionsdialog.cpp
+    optionsdialog.cpp \
+    controlwidget.cpp
 
 HEADERS += \
     mainwindow.h \
@@ -46,11 +47,13 @@ HEADERS += \
     newmodeldlg.h \
     account.h \
     model.h \
-    optionsdialog.h
+    optionsdialog.h \
+    controlwidget.h
 
 FORMS += \
     newmodeldlg.ui \
-    optionsdialog.ui
+    optionsdialog.ui \
+    controlwidget.ui
 
 DISTFILES += \
     README.md

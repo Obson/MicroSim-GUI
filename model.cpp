@@ -422,12 +422,34 @@ void Model::run()
         // RqDebug() << "Model::run(): _period =" << _period << ", _iterations =" << _iterations;
         if (_period >= _first_period)
         {
-            for (int i = 0; i < static_cast<int>(Property::num_properties); i++)
+            for (int i = 0; i < _num_properties/*static_cast<int>(Property::num_properties)*/; i++)
             {
-                //qDebug() << "Model::run(): i =" << i;
                 Property prop = prop_list[i];
-                //int val = getPropertyVal(prop);
-                series[prop]->append(_period, scale(prop));
+                int val = scale(prop);
+                series[prop]->append(_period, val);
+
+                int j = static_cast<int> (prop);
+
+                if (_period == _first_period)
+                {
+                    max_val[j] = val;
+                    min_val[j] = val;
+                    sum[j] = val;
+                }
+                else
+                {
+                    if (val > max_val[j])
+                    {
+                        max_val[j] = val;
+                    }
+
+                    if (val < min_val[j])
+                    {
+                        min_val[j] = val;
+                    }
+
+                    sum[j] += val;
+                }
             }
         }
 
@@ -444,6 +466,21 @@ void Model::run()
 int Model::period()
 {
     return _period;
+}
+
+int Model::min_value(int ix)
+{
+    return min_val[ix];
+}
+
+int Model::max_value(int ix)
+{
+    return max_val[ix];
+}
+
+int Model::total(int ix)
+{
+    return sum[ix];
 }
 
 Government *Model::gov()
