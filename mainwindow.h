@@ -151,31 +151,6 @@ private:
     QValueAxis *axisX = nullptr;
     QValueAxis *axisY = nullptr;
 
-    enum Property
-    {
-        pr_dflt,
-        pr_current_period,
-        pr_gov_exp,
-        pr_bens_paid,
-        pr_gov_recpts,
-        pr_deficit,
-        pr_gov_bal,
-        pr_num_firms,
-        pr_num_emps,
-        pr_num_unemps,
-        pr_num_gov_emps,
-        pr_num_hired,
-        pr_num_fired,
-        pr_prod_bal,
-        pr_wages,
-        pr_consumption,
-        pr_bonuses,
-        pr_dedns,
-        pr_inc_tax,
-        pr_sales_tax,
-        pr_dom_bal
-    };
-
     enum Opr
     {
         invalid_op,
