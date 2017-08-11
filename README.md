@@ -1,11 +1,15 @@
 # MicroSim
 
-**MicroSim** is a micro-economic modelling program designed to complement SimX (which is a *macro*-economic modelling system). Like SimX, it provides its own graphics, but it will also (eventually) output its results in the form of a CSV file which can be read into a spreadsheet for further analysis.
+**MicroSim** is (or rather will be when it's completed) a micro-economic modelling program designed to complement SimX (which is a *macro*-economic modelling system). Like SimX, it provides its own graphics, but it will also (probably) output its results in the form of a CSV file which can be read into a spreadsheet for further analysis.
+
+### Technicalities ###
+
+MicroSim has been developed using Qt (5.9) and uses Qt Frameworks throughout. The files in this repository include the .pro file so it can easily be cloned as a Qt project in Qt Creator. It is being developed, so far, under Mac OSX, but it should be straightforward to recompile it on any platform supported by Qt.
 
 
-## Components of a Model and Their Interactions ##
+## Components of a MicroSim Model and Their Interactions ##
 
-A model contains the following components:
+A MicroSim model contains the following components:
 
 * Workers
 * Firms
@@ -22,6 +26,16 @@ These components interact in fairly simple ways in response to
 **Money** in MicroSim is curently dimensionless and may be thought of as arbitrary *currency units* or CUs. This may change when we add foreign exchange (later).
 
 Every component is *triggered* once per period, and when triggered it will do something depending on its circumstances at the time. A firm, for example, may hire or fire employees, and a worker may make some purchases. The parameters of the model determine more precisely how they respond. 
+### The Government ###
+
+For our purposes it's useful to regard the Government as a number of separated but related entities.
+
+* Policy making
+* Treasury
+* Civil service and other government-controlled 'industries'
+* The workers in those separate areas
+
+### The Central Bank ###
 
 ## How it Works ##
 The model is entirely 'driven by' money. And as in the real world money emanates in the first instance from the government. There are a number of ways money may be disbursed by the government, for example:
@@ -45,7 +59,7 @@ The question then is how much the government should pay.
 
 #### Government expenditure ####
 
-**This section is under revision**
+**This section is under revision (in fact the whole thing is!)**
 
 The amount the government needs to spend (ignoring benefits) is determined by the size of the economy, the wage rate, the tax rate, and the rate of investment in employment. In the real world these quantities, with the exception of the tax rate, are quite hard to determine. For MicroSim the situation is much simpler&mdash;they are all parameters given in the model definition. We give, for example, an actual population size and a target rate of employment. [This statement is inaccurate &mdash; MUST FIX: By multiplying these together MicroSim obtains the size of the economically active population. It can then work out how much money the government needs to spend in order to bring that number of workers into the economy.]
 
