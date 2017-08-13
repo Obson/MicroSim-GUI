@@ -851,15 +851,24 @@ Worker *Model::hire(Firm *employer, int period)
     Worker *w = nullptr;
     for (int i = 0; i < workers.count(); i++)
     {
-        if (workers[i]->getEmployer() == nullptr)
+        if (workers[i]->getEmployer() == nullptr)       // i.e. unemployed
         {
             w = workers[i];
         }
     }
+
     if (w == nullptr)
     {
-        w = new Worker(this);
-        workers.push_back(w);
+        if (workers.count() < population())     // (unscaled)
+        {
+            w = new Worker(this);
+            workers.push_back(w);
+        }
+        else
+        {
+            qDebug() << "Model::hire(): 100% employed, cannot hire any more!";
+            return nullptr;
+        }
     }
 
     w->employer = employer;
