@@ -848,6 +848,16 @@ int Model::getNumUnemployed()
 
 Worker *Model::hire(Firm *employer, int period)
 {
+    // Calculate friction
+    int pop = population();
+    int avail = pop - workers.count();      // number potentially available
+    int access = (avail * 1000) / pop;      // accessibility as permillage
+    int prob = qrand() % 1000;
+    if (prob >= access)
+    {
+        return nullptr;
+    }
+
     Worker *w = nullptr;
     for (int i = 0; i < workers.count(); i++)
     {
@@ -859,6 +869,11 @@ Worker *Model::hire(Firm *employer, int period)
 
     if (w == nullptr)
     {
+        // We've already checked availability, but in case the mechanism
+        // changes in future we make sure you can't employ more people that
+        // there actually are. This constraint could conceivable be varied if
+        // we want to allow differential labour values by treating one worker
+        // as equivalent to several workers.
         if (workers.count() < population())     // (unscaled)
         {
             w = new Worker(this);
