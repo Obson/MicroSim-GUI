@@ -132,7 +132,7 @@ void MainWindow::createActions()
     connect(changeAction, &QAction::triggered, this,
             &MainWindow::editParameters);
 
-    newAction = new QAction(tr("&New..."), this);
+    newAction = new QAction(tr("&New model..."), this);
     newAction->setStatusTip(tr("Create a new model"));
     connect(newAction, &QAction::triggered, this, &MainWindow::createNewModel);
 
@@ -474,6 +474,9 @@ void MainWindow::createDockWindows()
     connect(ctrl, &ControlWidget::setupModel, this, &MainWindow::editParameters);
     connect(ctrl, &ControlWidget::closeDown, this, &MainWindow::close);
     connect(ctrl, &ControlWidget::redrawChart, this, &MainWindow::drawChart);
+    connect(ctrl, &ControlWidget::newModelRequest, this, &MainWindow::createNewModel);
+
+    // Signal to bottom-area
     connect(this, &MainWindow::drawingCompleted, ctrl, &ControlWidget::chartDrawn);
 }
 

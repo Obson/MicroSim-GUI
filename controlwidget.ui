@@ -16,7 +16,7 @@
   <widget class="QLabel" name="lab_property">
    <property name="geometry">
     <rect>
-     <x>30</x>
+     <x>1050</x>
      <y>10</y>
      <width>191</width>
      <height>16</height>
@@ -77,8 +77,8 @@
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>31</x>
-     <y>35</y>
+     <x>1050</x>
+     <y>40</y>
      <width>132</width>
      <height>66</height>
     </rect>
@@ -131,16 +131,26 @@
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>1088</x>
-     <y>13</y>
+     <x>60</x>
+     <y>10</y>
      <width>131</width>
-     <height>91</height>
+     <height>101</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
+    <property name="spacing">
+     <number>0</number>
+    </property>
     <property name="leftMargin">
      <number>0</number>
     </property>
+    <item>
+     <widget class="QPushButton" name="btnNewModel">
+      <property name="text">
+       <string>New</string>
+      </property>
+     </widget>
+    </item>
     <item>
      <widget class="QPushButton" name="btn_setup">
       <property name="text">

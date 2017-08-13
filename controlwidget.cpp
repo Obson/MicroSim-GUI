@@ -123,3 +123,8 @@ void ControlWidget::on_btn_edit_model_clicked()
         ui->label_notes->setText(dlg->getNotes());
     }
 }
+
+void ControlWidget::on_btnNewModel_clicked()
+{
+    emit newModelRequest();
+}

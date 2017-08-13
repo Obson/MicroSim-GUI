@@ -33,7 +33,10 @@ private slots:
 
     void on_btn_edit_model_clicked();
 
+    void on_btnNewModel_clicked();
+
 signals:
+    void newModelRequest();
     void setupModel();
     void redrawChart();
     void closeDown();
