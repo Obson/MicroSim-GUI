@@ -363,63 +363,64 @@ void Model::run()
 
     for (int _period = 1; _period <= _iterations + _first_period; _period++)
     {
-        //qDebug() << "Model::run(): _name =" << _name << ", period =" << _period;
-
+        // -------------------------------------------
         // Initialise objects ready for next iteration
+        // -------------------------------------------
 
-        //qDebug() << "Model::run(): _name =" << _name << "initialising Government";
         _gov->init();
 
         int num_workers = workers.count();
         int num_firms = firms.count();
 
-        //qDebug() << "Model::run(): _name =" << _name << "initialising" << num_firms << "firms";
-        for (int i = 0; i < num_firms; i++)
-        {
+        for (int i = 0; i < num_firms; i++) {
             firms[i]->init();
         }
 
-        //qDebug() << "Model::run(): _name =" << _name << "initialising" << num_workers << "workers";
-        for (int i = 0; i < num_workers; i++)
-        {
+        for (int i = 0; i < num_workers; i++) {
             workers[i]->init();
         }
 
         // Reset counters
+
         num_hired = 0;
         num_fired = 0;
         num_just_fired = 0;
 
-        // Trigger government, which will transfer grants and benefitsto firms
+        // -------------------------------------------
+        // Trigger objects
+        // -------------------------------------------
+
+        // Triggering government will transfer grants and benefits to firms
         // and workers before they are triggered
         _gov->trigger(_period);
 
-        // Trigger firms, which will pay deductions to government and wages to
+        // Triggering firms will pay deductions to government and wages to
         // workers. Firms will also fire any workers they can't afford to pay.
         // Workers receiving payment will pay income tax to the government
-        //qDebug() << "Model::run(): _name =" << _name << "triggering" << num_firms << "firms";
-        for (int i = 0; i < num_firms; i++)
-        {
+        for (int i = 0; i < num_firms; i++) {
             firms[i]->trigger(_period);
         }
 
         // Trigger workers to make purchases
-        //qDebug() << "Model::run(): _name =" << _name << "triggering" << num_workers << "workers";
-        for (int i = 0; i < num_workers; i++)
-        {
+        for (int i = 0; i < num_workers; i++) {
             workers[i]->trigger(_period);
         }
 
+        // -------------------------------------------
+        // Post-trigger (epilogue) phase
+        // -------------------------------------------
+
         // Post-trigger for firms so they can pay tax on sales just made, pay
         // bonuses, and hire more employees (investment)
-        //qDebug() << "Model::run(): _name =" << _name << "post-trigger for" << num_firms << "firms";
-        for (int i = 0, c = firms.count(); i < c; i++)
-        {
+        for (int i = 0, c = firms.count(); i < c; i++) {
             firms[i]->epilogue(_period);
         }
 
+        // -------------------------------------------
+        // Stats
+        // -------------------------------------------
+
         // Append the values from this iteration to the series
-        // RqDebug() << "Model::run(): _period =" << _period << ", _iterations =" << _iterations;
         if (_period >= _first_period)
         {
             for (int i = 0; i < _num_properties/*static_cast<int>(Property::num_properties)*/; i++)
@@ -453,13 +454,16 @@ void Model::run()
             }
         }
 
+        // -------------------------------------------
+        // Exogenous changes
+        // -------------------------------------------
+
         // Create a new firm, possibly
-        if (qrand() % 100 < getFCP())
-        {
-            //qDebug() << "Model::run(): _name =" << _name << "creating new firm";
+        if (qrand() % 100 < getFCP()) {
             createFirm();
         }
     }
+
     qDebug() << "Model::run(): _name =" << _name << "done";
 }
 

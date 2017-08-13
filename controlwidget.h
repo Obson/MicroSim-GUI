@@ -16,13 +16,20 @@ public:
     ~ControlWidget();
 
     void setStats(QString caption, int min_val, int max_val, int mean);
+    void setNotes(QString);
+    void updateStatus(QString);
+
+public slots:
+    void statusChanged(QString status);
+    void chartDrawn();
 
 private slots:
     void on_btn_setup_clicked();
-
     void on_btn_redraw_clicked();
-
     void on_btn_close_clicked();
+
+    void on_le_start_textEdited(const QString);
+    void on_le_iters_textEdited(const QString);
 
 signals:
     void setupModel();
@@ -31,6 +38,9 @@ signals:
 
 private:
     Ui::ControlWidget *ui;
+
+    int start_period;
+    int iters;
 };
 
 #endif // CONTROLWIDGET_H

@@ -1,17 +1,13 @@
 #ifndef MODEL_H
 #define MODEL_H
 
-//#include <stdio.h>
 #include <iostream>
 #include <map>
 #include <QObject>
 #include <QVector>
 #include <QtCharts/QLineSeries>
 #include <QSettings>
-
-
 #include <QMap>
-
 
 class Account;
 class Government;

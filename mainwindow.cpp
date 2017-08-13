@@ -470,8 +470,9 @@ void MainWindow::createDockWindows()
 
     // Signals from bottom-area buttons
     connect(ctrl, &ControlWidget::setupModel, this, &MainWindow::editParameters);
-    // ...
-
+    connect(ctrl, &ControlWidget::closeDown, this, &QCoreApplication::quit);
+    connect(ctrl, &ControlWidget::redrawChart, this, &MainWindow::drawChart);
+    connect(this, &MainWindow::drawingCompleted, ctrl, &ControlWidget::chartDrawn);
 }
 
 void MainWindow::showStats()
@@ -543,6 +544,8 @@ QColor MainWindow::nextColour(int n)
 
 void MainWindow::drawChart()    // uses _current_model
 {
+    ctrl->updateStatus("Loading");
+
     // We are going to remove the chart altogether and replace it with a new
     // one to make sure we get a clean slate. However if we don't remove the
     // objects owned by the old chart the program eventually crashes. So far,
@@ -602,6 +605,8 @@ void MainWindow::drawChart()    // uses _current_model
     }
 
     chart->createDefaultAxes();
+
+    emit drawingCompleted();
 }
 
 void MainWindow::changeModel(QListWidgetItem *item)
@@ -614,11 +619,12 @@ void MainWindow::changeModel(QListWidgetItem *item)
         errorMessage("Cannot find the requested model");    // exits
     }
 
-    QString model_name = item->text();
-    statusBar()->showMessage(tr("Model: ") + model_name);
-
     QSettings settings;
+    QString model_name = item->text();
+    statusBar()->showMessage(tr("Model: ") + model_name + tr("  Total population: ") + settings.value("nominal-population", 1000).toString());
     settings.setValue("current_model", model_name);
+    settings.beginGroup(model_name);
+    ctrl->setNotes(settings.value("notes", "No notes entered for this model").toString());
 
     drawChart();
 }
