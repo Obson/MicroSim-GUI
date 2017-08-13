@@ -782,7 +782,9 @@ int Model::getPropertyVal(Property p)
         return _amount_owed;
 
     case Property::bus_size:
-        _bus_size = _num_emps / _num_firms;
+        // We take the government firm into account here because _num_emps
+        // doesn't make a distinction
+        _bus_size = _num_emps  / (_num_firms + 1);
         return _bus_size;
 
     case Property::hundred:

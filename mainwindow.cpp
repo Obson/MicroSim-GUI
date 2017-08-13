@@ -237,6 +237,7 @@ void MainWindow::errorMessage(QString msg)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+    qDebug() << "MainWindow::closeEvent() called";
     // Save current config to settings
     QSettings settings;
     settings.beginGroup("State");
@@ -251,6 +252,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     }
 
     settings.endGroup();
+    event->accept();
 }
 
 void MainWindow::restoreState()
@@ -470,7 +472,7 @@ void MainWindow::createDockWindows()
 
     // Signals from bottom-area buttons
     connect(ctrl, &ControlWidget::setupModel, this, &MainWindow::editParameters);
-    connect(ctrl, &ControlWidget::closeDown, this, &QCoreApplication::quit);
+    connect(ctrl, &ControlWidget::closeDown, this, &MainWindow::close);
     connect(ctrl, &ControlWidget::redrawChart, this, &MainWindow::drawChart);
     connect(this, &MainWindow::drawingCompleted, ctrl, &ControlWidget::chartDrawn);
 }
