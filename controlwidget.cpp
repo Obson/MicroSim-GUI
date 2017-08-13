@@ -2,6 +2,7 @@
 #include "ui_controlwidget.h"
 #include <QDebug>
 #include <QSettings>
+#include "newmodeldlg.h"
 
 ControlWidget::ControlWidget(QWidget *parent) :
     QWidget(parent),
@@ -59,7 +60,7 @@ void ControlWidget::on_btn_redraw_clicked()
         int _iters = ui->le_iters->text().toInt(&ok);
         if (ok && start_period > 0 && iters >= 10 && iters + start_period <= 1000)
         {
-            updateStatus(tr("Loading"));
+            updateStatus(tr("Loading..."));
 
             QSettings settings;
             start_period = _start_period;
@@ -78,7 +79,8 @@ void ControlWidget::on_btn_redraw_clicked()
 
 void ControlWidget::chartDrawn()
 {
-    updateStatus("Loaded");
+    QSettings settings;
+    updateStatus(settings.value("current_model").toString());
 }
 
 void ControlWidget::on_btn_close_clicked()
@@ -109,4 +111,15 @@ void ControlWidget::on_le_iters_textEdited(const QString)
 {
     ui->btn_redraw->setEnabled(true);
     ui->btn_redraw->setDefault(true);
+}
+
+void ControlWidget::on_btn_edit_model_clicked()
+{
+    NewModelDlg *dlg = new NewModelDlg(this);
+    dlg->setPreexisting();
+    if (dlg->exec() == QDialog::Accepted)
+    {
+        // Update the notes
+        ui->label_notes->setText(dlg->getNotes());
+    }
 }

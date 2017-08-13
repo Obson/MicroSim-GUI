@@ -31,6 +31,8 @@ private slots:
     void on_le_start_textEdited(const QString);
     void on_le_iters_textEdited(const QString);
 
+    void on_btn_edit_model_clicked();
+
 signals:
     void setupModel();
     void redrawChart();

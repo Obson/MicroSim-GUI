@@ -19,11 +19,16 @@ public:
     QString getNotes();
     int     getIters();
 
+    void    setPreexisting();
+
 private:
     Ui::NewModelDlg *ui;
 
+    QString current_name;                   // when updating
     QString model_name;
     QString notes;
+
+    bool preexisting = false;
 
     void accept();
 };

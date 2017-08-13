@@ -203,16 +203,45 @@
    <property name="geometry">
     <rect>
      <x>280</x>
-     <y>40</y>
-     <width>411</width>
-     <height>61</height>
+     <y>50</y>
+     <width>441</width>
+     <height>51</height>
     </rect>
    </property>
    <property name="text">
     <string notr="true"/>
    </property>
+   <property name="alignment">
+    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+   </property>
    <property name="wordWrap">
     <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="Line" name="line_3">
+   <property name="geometry">
+    <rect>
+     <x>730</x>
+     <y>0</y>
+     <width>16</width>
+     <height>121</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Vertical</enum>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="btn_edit_model">
+   <property name="geometry">
+    <rect>
+     <x>610</x>
+     <y>10</y>
+     <width>113</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Edit</string>
    </property>
   </widget>
   <zorder>layoutWidget</zorder>
@@ -224,6 +253,8 @@
   <zorder>progressBar</zorder>
   <zorder>label_status</zorder>
   <zorder>label_notes</zorder>
+  <zorder>line_3</zorder>
+  <zorder>btn_edit_model</zorder>
  </widget>
  <resources/>
  <connections/>
