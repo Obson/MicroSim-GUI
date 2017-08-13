@@ -196,7 +196,6 @@ int Model::scale(Property p)
     switch(p)
     {
     case Property::current_period:
-    case Property::num_firms:
     case Property::pc_emps:
     case Property::pc_unemps:
     case Property::pc_active:
@@ -213,6 +212,7 @@ int Model::scale(Property p)
     case Property::gov_recpts:
     case Property::deficit:
     case Property::gov_bal:
+    case Property::num_firms:
     case Property::num_emps:
     case Property::num_unemps:
     case Property::num_gov_emps:
@@ -318,7 +318,7 @@ void Model::restart()
         series[prop]->append(0,
                              prop == Property::pop_size
                              ? getPopSize() : (prop == Property::num_firms
-                                               ? _startups + 1 : 0));
+                                               ? _startups : 0));
         */
     }
 
@@ -340,6 +340,8 @@ void Model::restart()
     firms.clear();
     firms.reserve(100);
 
+    // Don't scale the number of startups internally, but must be scaled in
+    // stats reporting
     for (int i = 0; i < _startups; i++)
     {
         createFirm();
@@ -703,7 +705,10 @@ int Model::getPropertyVal(Property p)
         return _gov_bal;
 
     case Property::num_firms:
-        _num_firms = firms.count();
+        // num_firms is (must be) only used for stats as it doesn't include
+        // the government-owned firm. For the actually number (unscaled) use
+        // firms.count().
+        _num_firms = firms.count() - 1;
         return _num_firms;
 
     case Property::num_emps:

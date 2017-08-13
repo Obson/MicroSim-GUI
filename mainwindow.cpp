@@ -620,11 +620,21 @@ void MainWindow::changeModel(QListWidgetItem *item)
     }
 
     QSettings settings;
+
+    int nominal_population = settings.value("nominal-population", 1000).toInt();
+    int scale = nominal_population / 1000;
+    int startups = settings.value("startups", 0).toInt() * scale;
+
     QString model_name = item->text();
-    statusBar()->showMessage(tr("Model: ") + model_name + tr("  Total population: ") + settings.value("nominal-population", 1000).toString());
+    statusBar()->showMessage(  tr("  Total population: ") + QString::number(nominal_population)
+                             + tr("  Standard wage: ") + settings.value("unit-wage", 500).toString()
+                             + tr("  Number of businesses at start: ") + QString::number(startups)
+                            );
+
     settings.setValue("current_model", model_name);
     settings.beginGroup(model_name);
     ctrl->setNotes(settings.value("notes", "No notes entered for this model").toString());
+    settings.endGroup();
 
     drawChart();
 }
