@@ -587,6 +587,8 @@ void MainWindow::drawChart()    // uses _current_model
     chart->legend()->show();
     chart->setTitle("<h2>" + _current_model->name() + "</h2>");
 
+    QLineSeries *anySeries;
+
     for (int i = 0, n = 0; i < propertyList->count(); i++)
     {
         QListWidgetItem *item;
@@ -600,6 +602,7 @@ void MainWindow::drawChart()    // uses _current_model
             QLineSeries *ser = _current_model->series[prop];
             ser->setName(series_name);
             chart->addSeries(ser);
+            anySeries = ser;
 
             switch(prop)
             {
@@ -615,7 +618,12 @@ void MainWindow::drawChart()    // uses _current_model
         }
     }
 
+    // Format the axis numbers to whole integers
     chart->createDefaultAxes();
+    QValueAxis *x_axis = static_cast<QValueAxis*>(chart->axisX(anySeries));
+    x_axis->setLabelFormat("%d");
+    QValueAxis *y_axis = static_cast<QValueAxis*>(chart->axisY(anySeries));
+    y_axis->setLabelFormat("%d");
 
     emit drawingCompleted();
 }
