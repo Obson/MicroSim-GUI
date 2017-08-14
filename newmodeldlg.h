@@ -18,6 +18,7 @@ public:
     QString getName();
     QString getNotes();
     int     getIters();
+    QString importFrom();
 
     void    setPreexisting();
 

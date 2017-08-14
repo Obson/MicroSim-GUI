@@ -25,6 +25,8 @@ ParameterWizard::ParameterWizard(QWidget *parent) : QWizard(parent)
     setOption(QWizard::NoCancelButton, false);
     setOption(QWizard::CancelButtonOnLeft, true);
 
+    import_model.clear();
+
     setMinimumHeight(560);
 
     props << "Current period"
@@ -60,6 +62,11 @@ ParameterWizard::ParameterWizard(QWidget *parent) : QWizard(parent)
          << "is not more than";
 
     connect(this, &QWizard::customButtonClicked, this, &ParameterWizard::createNewPage);
+}
+
+void ParameterWizard::importFrom(QString model_name)
+{
+    import_model = model_name;
 }
 
 void ParameterWizard::setCurrentModel(QString model_name)
@@ -169,15 +176,8 @@ DefaultPage::DefaultPage(ParameterWizard *w)
     setLayout(layout);
 }
 
-void DefaultPage::initializePage()
+void DefaultPage::readSettings(QString model)
 {
-    QString model = wiz->current_model;
-
-    // This function should not be called unless wiz->current_model has been set.
-    qDebug() << "DefaultPage::initialize(): current_model =" << model;
-
-    setTitle(tr("Default Parameters For ") + model);
-
     // Read the default parameters from settings.We use 'sensible' default
     // defaults so they will have a workable model to start with
     QSettings settings;
@@ -193,8 +193,15 @@ void DefaultPage::initializePage()
     sb_boe_loan_int->setValue(settings.value(model + "/default/boe-interest", 1).toInt());
     sb_bus_loan_int->setValue(settings.value(model + "/default/bus-interest", 3).toInt());
     cb_loan_prob->setCurrentIndex(settings.value(model + "/default/loan-prob", 4).toInt());
+}
 
-    // TODO: Add tool-tips to each of these
+// This function should not be called unless wiz->current_model has been set.
+void DefaultPage::initializePage()
+{
+    QString model = wiz->current_model;
+    qDebug() << "DefaultPage::initialize(): current_model =" << model;
+    setTitle(tr("Default Parameters For ") + model);
+    readSettings(wiz->import_model.isEmpty() ? model : wiz->import_model);
 }
 
 bool DefaultPage::validatePage()

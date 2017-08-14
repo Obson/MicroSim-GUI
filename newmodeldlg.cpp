@@ -12,6 +12,20 @@ NewModelDlg::NewModelDlg(QWidget *parent) :
     ui(new Ui::NewModelDlg)
 {
     ui->setupUi(this);
+
+    QSettings settings;
+    int count = settings.beginReadArray("Models");
+    if (count > 0)
+    {
+        for (int i = 0; i < count; ++i)
+        {
+            settings.setArrayIndex(i);
+            ui->comboBox->addItem(settings.value("name").toString());
+        }
+    }
+    settings.endArray();
+
+    ui->comboBox->setCurrentIndex(0);
 }
 
 NewModelDlg::~NewModelDlg()
@@ -29,6 +43,18 @@ QString NewModelDlg::getNotes()
     return notes;
 }
 
+QString NewModelDlg::importFrom()
+{
+    if (ui->comboBox->currentIndex() == 0)
+    {
+        return "";
+    }
+    else
+    {
+        return ui->comboBox->currentText();
+    }
+}
+
 void NewModelDlg::setPreexisting()
 {
     preexisting = true;
@@ -39,12 +65,12 @@ void NewModelDlg::setPreexisting()
     current_name = settings.value("current_model").toString();
     ui->leName->setText(current_name);
     ui->teNotes->setText(settings.value(current_name + "/notes").toString());
+    ui->comboBox->setEnabled(false);
     setWindowTitle("Edit Model Description");
 }
 
 void NewModelDlg::accept()
 {
-    bool ok = false;
     model_name = ui->leName->text().simplified();
     notes      = ui->teNotes->toPlainText().simplified();
 

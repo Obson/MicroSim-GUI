@@ -22,6 +22,7 @@ public:
     QSpinBox *getSpinBox(int min, int max);
 
     void setCurrentModel(QString model_name);
+    void importFrom(QString model_name);
 
     void done(int result);
 
@@ -38,6 +39,7 @@ protected:
 
     QStringList models;         // list of defined model names
     QString current_model;
+    QString import_model;       // model to import settings from or empty
 
     int pid;                    // This is the CURRENT page id -- i.e. the id of
                                 // the page currently being processed. Qt's
@@ -58,6 +60,8 @@ public:
     bool validatePage();
 
 private:
+    void readSettings(QString model);
+
     ParameterWizard *wiz;
 
     QLineEdit *pop_size;

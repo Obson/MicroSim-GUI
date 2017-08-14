@@ -30,6 +30,12 @@ int Account::getAmountOwed()
     return owed_to_bank;
 }
 
+// To be overridden by classes that could be government supported (i.e. Firm)
+bool Account::isGovernmentSupported()
+{
+    return false;
+}
+
 // Use transferTo() in preference to credit() as credit() doesn't upate our
 // balance
 bool Account::transferTo(Account *recipient, int amount, Account *creditor)

@@ -55,6 +55,19 @@ int Government::getReceipts()
     return rec;
 }
 
+int Government::getTopup(Account *requester, int amount)
+{
+    if (requester->isGovernmentSupported())
+    {
+        balance -= amount;
+        return amount;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
 Firm *Government::gov_firm()
 {
     return _gov_firm;

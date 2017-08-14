@@ -46,6 +46,8 @@ public:
 
     static int nextId();
 
+    virtual bool isGovernmentSupported();
+
 protected:
 
     Model *_model;
@@ -265,6 +267,8 @@ public:
     int getExpenditure();   // Gov expenditure in current period (excl benefits)
     int getBenefitsPaid();  // Benefits paid this period
     int getReceipts();      // Gov receipts (taxes and dedns) in current period
+
+    int getTopup(Account *requester, int amount);
 
     size_t getNumEmployees();  // Number of government employees
 };

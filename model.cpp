@@ -586,7 +586,13 @@ int Model::payWorkers(int amount, int max_tot, Account *source, Reason reason, i
                     }
                     else
                     {
-                        qDebug() << "Model::payWorkers(): gov firm cannot pay worker";
+                        // Get additional funding from government to pay worker
+                        source->credit(gov()->getTopup(source, amount - (max_tot - amt_paid)), gov());
+
+                        qDebug() << "Model::payWorkers(): additional funding of"
+                                 << amount - (max_tot - amt_paid)
+                                 << "at period"
+                                 << period;
                     }
 
                     if (get_loan)

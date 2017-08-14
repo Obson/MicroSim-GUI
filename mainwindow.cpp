@@ -333,6 +333,12 @@ void MainWindow::createNewModel()
         }
         settings.endArray();
 
+        // Get the name of the model (if any) from which to import parameters
+        // and pass it to the parameter wizard
+        if (!dlg.importFrom().isEmpty()) {
+            wiz->importFrom(dlg.importFrom());
+        }
+
         // Call the parameter wizard to allow the user to change the parameters
         qDebug() << "MainWindow::createNew(): calling editParameters()";
         editParameters();
