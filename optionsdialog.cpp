@@ -85,7 +85,7 @@ void OptionsDialog::accept()
         if (ok5 && first >= 0 && first + iterations <= 1000)
         {
             startups = ui->lineEdit_2->text().toInt(&ok2);
-            if (ok2 && startups >= 0 && startups <= 100)
+            if (ok2 && startups > 0 && startups <= 100)
             {
                 nom_pop = ui->lineEdit_3->text().toInt(&ok3);
                 if (ok3 && nom_pop >= 1000 && nom_pop <= 100000000)
@@ -119,7 +119,7 @@ void OptionsDialog::accept()
             else
             {
                 msgBox.setText(tr("You have not entered a valid number of startups!"));
-                msgBox.setDetailedText(tr("You can specify from 0 to 100 startups per 1000 economically active population."));
+                msgBox.setDetailedText(tr("You can specify from 1 to 100 startups per 1000 economically active population."));
             }
         }
         else

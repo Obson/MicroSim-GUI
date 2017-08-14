@@ -158,6 +158,8 @@ private:
 
     int committed = 0;              // current cost of wages and deductions
 
+    bool _state_supported = false;
+
 protected:
 
     Government *gov;
@@ -194,7 +196,9 @@ public:
     // alternative approach would be to start off with equal (or evenly
     // distributed) wages and see what develops over time.
 
-    Firm(Model *model);
+    Firm(Model *model, bool state_supported = false);
+
+    bool isGovernmentSupported();
 
     void trigger(int period);
     void epilogue(int period);

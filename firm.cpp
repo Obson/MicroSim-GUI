@@ -24,9 +24,9 @@
 #include <cassert>
 #include <QDebug>
 
-Firm::Firm(Model *model) : Account(model)
+Firm::Firm(Model *model, bool state_supported) : Account(model)
 {
-    //gov = model->gov();
+    _state_supported = state_supported;
 }
 
 void Firm::init()
@@ -46,6 +46,11 @@ void Firm::init()
                                     // associated deductions. This is calculated
                                     // while paying the employees so it is not
                                     // available until trigger() has been called.
+}
+
+bool Firm::isGovernmentSupported()
+{
+    return _state_supported;
 }
 
 void Firm::trigger(int period)
@@ -99,22 +104,25 @@ void Firm::epilogue(int period)
 {
     if (balance > committed) {
         int available = balance - committed;
-        int investible = (available * model()->getPropInv()) / 100;
-        int bonuses = ((available - investible) * model()->getReserve()) / 100;
+        int investible = _state_supported ? available : (available * model()->getPropInv()) / 100;
+        int bonuses = _state_supported ? 0 : ((available - investible) * model()->getReserve()) / 100;
 
         // We distribute the funds before hiring new workers to ensure they only
         // get distributed to existing workers.
-        int emps = model()->getNumEmployedBy(this);
-        int amt_paid = (emps > 0 ? model()->payWorkers(bonuses/emps, bonuses,
-                                                       this, Model::for_bonus)
-                                 : 0);
-        balance -= amt_paid;
-        bonuses_paid += amt_paid;
-
-        // Adjust calculation if not all the bonus funds were used
-        if (amt_paid < bonuses)
+        if (!_state_supported)
         {
-            investible += (bonuses_paid - amt_paid);
+            int emps = model()->getNumEmployedBy(this);
+            int amt_paid = (emps > 0 ? model()->payWorkers(bonuses/emps, bonuses,
+                                                           this, Model::for_bonus)
+                                     : 0);
+            balance -= amt_paid;
+            bonuses_paid += amt_paid;
+
+            // Adjust calculation if not all the bonus funds were used
+            if (amt_paid < bonuses)
+            {
+                investible += (bonuses_paid - amt_paid);
+            }
         }
 
         // How many more employees can we afford?

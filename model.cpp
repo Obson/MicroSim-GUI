@@ -499,18 +499,22 @@ Bank *Model::bank()
     return _bank;
 }
 
-Firm *Model::createFirm()
+Firm *Model::createFirm(bool state_supported)
 {
     //qDebug() << "Model::createFirm(): creating new firm";
-    Firm *firm = new Firm(this);
+    Firm *firm = new Firm(this, state_supported);
     firms.append(firm);
-
     return firm;
 }
 
 Firm *Model::selectRandomFirm()
 {
-    return firms[qrand() % firms.size()];
+    // Any firm apart from the government firm. This is a bit of a trick. We
+    // make sure that the main (and currently, only) government-supported firm
+    // is created first so it will always be firms[0]. This enables us to
+    // select a random firm but excluding the government firm from the
+    // selection.
+    return firms[(qrand() % (firms.size() - 1)) + 1];
 }
 
 int Model::payWorkers(int amount, int max_tot, Account *source, Reason reason, int period)
@@ -542,40 +546,47 @@ int Model::payWorkers(int amount, int max_tot, Account *source, Reason reason, i
 
                 if (max_tot - amt_paid < amount)
                 {
-                    int prob = getLoanProb();
-                    int r = 0;
-                    if (prob < 4 && prob > 0) {
-                        r = qrand() % 4;
-                    }
-
                     bool get_loan = false;
 
-                    switch (prob)
+                    if (source != gov()->gov_firm())
                     {
-                    case 0: // never
-                        break;
-
-                    case 1: // rarely
-                        if (r == 0) {   // one chance in four
-                            get_loan = true;
+                        int prob = getLoanProb();
+                        int r = 0;
+                        if (prob < 4 && prob > 0) {
+                            r = qrand() % 4;
                         }
-                        break;
 
-                    case 2: // sometimes
-                        if (r < 2) {    // two chances: 0, 1
+                        switch (prob)
+                        {
+                        case 0: // never
+                            break;
+
+                        case 1: // rarely
+                            if (r == 0) {   // one chance in four
+                                get_loan = true;
+                            }
+                            break;
+
+                        case 2: // sometimes
+                            if (r < 2) {    // two chances: 0, 1
+                                get_loan = true;
+                            }
+                            break;
+
+                        case 3: // usually
+                            if (r < 3) {    // three chances: 0, 1, 2
+                                get_loan = true;
+                            }
+                            break;
+
+                        case 4: // always
                             get_loan = true;
+                            break;
                         }
-                        break;
-
-                    case 3: // usually
-                        if (r < 3) {    // three chances: 0, 1, 2
-                            get_loan = true;
-                        }
-                        break;
-
-                    case 4: // always
-                        get_loan = true;
-                        break;
+                    }
+                    else
+                    {
+                        qDebug() << "Model::payWorkers(): gov firm cannot pay worker";
                     }
 
                     if (get_loan)

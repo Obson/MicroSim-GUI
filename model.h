@@ -69,7 +69,7 @@ public:
     int max_value(int);
     int total(int);
 
-    Firm *createFirm();
+    Firm *createFirm(bool state_supported = false);
     Firm *selectRandomFirm();
 
     enum class Status {any, employed, unemployed};
