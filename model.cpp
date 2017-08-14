@@ -679,8 +679,8 @@ int Model::payWorkers(int amount, int max_tot, Account *source, Reason reason, i
 // These functions retrieve model properties
 // ----------------------------------------------------------------------------
 
-// NOTE: Values must be retrieved in ascending order of Property because we
-// save results on the way through so they can be used to deliver composite
+// IMPORTANT: Values must be retrieved in ascending order of Property because
+// we save results on the way through so they can be used to deliver composite
 // results more efficiently. If we ever need the composite results
 // independently they should be calculated from scratch.
 int Model::getPropertyVal(Property p)
