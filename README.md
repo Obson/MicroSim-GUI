@@ -6,4 +6,4 @@
 
 MicroSim has been developed using Qt (5.9) and uses Qt Frameworks throughout. The files in this repository include the .pro file so it can easily be cloned as a Qt project in Qt Creator. It is being developed, so far, under Mac OSX, but it should be straightforward to recompile it on any platform supported by Qt.
 
-Please see [the Wiki](#wiki) for more information.
+Please see [the Wiki](https://github.com/Obson/MicroSim-GUI/wiki) for more information.
