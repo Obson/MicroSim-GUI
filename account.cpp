@@ -45,7 +45,6 @@ bool Account::transferTo(Account *recipient, int amount, Account *creditor)
     if (amount > balance)
     {
         // TODO: This needs to go into a log somewhere
-        // std::cout << "Account " << id << ": insufficient funds (" << balance << " available, " << amount << " to pay)\n";
         // qDebug() << "Account::transferTo(): done (insufficient funds)";
         return false;
     }

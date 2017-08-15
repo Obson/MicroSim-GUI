@@ -863,7 +863,7 @@ int Model::getNumUnemployed()
     return n;
 }
 
-Worker *Model::hire(Firm *employer, int period)
+Worker *Model::hire(Firm *employer, int wage, int period)
 {
     // Calculate friction
     int pop = population();
@@ -905,18 +905,19 @@ Worker *Model::hire(Firm *employer, int period)
 
     w->employer = employer;
     w->period_hired = period;
+    w->agreed_wage = wage;
 
     num_hired += 1;
 
     return w;
 }
 
-int Model::hireSome(Firm *employer, int period, int number_to_hire)
+int Model::hireSome(Firm *employer, int wage, int period, int number_to_hire)
 {
     int count;
     for (count = 0; count < number_to_hire; count++)
     {
-        if (hire(employer, period) == nullptr)
+        if (hire(employer, wage, period) == nullptr)
         {
             break;
         }

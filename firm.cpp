@@ -102,7 +102,8 @@ void Firm::trigger(int period)
 // hire new workers if funds permit.
 void Firm::epilogue(int period)
 {
-    if (balance > committed) {
+    if (balance > committed)
+    {
         int available = balance - committed;
         int investible = _state_supported ? available : (available * model()->getPropInv()) / 100;
         int bonuses = _state_supported ? 0 : ((available - investible) * model()->getReserve()) / 100;
@@ -126,12 +127,13 @@ void Firm::epilogue(int period)
         }
 
         // How many more employees can we afford?
+        int wage = model()->getStdWage();
         int num_to_hire = (investible * 100) /
-                (model()->getStdWage() * (100 + model()->getPreTaxDedns()));
+                (wage * (100 + model()->getPreTaxDedns()));
 
         if (num_to_hire > 0)
         {
-            num_hired = model()->hireSome(this, period, num_to_hire);
+            num_hired = model()->hireSome(this, wage, period, num_to_hire);
         }
     }
 }

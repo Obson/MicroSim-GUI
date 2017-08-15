@@ -74,9 +74,9 @@ public:
 
     enum class Status {any, employed, unemployed};
 
-    int hireSome(Firm *employer, int period, int number_to_hire);
+    int hireSome(Firm *employer, int wage, int period, int number_to_hire);
 
-    Worker *hire(Firm *employer, int period);
+    Worker *hire(Firm *employer, int wage, int period);
 
     void fire(Worker *w, int period);
 

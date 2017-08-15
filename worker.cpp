@@ -59,6 +59,16 @@ void Worker::trigger(int period)
     // qDebug() << "Worker::trigger(): done";
 }
 
+int Worker::agreedWage()
+{
+    return agreed_wage;
+}
+
+void Worker::setAgreedWage(int wage)
+{
+    agreed_wage = wage;
+}
+
 void Worker::credit(int amount, Account *creditor)
 {
     // qDebug() << "Worker::credit(): amount =" << amount;

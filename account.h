@@ -111,6 +111,8 @@ private:
     int period_hired;
     int period_fired;
 
+    int agreed_wage;
+
 protected:
 
     Government *gov;
@@ -134,10 +136,14 @@ public:
     void credit(int amount, Account *creditor = nullptr);
     void trigger(int period);
 
+    void setAgreedWage(int wage);
+
     int getWagesReceived();
     int getBenefitsReceived();
     int getPurchasesMade();
     int getIncTaxPaid();
+
+    int agreedWage();
 };
 
 class Firm: public Account
