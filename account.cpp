@@ -38,10 +38,8 @@ bool Account::isGovernmentSupported()
 
 // Use transferTo() in preference to credit() as credit() doesn't upate our
 // balance
-bool Account::transferTo(Account *recipient, int amount, Account *creditor)
+bool Account::transferSafely(Account *recipient, int amount, Account *creditor)
 {
-    // qDebug() << "Account::transferTo(): amount =" << amount << ", balance =" << balance;
-
     if (amount > balance)
     {
         // TODO: This needs to go into a log somewhere
@@ -52,7 +50,6 @@ bool Account::transferTo(Account *recipient, int amount, Account *creditor)
     {
         recipient->credit(amount, creditor);
         balance -= amount;
-        // qDebug() << "Account::transferTo(): done (OK)";
         return true;
     }
 }
@@ -65,13 +62,17 @@ void Account::credit(int amount, Account *creditor)
 void Account::loan(int amount, int rate, Account *creditor)
 {
     balance += amount;
-    if (creditor == model()->bank()) {
+    if (creditor == model()->bank())
+    {
         owed_to_bank += amount;
-        // Note that if interest rate changes on subsequent loans, the new rate
-        // will replace the old rate for the whole amount. This is not very
-        // realistic and should be changed eventually.
+
+        // TODO: Note that if interest rate changes on subsequent loans, the
+        // new rate will replace the old rate for the whole amount. This is not
+        // very realistic and should be changed eventually.
         interest_rate = rate;
-    } else {
+    }
+    else
+    {
         qCritical() << "Only bank loans allowed at present";
     }
 }

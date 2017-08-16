@@ -24,9 +24,9 @@ OptionsDialog::OptionsDialog(QWidget *parent) :
     if (!ok) {
         startups = 10;
     }
-    int nom_pop = settings.value("nominal-population", 1000000).toInt(&ok);
+    int nom_pop = settings.value("nominal-population", 1000).toInt(&ok);
     if (!ok) {
-        nom_pop = 10000000;
+        nom_pop = 1000;
     }
     int wage = settings.value("unit-wage", 100).toInt(&ok);
     ui->lineEdit->setText(QString::number(iterations));
@@ -88,7 +88,7 @@ void OptionsDialog::accept()
             if (ok2 && startups > 0 && startups <= 100)
             {
                 nom_pop = ui->lineEdit_3->text().toInt(&ok3);
-                if (ok3 && nom_pop >= 1000 && nom_pop <= 100000000)
+                if (ok3 && nom_pop >= 1000 && nom_pop <= 1000)
                 {
                     unit_wage = ui->lineEdit_4->text().toInt(&ok4);
                     if (ok4 && unit_wage >= 100 && unit_wage < 1000) {

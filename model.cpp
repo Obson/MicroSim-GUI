@@ -67,16 +67,16 @@ Model *Model::createModel(QString name)
     settings.setValue(parameter_keys[ParamType::emp_rate],          95);
     settings.setValue(parameter_keys[ParamType::prop_con],          80);
     settings.setValue(parameter_keys[ParamType::inc_tax_rate],      10);
-    settings.setValue(parameter_keys[ParamType::sales_tax_rate],    15);
-    settings.setValue(parameter_keys[ParamType::firm_creation_prob],10);
-    settings.setValue(parameter_keys[ParamType::dedns],             0);
+    settings.setValue(parameter_keys[ParamType::sales_tax_rate],     0);
+    settings.setValue(parameter_keys[ParamType::firm_creation_prob], 0);
+    settings.setValue(parameter_keys[ParamType::dedns],              0);
     settings.setValue(parameter_keys[ParamType::unemp_ben_rate],    60);
     settings.setValue(parameter_keys[ParamType::active_pop],        60);    // percent? not used at present
-    settings.setValue(parameter_keys[ParamType::reserve],           60);
-    settings.setValue(parameter_keys[ParamType::prop_inv],          75);
+    settings.setValue(parameter_keys[ParamType::reserve],          100);
+    settings.setValue(parameter_keys[ParamType::prop_inv],           2);
     settings.setValue(parameter_keys[ParamType::boe_int],            1);
     settings.setValue(parameter_keys[ParamType::bus_int],            3);
-    settings.setValue(parameter_keys[ParamType::loan_prob],          4);
+    settings.setValue(parameter_keys[ParamType::loan_prob],          0);
 
     settings.endGroup();
     settings.endGroup();

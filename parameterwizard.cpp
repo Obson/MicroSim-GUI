@@ -182,17 +182,17 @@ void DefaultPage::readSettings(QString model)
     // defaults so they will have a workable model to start with
     QSettings settings;
     sb_emp_rate->setValue(settings.value(model + "/default/employment-rate", 95).toInt());
-    sb_prop_con->setValue(settings.value(model + "/default/propensity-to-consume", 75).toInt());
-    sb_dedns->setValue(settings.value(model + "/default/pre-tax-dedns-rate", 10).toInt());
+    sb_prop_con->setValue(settings.value(model + "/default/propensity-to-consume", 80).toInt());
+    sb_dedns->setValue(settings.value(model + "/default/pre-tax-dedns-rate", 0).toInt());
     sb_inc_tax->setValue(settings.value(model + "/default/income-tax-rate", 10).toInt());
-    sb_sales_tax->setValue(settings.value(model + "/default/sales-tax-rate", 15).toInt());
-    sb_bcr->setValue(settings.value(model + "/default/firm-creation-prob", 10).toInt());
-    sb_reserve->setValue(settings.value(model + "/default/reserve-rate", 25).toInt());
-    sb_prop_inv->setValue(settings.value(model + "/default/prop-invest", 80).toInt());
-    sb_ubr->setValue(settings.value(model + "/default/unempl-benefit-rate", 15).toInt());
+    sb_sales_tax->setValue(settings.value(model + "/default/sales-tax-rate", 0).toInt());
+    sb_bcr->setValue(settings.value(model + "/default/firm-creation-prob", 0).toInt());
+    sb_reserve->setValue(settings.value(model + "/default/reserve-rate", 100).toInt());
+    sb_prop_inv->setValue(settings.value(model + "/default/prop-invest", 2).toInt());
+    sb_ubr->setValue(settings.value(model + "/default/unempl-benefit-rate", 60).toInt());
     sb_boe_loan_int->setValue(settings.value(model + "/default/boe-interest", 1).toInt());
     sb_bus_loan_int->setValue(settings.value(model + "/default/bus-interest", 3).toInt());
-    cb_loan_prob->setCurrentIndex(settings.value(model + "/default/loan-prob", 4).toInt());
+    cb_loan_prob->setCurrentIndex(settings.value(model + "/default/loan-prob", 0).toInt());
 }
 
 // This function should not be called unless wiz->current_model has been set.

@@ -93,7 +93,7 @@ void Government::trigger(int period)
 //
 // This function overrides Account::transferTo to allow a negative balance.
 //
-void Government::transferTo(Account *recipient, int amount, Account *creditor)
+bool Government::transferSafely(Account *recipient, int amount, Account *)
 {
     // We adopt the convention that receipts from the government are not
     // taxable. This is probably a rather murky area, given that the
@@ -105,6 +105,9 @@ void Government::transferTo(Account *recipient, int amount, Account *creditor)
     // treat it as untaxable payment for services.
     recipient->credit(amount, this);
     balance -= amount;
+
+    // The government can always transfer any amount
+    return true;
 }
 
 // All credits to the Government are (at present) regarded as tax. This

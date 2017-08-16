@@ -87,14 +87,14 @@
     <item>
      <widget class="QComboBox" name="comboBox">
       <property name="currentText">
-       <string>None (use defaults)</string>
+       <string>Standard Model</string>
       </property>
       <property name="currentIndex">
        <number>0</number>
       </property>
       <item>
        <property name="text">
-        <string>None (use defaults)</string>
+        <string>Standard Model</string>
        </property>
       </item>
      </widget>

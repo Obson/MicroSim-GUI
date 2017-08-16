@@ -51,7 +51,7 @@ void Worker::trigger(int period)
         int purch = (balance * model()->getPropCon()) / 100;
         // qDebug() << "Worker::trigger(): purchase amount" << purch;
 
-        if (purch > 0 && transferTo(model()->selectRandomFirm(), purch, this))
+        if (purch > 0 && transferSafely(model()->selectRandomFirm(), purch, this))
         {
             purchases += purch;
         }
@@ -93,9 +93,18 @@ void Worker::credit(int amount, Account *creditor)
 
         //qDebug() << "Worker::credit(): transferring tax" << tax << "to gov";
 
-        transferTo(model()->gov(), tax, this);
-        wages += amount;
-        inc_tax += tax;
+        if (transferSafely(model()->gov(), tax, this))
+        {
+            wages += amount;
+            inc_tax += tax;
+        }
+        else
+        {
+            // Since tax is always going to be less that the amount credited
+            // this assertion is almost redudndant and can be removed after
+            // testing
+            Q_ASSERT(false);
+        }
     }
     else if (creditor == model()->gov())
     {

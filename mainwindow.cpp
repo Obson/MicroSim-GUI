@@ -400,7 +400,6 @@ void MainWindow::setOptions()
     dlg.setModal(true);
     if (dlg.exec() == QDialog::Accepted && _current_model != nullptr)
     {
-
         drawChart();
     }
 }
@@ -489,7 +488,7 @@ void MainWindow::createDockWindows()
 void MainWindow::showStats()
 {
     QSettings settings;
-    int range = settings.value("iterations").toInt();
+    int range = settings.value("iterations", 100).toInt();
     QListWidgetItem *it = propertyList->currentItem();
     QString key = it->text();
     Model::Property prop = property_map[key];
@@ -618,7 +617,7 @@ void MainWindow::drawChart()    // uses _current_model
     }
 
     // Format the axis numbers to whole integers. This needs a series to have
-    // been selected so avoid otherwise
+    // been selected, so avoid otherwise
     if (anySeries != nullptr)
     {
         chart->createDefaultAxes();

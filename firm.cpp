@@ -67,7 +67,7 @@ void Firm::trigger(int period)
             // foreclose unless this happens a lot...
             if (interest > 0 && interest <= balance)
             {
-                transferTo(model()->bank(), interest, this);
+                transferSafely(model()->bank(), interest, this);
             }
         }
 
@@ -153,7 +153,7 @@ void Firm::credit(int amount, Account *creditor)
     if (r > 0) {
         int r_eff = (100 * r) / (100 + r);      // e.g. 20%
         int t = (amount * r_eff) / 100;
-        if (transferTo(model()->gov(), t, this)) {
+        if (transferSafely(model()->gov(), t, this)) {
             sales_tax_paid += t;
         }
     }

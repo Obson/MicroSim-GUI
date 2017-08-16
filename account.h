@@ -71,12 +71,7 @@ protected:
     // will be distributed to workers designated as staff and shareholders of
     // the bank.
 
-    //struct Loan {
-    //    int amount = 0;
-    //    int interest_rate = 0;
-    //} bank_loan;
-
-    bool transferTo(Account *recipient, int amount, Account *creditor);
+    bool transferSafely(Account *recipient, int amount, Account *creditor);
 
 private:
 
@@ -252,10 +247,7 @@ protected:
     // prohibits transfers that would leave a negative balance. This
     // restriction doesn't apply to the government, which creates money
     // precisely by creating transfers that leave a negative balance.
-    void transferTo(Account *recipient,
-                    int amount,
-                    Account *creditor
-                    );
+    bool transferSafely(Account *recipient, int amount, Account*);
 
     // We override the base method here just so we can extract the balance for
     // statistics.
