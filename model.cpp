@@ -307,19 +307,11 @@ void Model::restart()
 {
     readDefaultParameters();
 
-    // Clear all series and set starting values to zero, except population
-    // size, which starts off at its parametric value. This may apply to others
-    // as well (TODO).
+    // Clear all series
     for (int i = 0; i < static_cast<int>(Property::zero); i++)
     {
         Property prop = prop_list[i];
         series[prop]->clear();
-        /*
-        series[prop]->append(0,
-                             prop == Property::pop_size
-                             ? getPopSize() : (prop == Property::num_firms
-                                               ? _startups : 0));
-        */
     }
 
     int num_workers = workers.count();
@@ -340,16 +332,16 @@ void Model::restart()
     firms.clear();
     firms.reserve(100);
 
+    // Reset the Government, which will re-create the gov firm as the first
+    // firm in the list
+    gov()->reset();
+
     // Don't scale the number of startups internally, but must be scaled in
     // stats reporting
     for (int i = 0; i < _startups; i++)
     {
         createFirm();
     }
-
-    // Reset the Government, which will re-create the gov firm as the first
-    // firm in the list
-    gov()->reset();
 }
 
 void Model::run()
@@ -517,120 +509,114 @@ Firm *Model::selectRandomFirm()
     return firms[(qrand() % (firms.size() - 1)) + 1];
 }
 
-int Model::payWorkers(int amount, int max_tot, Account *source, Reason reason, int period)
+int Model::getWageBill(Firm *employer, bool include_dedns)
 {
-    // qDebug() << "Model::payWorkers(): amount =" << amount << ", max_tot =" << max_tot << ", reason =" << reason << ", period =" << period;
+    int tot = 0;
 
-    int amt_paid = 0;
-    if (reason == for_wages)
+    for (int i = 0; i < workers.count(); i++)
     {
-        num_just_fired = 0;  // reset - will be incremented by fired()
+        Worker *w = workers[i];
+        if (w->employer == employer)
+        {
+            tot += w->agreedWage();
+        }
     }
 
+    if (include_dedns)
+    {
+        QSettings settings;
+        tot = (tot * (100 + settings.value("pre-tax-dedns-rate", 0).toInt())) / 100;
+    }
+}
+
+int Model::payWages(Firm *payer, int period)
+{
+    int amt_paid = 0;
+    num_just_fired = 0;
+
+    QSettings settings;
+
+    int dedns_rate = settings.value("pre-tax-dedns-rate", 0).toInt();
     int num_workers = workers.count();
-    // qDebug() << "Model::payWorkers(): num_workers =" << num_workers;
 
     for (int i = 0; i < num_workers; i++)
     {
-        // qDebug() << "Model::payWorkers(): i =" << i;
-
-        switch (reason)
+        Worker *w = workers[i];
+        if (w->isEmployedBy(payer))
         {
-        case for_wages:
+            int wage_due = w->agreedWage();
+            int dedns = (wage_due * dedns_rate) / 100;
+            int funds_available = payer->getBalance();
 
-            // qDebug() << "Model::payWorkers(): paying wages";
+            bool ok_to_pay = false;
 
-            if (workers[i]->getEmployer() == source)
+            if (funds_available < wage_due + dedns)
             {
-                // qDebug() << "Model::payWorkers(): worker is employee of payer";
-
-                if (max_tot - amt_paid < amount)
+                int shortfall = wage_due + dedns - funds_available;
+                if (payer->isGovernmentSupported())
                 {
-                    bool get_loan = false;
-
-                    if (source != gov()->gov_firm())
-                    {
-                        int prob = getLoanProb();
-                        int r = 0;
-                        if (prob < 4 && prob > 0) {
-                            r = qrand() % 4;
-                        }
-
-                        switch (prob)
-                        {
-                        case 0: // never
-                            break;
-
-                        case 1: // rarely
-                            if (r == 0) {   // one chance in four
-                                get_loan = true;
-                            }
-                            break;
-
-                        case 2: // sometimes
-                            if (r < 2) {    // two chances: 0, 1
-                                get_loan = true;
-                            }
-                            break;
-
-                        case 3: // usually
-                            if (r < 3) {    // three chances: 0, 1, 2
-                                get_loan = true;
-                            }
-                            break;
-
-                        case 4: // always
-                            get_loan = true;
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        // Get additional funding from government to pay worker
-                        source->credit(gov()->getTopup(source, amount - (max_tot - amt_paid)), gov());
-
-                        qDebug() << "Model::payWorkers(): additional funding of"
-                                 << amount - (max_tot - amt_paid)
-                                 << "at period"
-                                 << period;
-                    }
-
-                    if (get_loan)
-                    {
-                        int shortfall = amount - (max_tot - amt_paid);
-
-                        // qDebug() << "Model::payWorkers(): borrowing to make up shortfall of" << shortfall;
-
-                        // Apply a bank loan to cover the shortfall
-                        _bank->lend(shortfall, getBusRate(), source);
-
-                        // Pay the full amount
-                        workers[i]->credit(amount, source);
-
-                        // Increase max allowed by amount of loan
-                        max_tot += shortfall;
-
-                        // Record stats
-                        amt_paid += amount;
-                    }
-                    else
-                    {
-                        fire(workers[i], period);
-                    }
+                    // Get additional funds from government
+                    gov()->debit(payer, shortfall);
+                    payer->credit(shortfall, gov());
+                    ok_to_pay = true;
                 }
                 else
                 {
-                    // qDebug() << "Model::payWorkers(): crediting" << amount;
-                    workers[i]->credit(amount, source);
-                    amt_paid += amount;
+                    // Possibly request a loan, depending on policy.
+                    // This assumes there are getLoanProb() returns an integer
+                    // from 0 (= never) to 4 (= always)
+                    if (qrand() % 4 < getLoanProb())
+                    {
+                        // Apply a bank loan to cover the shortfall
+                        _bank->lend(shortfall, getBusRate(), payer);
+                        ok_to_pay = true;
+                    }
                 }
             }
             else
             {
-                // qDebug() << "Model::payWorkers(): no action (worker is not employee)";
+                ok_to_pay = true;
             }
-            break;
 
+            if (ok_to_pay)
+            {
+                // Pay the full amount of wages to worker
+                workers[i]->credit(wage_due, payer);
+
+                // Pay the deductions straight back to the government.
+                gov()->credit(dedns, payer);
+
+                // Update the payer's balance
+                amt_paid += wage_due + dedns;
+            }
+            else
+            {
+                if (payer->isGovernmentSupported())
+                {
+                    // This should never happen as govt-suptd payer can
+                    // always get required funds from government
+                    Q_ASSERT(false);
+                }
+                else
+                {
+                    // Not able to pay this worker so fire instead
+                    fire(w, period);
+                }
+            }
+        }
+    }
+    return amt_paid;                // so caller can update balance
+}
+
+int Model::payWorkers(int amount, int max_tot, Account *source, Reason reason)
+{
+    int amt_paid = 0;
+    int num_workers = workers.count();
+
+    for (int i = 0; i < num_workers; i++)
+    {
+        switch (reason)
+        {
         case for_benefits:
 
             // qDebug() << "Model::payWorkers(): paying benefits";
@@ -915,15 +901,21 @@ Worker *Model::hire(Firm *employer, int wage, int period)
 int Model::hireSome(Firm *employer, int wage, int period, int number_to_hire)
 {
     int count;
-    for (count = 0; count < number_to_hire; count++)
+    int wages_due;
+    for (count = 0, wages_due = 0; count < number_to_hire; count++)
     {
-        if (hire(employer, wage, period) == nullptr)
+        Worker *w = hire(employer, wage, period);
+        if (w == nullptr)
         {
             break;
         }
+        else
+        {
+            wages_due += w->agreedWage();
+        }
     }
 
-    return count;
+    return wages_due;
 }
 
 void Model::fire(Worker *w, int period)

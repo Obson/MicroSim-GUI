@@ -587,13 +587,12 @@ void MainWindow::drawChart()    // uses _current_model
     chart->legend()->show();
     chart->setTitle("<h2>" + _current_model->name() + "</h2>");
 
-    QLineSeries *anySeries;
+    QLineSeries *anySeries = nullptr;
 
     for (int i = 0, n = 0; i < propertyList->count(); i++)
     {
         QListWidgetItem *item;
         item = propertyList->item(i);
-        QString text = item->text();
         bool selected = item->checkState();
         if (selected)
         {
@@ -618,12 +617,16 @@ void MainWindow::drawChart()    // uses _current_model
         }
     }
 
-    // Format the axis numbers to whole integers
-    chart->createDefaultAxes();
-    QValueAxis *x_axis = static_cast<QValueAxis*>(chart->axisX(anySeries));
-    x_axis->setLabelFormat("%d");
-    QValueAxis *y_axis = static_cast<QValueAxis*>(chart->axisY(anySeries));
-    y_axis->setLabelFormat("%d");
+    // Format the axis numbers to whole integers. This needs a series to have
+    // been selected so avoid otherwise
+    if (anySeries != nullptr)
+    {
+        chart->createDefaultAxes();
+        QValueAxis *x_axis = static_cast<QValueAxis*>(chart->axisX(anySeries));
+        x_axis->setLabelFormat("%d");
+        QValueAxis *y_axis = static_cast<QValueAxis*>(chart->axisY(anySeries));
+        y_axis->setLabelFormat("%d");
+    }
 
     emit drawingCompleted();
 }

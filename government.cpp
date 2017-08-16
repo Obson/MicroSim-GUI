@@ -11,14 +11,14 @@ void Government::reset()
 {
     init();
     balance = 0;
-    _gov_firm = model()->createFirm();
+    _gov_firm = model()->createFirm(true);
 }
 
 Government::Government(Model *model) : Account(model)
 {
     // This must be the first Firm created, as this ensures that government
     // money is always spent at the start of the period.
-    _gov_firm = model->createFirm();
+    _gov_firm = model->createFirm(true);
 }
 
 // TO DO NEXT. OR AT LEAST VERY SOON
@@ -55,17 +55,15 @@ int Government::getReceipts()
     return rec;
 }
 
-int Government::getTopup(Account *requester, int amount)
+int Government::debit(Account *requester, int amount)
 {
-    if (requester->isGovernmentSupported())
-    {
-        balance -= amount;
-        return amount;
-    }
-    else
-    {
-        return 0;
-    }
+    // If this is called by a non-govt-supported firm the program will abort
+    Q_ASSERT(requester->isGovernmentSupported());
+
+    balance -= amount;
+    exp += amount;          // include direct unbudgeted support as expenditure.
+                            // TODO: Keep account of this separately
+    return amount;
 }
 
 Firm *Government::gov_firm()
@@ -82,11 +80,11 @@ void Government::trigger(int period)
     exp += amt;
 
     // Pay benefits to all unemployed workers
+
     ben += model()->payWorkers((model()->getStdWage() * model()->getUBR()) / 100,
                            0,                   // no max amount
                            this,                // source
-                           Model::for_benefits, // reason
-                           period
+                           Model::for_benefits // reason
                            );
 
     balance -= ben;

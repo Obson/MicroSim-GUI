@@ -11,7 +11,7 @@ void Bank::lend(int amount, int rate, Account *recipient)
     balance -= amount;
 }
 
-void Bank::trigger(int period)
+void Bank::trigger(int)
 {
     // No action requied at present. May be later..
 }

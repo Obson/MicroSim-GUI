@@ -48,6 +48,8 @@ public:
 
     virtual bool isGovernmentSupported();
 
+    void breakpoint();
+
 protected:
 
     Model *_model;
@@ -164,7 +166,7 @@ private:
     int num_hired = 0;
     int num_fired = 0;
 
-    int committed = 0;              // current cost of wages and deductions
+    //int wage_bill = 0;              // current cost of wages and deductions
 
     bool _state_supported = false;
 
@@ -274,7 +276,7 @@ public:
     int getBenefitsPaid();  // Benefits paid this period
     int getReceipts();      // Gov receipts (taxes and dedns) in current period
 
-    int getTopup(Account *requester, int amount);
+    int debit(Account *requester, int amount);
 
     size_t getNumEmployees();  // Number of government employees
 };

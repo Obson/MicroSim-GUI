@@ -74,6 +74,11 @@ public:
 
     enum class Status {any, employed, unemployed};
 
+    struct HireData {
+        int num;
+        int wages_due;
+    } hire_data;
+
     int hireSome(Firm *employer, int wage, int period, int number_to_hire);
 
     Worker *hire(Firm *employer, int wage, int period);
@@ -81,15 +86,17 @@ public:
     void fire(Worker *w, int period);
 
     enum Reason {
-        for_wages,
         for_benefits,
         for_bonus
     };
 
-    // The value of the period argument is immaterial unless the reason
-    // argument is for_wages
-    int payWorkers(int amount, int max_tot, Account *source,
-                   Reason reason = for_wages, int period = 0);
+    int getWageBill(Firm *employer, bool include_dedns = false);
+
+    int payWages(Firm *payer, int period);
+
+    bool randomCheck(int chances, int in);
+
+    int payWorkers(int amount, int max_tot, Account *source, Reason reason);
 
     // ------------------------------------------------------------------------
     // Properties

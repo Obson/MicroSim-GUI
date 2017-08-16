@@ -39,13 +39,6 @@ void Firm::init()
     num_fired = 0;
     bonuses_paid = 0;
     amount_granted = 0;
-
-    committed = 0;                  // Amount needed to pay existing employees,
-                                    // not including any new employees taken on
-                                    // in this period, plus the cost of
-                                    // associated deductions. This is calculated
-                                    // while paying the employees so it is not
-                                    // available until trigger() has been called.
 }
 
 bool Firm::isGovernmentSupported()
@@ -60,37 +53,29 @@ void Firm::trigger(int period)
         last_triggered = period;
         balance += amount_granted;
 
-        // Pay interest on bank loans. TODO: At present we never pay off the
-        // loan. We should have a parameter that indicates the factor by which
-        // the balance has to exceed the outstanding loan before we will repay
-        // it. Or something...
-        int interest = (owed_to_bank * interest_rate) / 100;
-
-        // If interest is greater than balance we'll just skip the payment and
-        // hope for better luck next time. A bank is unlikely to foreclose
-        // unless this happens a lot...
-        if (interest > 0 && interest <= balance)
+        if (!_state_supported)
         {
-            // qDebug() << "Firm::trigger(): id" << getId() << ", loan outstanding" << owed_to_bank << ", interest" << interest;
-            transferTo(model()->bank(), interest, this);
+            // Pay interest on bank loans.
+            // TODO: At present we never pay off the loan. We should have a
+            // parameter that indicates the factor by which the balance has to
+            // exceed the outstanding loan before we will repay it. Or
+            // something...
+            int interest = (owed_to_bank * interest_rate) / 100;
+
+            // If interest is greater than balance we'll just skip the payment
+            // and hope for better luck next time. A bank is unlikely to
+            // foreclose unless this happens a lot...
+            if (interest > 0 && interest <= balance)
+            {
+                transferTo(model()->bank(), interest, this);
+            }
         }
 
-        int amt_paid = model()->payWorkers(model()->getStdWage() * (100 - model()->getPreTaxDedns()) / 100,
-                                       balance,
-                                       this,
-                                       Model::for_wages,
-                                       period
-                                       );
-
-        wages_paid = amt_paid;
+        wages_paid += model()->payWages(this, period);
         balance -= wages_paid;
 
-        int dedns = (amt_paid * model()->getPreTaxDedns()) / 100;
-
-        transferTo(model()->gov(), dedns, this);
-
-        dedns_paid += dedns;
-        committed = amt_paid + dedns;
+        // TODO: We've knocked this out in the reorganisation. Reinstate.
+        // dedns_paid += dedns;
     }
 }
 
@@ -102,28 +87,44 @@ void Firm::trigger(int period)
 // hire new workers if funds permit.
 void Firm::epilogue(int period)
 {
-    if (balance > committed)
+    if (balance > wages_paid)
     {
-        int available = balance - committed;
-        int investible = _state_supported ? available : (available * model()->getPropInv()) / 100;
-        int bonuses = _state_supported ? 0 : ((available - investible) * model()->getReserve()) / 100;
+        // It seems odd that a government-supported industry should have to pay
+        // pre-tax deductions to the government but it supports the mythology
+        // that they amount to an insurance premium
+        int available = balance - wages_paid;   // now includes deductions
+
+        int investible, bonuses;
+        if (_state_supported)
+        {
+            investible = available;
+            bonuses = 0;
+        }
+        else
+        {
+            investible = (available * model()->getPropInv()) / 100;
+            bonuses = ((available - investible) * model()->getReserve()) / 100;
+        }
 
         // We distribute the funds before hiring new workers to ensure they only
         // get distributed to existing workers.
         if (!_state_supported)
         {
             int emps = model()->getNumEmployedBy(this);
-            int amt_paid = (emps > 0 ? model()->payWorkers(bonuses/emps, bonuses,
-                                                           this, Model::for_bonus)
-                                     : 0);
-            balance -= amt_paid;
-            bonuses_paid += amt_paid;
+            int amt_paid = 0;
+            if (emps > 0)
+            {
+                amt_paid = model()->payWorkers(bonuses/emps, bonuses, this, Model::for_bonus);
+            }
 
             // Adjust calculation if not all the bonus funds were used
             if (amt_paid < bonuses)
             {
-                investible += (bonuses_paid - amt_paid);
+                investible += (bonuses_paid);
             }
+
+            balance -= amt_paid;
+            bonuses_paid += amt_paid;
         }
 
         // How many more employees can we afford?
@@ -133,7 +134,7 @@ void Firm::epilogue(int period)
 
         if (num_to_hire > 0)
         {
-            num_hired = model()->hireSome(this, wage, period, num_to_hire);
+            model()->hireSome(this, wage, period, num_to_hire);
         }
     }
 }

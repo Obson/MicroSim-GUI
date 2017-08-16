@@ -73,6 +73,11 @@ void Worker::credit(int amount, Account *creditor)
 {
     // qDebug() << "Worker::credit(): amount =" << amount;
 
+    if (amount < 0) {
+        amount = amount;
+    }
+    Q_ASSERT(amount >= 0);
+
     Account::credit(amount);
 
     if (isEmployedBy(creditor))

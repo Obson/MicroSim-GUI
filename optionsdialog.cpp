@@ -28,7 +28,7 @@ OptionsDialog::OptionsDialog(QWidget *parent) :
     if (!ok) {
         nom_pop = 10000000;
     }
-    int wage = settings.value("unit-wage", 1000000).toInt(&ok);
+    int wage = settings.value("unit-wage", 100).toInt(&ok);
     ui->lineEdit->setText(QString::number(iterations));
     ui->lineEdit_2->setText(QString::number(startups));
     ui->lineEdit_3->setText(QString::number(nom_pop));
@@ -91,7 +91,7 @@ void OptionsDialog::accept()
                 if (ok3 && nom_pop >= 1000 && nom_pop <= 100000000)
                 {
                     unit_wage = ui->lineEdit_4->text().toInt(&ok4);
-                    if (ok4 && unit_wage > 100 && unit_wage < 1000) {
+                    if (ok4 && unit_wage >= 100 && unit_wage < 1000) {
                         QSettings settings;
                         settings.setValue("iterations", iterations);
                         settings.setValue("start-period", first);
@@ -104,7 +104,7 @@ void OptionsDialog::accept()
                     else
                     {
                         msgBox.setText(tr("You have not entered a valid standard unit wage!"));
-                        msgBox.setDetailedText(tr("The standard unit wage must be in the range 100 to 1000. 500 is suggested."));
+                        msgBox.setDetailedText(tr("The standard unit wage must be in the range 100 to 1000. 100 is suggested."));
                     }
                 }
                 else
