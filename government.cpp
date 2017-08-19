@@ -66,6 +66,11 @@ int Government::debit(Account *requester, int amount)
     return amount;
 }
 
+bool Government::isGovernment()
+{
+    return true;
+}
+
 Firm *Government::gov_firm()
 {
     return _gov_firm;

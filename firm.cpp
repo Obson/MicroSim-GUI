@@ -71,6 +71,10 @@ void Firm::trigger(int period)
             }
         }
 
+        if (balance < 0) {
+            balance = balance;
+        }
+
         wages_paid += model()->payWages(this, period);
         balance -= wages_paid;
 
@@ -124,6 +128,8 @@ void Firm::epilogue(int period)
             }
 
             balance -= amt_paid;
+            Q_ASSERT(balance >= 0);
+
             bonuses_paid += amt_paid;
         }
 
@@ -143,18 +149,29 @@ void Firm::credit(int amount, Account *creditor)
 {
     Account::credit(amount);
 
-    sales_receipts += amount;
+    // If state-supported the reason we are being credited must be that we have
+    // asked for additional support to pay wages, in which case we have now
+    // finished. If we are not state-supported the credit will be for a sale,
+    // and sales tax is therefore due. This could change if we allow state-
+    // supported firms to be commercial, in which case a better check might
+    // be to see whether the creditor is the government.
 
-    // Base class credits account but doesn't pay tax. We assume seller,
-    // not buyer, is responsible for paying sales tax and that payments
-    // to a Firm are always for purchases and therefore subject to
-    // sales tax.
-    int r = model()->getSalesTaxRate();    // e.g. 25%
-    if (r > 0) {
-        int r_eff = (100 * r) / (100 + r);      // e.g. 20%
-        int t = (amount * r_eff) / 100;
-        if (transferSafely(model()->gov(), t, this)) {
-            sales_tax_paid += t;
+    if (!creditor->isGovernment())
+    {
+        sales_receipts += amount;
+
+        // Base class credits account but doesn't pay tax. We assume seller,
+        // not buyer, is responsible for paying sales tax and that payments
+        // to a Firm are always for purchases and therefore subject to
+        // sales tax.
+        int r = model()->getSalesTaxRate();    // e.g. 25%
+        if (r > 0)
+        {
+            int r_eff = (100 * r) / (100 + r);      // e.g. 20%
+            int t = (amount * r_eff) / 100;
+            if (transferSafely(model()->gov(), t, this)) {
+                sales_tax_paid += t;
+            }
         }
     }
 }

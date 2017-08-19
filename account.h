@@ -47,6 +47,7 @@ public:
     static int nextId();
 
     virtual bool isGovernmentSupported();
+    virtual bool isGovernment();
 
     void breakpoint();
 
@@ -259,6 +260,8 @@ protected:
 public:
 
     Government(Model *model);
+
+    bool isGovernment();
 
     Firm *gov_firm();
 

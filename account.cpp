@@ -36,6 +36,11 @@ bool Account::isGovernmentSupported()
     return false;
 }
 
+bool Account::isGovernment()
+{
+    return false;
+}
+
 // Use transferTo() in preference to credit() as credit() doesn't upate our
 // balance
 bool Account::transferSafely(Account *recipient, int amount, Account *creditor)
@@ -43,7 +48,7 @@ bool Account::transferSafely(Account *recipient, int amount, Account *creditor)
     if (amount > balance)
     {
         // TODO: This needs to go into a log somewhere
-        // qDebug() << "Account::transferTo(): done (insufficient funds)";
+        qDebug() << "Account::transferTo(): done (insufficient funds)";
         return false;
     }
     else

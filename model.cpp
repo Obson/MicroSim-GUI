@@ -550,14 +550,17 @@ int Model::payWages(Firm *payer, int period)
 
             bool ok_to_pay = false;
 
-            if (funds_available < wage_due + dedns)
+            if (funds_available - amt_paid < wage_due + dedns)
             {
-                int shortfall = wage_due + dedns - funds_available;
+                int shortfall = wage_due + dedns - funds_available + amt_paid;
                 if (payer->isGovernmentSupported())
                 {
                     // Get additional funds from government
                     gov()->debit(payer, shortfall);
+
+                    // Transfer the funds to the payer
                     payer->credit(shortfall, gov());
+
                     ok_to_pay = true;
                 }
                 else
@@ -586,7 +589,6 @@ int Model::payWages(Firm *payer, int period)
                 // Pay the deductions straight back to the government.
                 gov()->credit(dedns, payer);
 
-                // Update the payer's balance
                 amt_paid += wage_due + dedns;
             }
             else
