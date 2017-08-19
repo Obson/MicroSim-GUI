@@ -146,7 +146,7 @@ DefaultPage::DefaultPage(ParameterWizard *w)
     sb_inc_tax = wiz->getSpinBox(0, 100);
     sb_sales_tax = wiz->getSpinBox(0, 100);
     sb_bcr = wiz->getSpinBox(0, 100);
-    sb_reserve = wiz->getSpinBox(0, 100);
+    sb_distrib = wiz->getSpinBox(0, 100);
     sb_prop_inv = wiz->getSpinBox(1, 100);
     sb_ubr = wiz->getSpinBox(0, 100);
 
@@ -167,7 +167,7 @@ DefaultPage::DefaultPage(ParameterWizard *w)
     layout->addRow(new QLabel(tr("Income tax (%)")), sb_inc_tax);
     layout->addRow(new QLabel(tr("Sales tax (%)")), sb_sales_tax);
     layout->addRow(new QLabel(tr("Business creation rate (%)")), sb_bcr);
-    layout->addRow(new QLabel(tr("Reserve rate (%)")), sb_reserve);
+    layout->addRow(new QLabel(tr("Profit distribution rate (%)")), sb_distrib);
     layout->addRow(new QLabel(tr("Investment rate (%)")), sb_prop_inv);
     layout->addRow(new QLabel(tr("Unemployment benefit (%)")), sb_ubr);
     layout->addRow(new QLabel(tr("BOE lending rate (%)")), sb_boe_loan_int);
@@ -187,7 +187,7 @@ void DefaultPage::readSettings(QString model)
     sb_inc_tax->setValue(settings.value(model + "/default/income-tax-rate", 10).toInt());
     sb_sales_tax->setValue(settings.value(model + "/default/sales-tax-rate", 0).toInt());
     sb_bcr->setValue(settings.value(model + "/default/firm-creation-prob", 0).toInt());
-    sb_reserve->setValue(settings.value(model + "/default/reserve-rate", 100).toInt());
+    sb_distrib->setValue(settings.value(model + "/default/reserve-rate", 100).toInt());
     sb_prop_inv->setValue(settings.value(model + "/default/prop-invest", 2).toInt());
     sb_ubr->setValue(settings.value(model + "/default/unempl-benefit-rate", 60).toInt());
     sb_boe_loan_int->setValue(settings.value(model + "/default/boe-interest", 1).toInt());
@@ -217,7 +217,7 @@ bool DefaultPage::validatePage()
     settings.setValue(model + "/default/income-tax-rate", sb_inc_tax->value());
     settings.setValue(model + "/default/sales-tax-rate", sb_sales_tax->value());
     settings.setValue(model + "/default/firm-creation-prob", sb_bcr->value());
-    settings.setValue(model + "/default/reserve-rate", sb_reserve->value());
+    settings.setValue(model + "/default/reserve-rate", sb_distrib->value());
     settings.setValue(model + "/default/prop-invest", sb_prop_inv->value());
     settings.setValue(model + "/default/unempl-benefit-rate", sb_ubr->value());
 

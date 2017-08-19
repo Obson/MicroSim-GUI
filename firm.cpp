@@ -103,7 +103,7 @@ void Firm::epilogue(int period)
         else
         {
             investible = (available * model()->getPropInv()) / 100;
-            bonuses = ((available - investible) * model()->getReserve()) / 100;
+            bonuses = ((available - investible) * model()->getDistributionRate()) / 100;
         }
 
         // We distribute the funds before hiring new workers to ensure they only

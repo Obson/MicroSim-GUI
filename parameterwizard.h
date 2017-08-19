@@ -73,7 +73,7 @@ private:
     QSpinBox *sb_inc_tax;
     QSpinBox *sb_sales_tax;
     QSpinBox *sb_bcr;           // business creation rate
-    QSpinBox *sb_reserve;
+    QSpinBox *sb_distrib;
     QSpinBox *sb_prop_inv;
     QSpinBox *sb_ubr;           // unempl benefit rate
     QSpinBox *sb_boe_loan_int;

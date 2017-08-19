@@ -16,7 +16,7 @@ QMap<ParamType,QString> Model::parameter_keys
     {ParamType::dedns, "pre-tax-dedns-rate"},
     {ParamType::unemp_ben_rate, "unempl-benefit-rate"},
     {ParamType::active_pop, "active-population-rate"},
-    {ParamType::reserve, "reserve-rate"},
+    {ParamType::distrib, "reserve-rate"},
     {ParamType::prop_inv, "prop-invest"},
     {ParamType::boe_int, "boe-interest"},
     {ParamType::bus_int, "bus-interest"},
@@ -72,7 +72,7 @@ Model *Model::createModel(QString name)
     settings.setValue(parameter_keys[ParamType::dedns],              0);
     settings.setValue(parameter_keys[ParamType::unemp_ben_rate],    60);
     settings.setValue(parameter_keys[ParamType::active_pop],        60);    // percent? not used at present
-    settings.setValue(parameter_keys[ParamType::reserve],          100);
+    settings.setValue(parameter_keys[ParamType::distrib],          100);
     settings.setValue(parameter_keys[ParamType::prop_inv],           2);
     settings.setValue(parameter_keys[ParamType::boe_int],            1);
     settings.setValue(parameter_keys[ParamType::bus_int],            3);
@@ -271,7 +271,7 @@ void Model::readDefaultParameters()
     p->dedns.val              = settings.value(parameter_keys[ParamType::dedns]).toInt();
     p->unemp_ben_rate.val     = settings.value(parameter_keys[ParamType::unemp_ben_rate]).toInt();
     p->active_pop.val         = settings.value(parameter_keys[ParamType::active_pop]).toInt();
-    p->reserve.val            = settings.value(parameter_keys[ParamType::reserve]).toInt();
+    p->distrib.val            = settings.value(parameter_keys[ParamType::distrib]).toInt();
     p->prop_inv.val           = settings.value(parameter_keys[ParamType::prop_inv]).toInt();
     p->boe_int.val            = settings.value(parameter_keys[ParamType::boe_int]).toInt();
     p->bus_int.val            = settings.value(parameter_keys[ParamType::bus_int]).toInt();
@@ -1100,7 +1100,7 @@ int Model::getParameterVal(ParamType type)
              : ((type == ParamType::dedns) ? parameter_sets[i]->dedns
              : ((type == ParamType::unemp_ben_rate) ? parameter_sets[i]->unemp_ben_rate
              : ((type == ParamType::active_pop) ? parameter_sets[i]->active_pop
-             : ((type == ParamType::reserve) ? parameter_sets[i]->reserve
+             : ((type == ParamType::distrib) ? parameter_sets[i]->distrib
              : ((type == ParamType::prop_inv) ? parameter_sets[i]->prop_inv
              : ((type == ParamType::boe_int) ? parameter_sets[i]->boe_int
              : ((type == ParamType::bus_int) ? parameter_sets[i]->bus_int
@@ -1155,9 +1155,9 @@ int Model:: getUBR()
     return getParameterVal(ParamType::unemp_ben_rate);
 }
 
-int Model::getReserve()
+int Model::getDistributionRate()
 {
-    return getParameterVal(ParamType::reserve);
+    return getParameterVal(ParamType::distrib);
 }
 
 int Model::getPropInv()

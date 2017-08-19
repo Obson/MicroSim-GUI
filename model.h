@@ -27,7 +27,7 @@ enum class ParamType {
     dedns,
     unemp_ben_rate,
     active_pop,
-    reserve,
+    distrib,
     prop_inv,
     boe_int,
     bus_int,
@@ -193,7 +193,7 @@ public:
     int getFCP();           // firm creaton probability (%)
     int getUBR();           // unemployment benefit rate (% of std wage)
     int getPropInv();       // propensity to invest
-    int getReserve();       // funds kept in reserve for next period (%)
+    int getDistributionRate();       // funds kept in reserve for next period (%)
 
     int getBoeRate();       // BoE lending rate
     int getBusRate();       // retail lending rate
@@ -282,7 +282,7 @@ protected:
         Pair dedns;
         Pair unemp_ben_rate;
         Pair active_pop;
-        Pair reserve;
+        Pair distrib;
         Pair prop_inv;
         Pair boe_int;
         Pair bus_int;
