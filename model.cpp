@@ -527,6 +527,8 @@ int Model::getWageBill(Firm *employer, bool include_dedns)
         QSettings settings;
         tot = (tot * (100 + settings.value("pre-tax-dedns-rate", 0).toInt())) / 100;
     }
+
+    return tot;
 }
 
 int Model::payWages(Firm *payer, int period)
