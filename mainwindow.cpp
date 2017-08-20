@@ -416,7 +416,7 @@ void MainWindow::propertyChanged(QListWidgetItem *item)
     // Allow the property to be changed even when there's no model selected.
     if (_current_model != nullptr)
     {
-        drawChart();
+        drawChart(false);   // no need to rerun
     }
 }
 
@@ -552,7 +552,7 @@ QColor MainWindow::nextColour(int n)
     return colours[n % colours.count()];
 }
 
-void MainWindow::drawChart()    // uses _current_model
+void MainWindow::drawChart(bool rerun)    // uses _current_model
 {
     ctrl->updateStatus("Loading");
 
@@ -581,7 +581,10 @@ void MainWindow::drawChart()    // uses _current_model
     // Tell the existing view to use the new chart
     chartView->setChart(chart);
 
-    _current_model->run();
+    if (rerun)
+    {
+        _current_model->run();
+    }
 
     chart->legend()->show();
     chart->setTitle("<h2>" + _current_model->name() + "</h2>");

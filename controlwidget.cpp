@@ -67,7 +67,7 @@ void ControlWidget::on_btn_redraw_clicked()
             iters = _iters;
             settings.setValue("start-period", start_period);
             settings.setValue("iterations", iters);
-            emit redrawChart();
+            emit redrawChart(true);
             return;
         }
     }

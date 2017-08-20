@@ -38,7 +38,7 @@ private slots:
 signals:
     void newModelRequest();
     void setupModel();
-    void redrawChart();
+    void redrawChart(bool);
     void closeDown();
 
 private:
