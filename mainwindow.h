@@ -120,6 +120,7 @@ private:
     void changeModel(QListWidgetItem*);
 
     QList<QColor> colours;
+    QMap<Model::Property,QColor> propertyColours;
 
     QListWidgetItem *selectedModelItem;
 

@@ -1,5 +1,4 @@
 #include "mainwindow.h"
-#include "ui_mainwindow.h"
 #include "newmodeldlg.h"
 #include <QtWidgets>
 #include <QMessageBox>
@@ -90,7 +89,7 @@ MainWindow::MainWindow()
 
 MainWindow::~MainWindow()
 {
-    delete ui;
+    // Nothing to do...
 }
 
 void MainWindow::show()
@@ -246,6 +245,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     {
         QListWidgetItem *item;
         item = propertyList->item(i);
+        item->data(Qt::UserRole).clear();
         QString text = item->text();
         bool selected = item->checkState();
         settings.setValue(text, selected ? true : false);
@@ -591,7 +591,7 @@ void MainWindow::drawChart(bool rerun)    // uses _current_model
 
     QLineSeries *anySeries = nullptr;
 
-    for (int i = 0, n = 0; i < propertyList->count(); i++)
+    for (int i = 0, n = propertyColours.count(); i < propertyList->count(); i++)
     {
         QListWidgetItem *item;
         item = propertyList->item(i);
@@ -613,7 +613,16 @@ void MainWindow::drawChart(bool rerun)    // uses _current_model
                 ser->setPen(QPen(Qt::DotLine));
                 break;
             default:
-                ser->setColor(nextColour(n++));
+                if (propertyColours.contains(prop))
+                {
+                    ser->setColor(propertyColours[prop]);
+                }
+                else
+                {
+                    QColor colour = nextColour(n++);
+                    propertyColours[prop] = colour;
+                    ser->setColor(colour);
+                }
                 break;
             }
         }
