@@ -378,6 +378,7 @@ void MainWindow::editParameters()
     {
         current_model()->run();
     }
+    propertyChanged(nullptr);
 }
 
 void MainWindow::about()
