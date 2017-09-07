@@ -110,6 +110,7 @@ private:
 
     QMap<QString,Model::Property> property_map;
 
+    void createChart();
     void createActions();
     void createMenus();
     void createStatusBar();

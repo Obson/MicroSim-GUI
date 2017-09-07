@@ -60,17 +60,7 @@ MainWindow::MainWindow()
     // If non-zero, points to currently selected listwidget item
     selectedModelItem = 0;
 
-    chart = new QChart();
-    chart->legend()->setAlignment(Qt::AlignBottom);
-    chartView = new QChartView(chart);
-    chartView->setRenderHint(QPainter::Antialiasing);
-
-    colours << Qt::red << Qt::blue << Qt::darkRed << Qt::darkGreen
-            << Qt::darkBlue << Qt::darkMagenta << Qt::darkYellow
-            << Qt::darkCyan;
-
-    setCentralWidget(chartView);
-
+    createChart();
     createActions();
     createMenus();
     createStatusBar();
@@ -109,6 +99,20 @@ void MainWindow::show()
 void MainWindow::showHelp()
 {
     nyi();
+}
+
+void MainWindow::createChart()
+{
+    chart = new QChart();
+    chart->legend()->setAlignment(Qt::AlignBottom);
+    chartView = new QChartView(chart);
+    chartView->setRenderHint(QPainter::Antialiasing);
+
+    colours << Qt::red << Qt::blue << Qt::darkRed << Qt::darkGreen
+            << Qt::darkBlue << Qt::darkMagenta << Qt::darkYellow
+            << Qt::darkCyan;
+
+    setCentralWidget(chartView);
 }
 
 void MainWindow::createActions()
@@ -575,12 +579,9 @@ void MainWindow::drawChart(bool rerun)    // uses _current_model
 
     // Remove the existing chart and replace it with a new one.
     QChart *old_chart = chart;
-    chart = new QChart();
+    createChart();
     delete old_chart;
     chart->legend()->setAlignment(Qt::AlignBottom);
-
-    // Tell the existing view to use the new chart
-    chartView->setChart(chart);
 
     if (rerun)
     {
