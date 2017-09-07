@@ -308,7 +308,7 @@ void Model::restart()
     readDefaultParameters();
 
     // Clear all series
-    for (int i = 0; i < static_cast<int>(Property::zero); i++)
+    for (int i = 0; i < static_cast<int>(Property::num_properties); i++)
     {
         Property prop = prop_list[i];
         series[prop]->clear();
@@ -1223,7 +1223,8 @@ int Model::getActivePop()
 bool Model::applies(Model::Condition *condition)
 {
     // Property::zero is always zero and can be used as a marker for the end of
-    // the enum. In a condition we also use it to indicate that the associated
+    // the enum (Better to use num_properties). In a condition we also use it
+    // to indicate that the associated
     // parameters are to be applied unconditionally (unless overridden by a
     // subsequent condition). In practice we currently access defaults
     // (unconditionals) separately from conditionals so we don't actually have

@@ -578,9 +578,8 @@ void MainWindow::drawChart(bool rerun)    // uses _current_model
     }
 
     // Remove the existing chart and replace it with a new one.
-    QChart *old_chart = chart;
+    delete chart;
     createChart();
-    delete old_chart;
     chart->legend()->setAlignment(Qt::AlignBottom);
 
     if (rerun)
