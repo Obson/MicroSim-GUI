@@ -15,13 +15,10 @@ ParameterWizard::ParameterWizard(QWidget *parent) : QWizard(parent)
     // be changed once it's all working.
     // settings.setFallbacksEnabled(false);
 
-    // TODO (Important): We seem to have lost the 'Add conditional parameters'
-    // button.
+    setWindowTitle("MicroSim Parameter Setup");
 
-    setWindowTitle("MicroSim Parameter Setup Wizard");
-
-    setButtonText(QWizard::CustomButton1, tr("&Add conditional parameters"));
-    setOption(QWizard::HaveCustomButton1, false);
+    setButtonText(QWizard::CustomButton1, tr("&Conditional parameters"));
+    setOption(QWizard::HaveCustomButton1, true);
     setOption(QWizard::NoCancelButton, false);
     setOption(QWizard::CancelButtonOnLeft, true);
 
@@ -104,10 +101,6 @@ void ParameterWizard::done(int result)
     QDialog::done(result);
 }
 
-///
-/// \brief ParameterWizard::currentIdChanged
-/// \param id New wizard page id
-///
 void ParameterWizard::currentIdChanged(int id)
 {
     // WARNING: Check on id here was to prevent crash if they cancelled from the

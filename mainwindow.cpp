@@ -60,6 +60,18 @@ MainWindow::MainWindow()
     // If non-zero, points to currently selected listwidget item
     selectedModelItem = 0;
 
+    // Make sure preferences exist
+    QSettings settings;
+    if (!settings.contains("iterations"))
+    {
+        settings.setValue("iterations", 99);
+        settings.setValue("start-period", 1);
+        settings.setValue("startups", 10);
+        settings.setValue("nominal-population", 1000);
+        settings.setValue("unit-wage", 100);
+        settings.setValue("government-employees", 200); // approx tot pop / 5
+    }
+
     createChart();
     createActions();
     createMenus();
@@ -661,6 +673,7 @@ void MainWindow::changeModel(QListWidgetItem *item)
 
     QString model_name = item->text();
     statusBar()->showMessage(  tr("  Total population: ") + QString::number(nominal_population)
+                             + tr("  Government employees: ") + settings.value("government-employees", 200).toString()
                              + tr("  Standard wage: ") + settings.value("unit-wage", 500).toString()
                              + tr("  Number of businesses at start: ") + QString::number(startups)
                             );

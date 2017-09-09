@@ -34,8 +34,8 @@
     <rect>
      <x>770</x>
      <y>14</y>
-     <width>221</width>
-     <height>91</height>
+     <width>228</width>
+     <height>94</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout_2">
@@ -50,10 +50,18 @@
      </widget>
     </item>
     <item row="1" column="1">
-     <widget class="QLineEdit" name="le_iters"/>
+     <widget class="QLineEdit" name="le_iters">
+      <property name="maxLength">
+       <number>4</number>
+      </property>
+     </widget>
     </item>
     <item row="0" column="1">
-     <widget class="QLineEdit" name="le_start"/>
+     <widget class="QLineEdit" name="le_start">
+      <property name="maxLength">
+       <number>4</number>
+      </property>
+     </widget>
     </item>
     <item row="1" column="0">
      <widget class="QLabel" name="label_5">
@@ -72,6 +80,15 @@
       </property>
       <property name="text">
        <string>Update</string>
+      </property>
+      <property name="autoDefault">
+       <bool>true</bool>
+      </property>
+      <property name="default">
+       <bool>false</bool>
+      </property>
+      <property name="flat">
+       <bool>false</bool>
       </property>
      </widget>
     </item>
@@ -272,12 +289,20 @@
   <zorder>lab_property</zorder>
   <zorder>line</zorder>
   <zorder>line_2</zorder>
-  <zorder>progressBar</zorder>
   <zorder>label_status</zorder>
   <zorder>label_notes</zorder>
   <zorder>line_3</zorder>
   <zorder>btn_edit_model</zorder>
  </widget>
+ <tabstops>
+  <tabstop>le_start</tabstop>
+  <tabstop>le_iters</tabstop>
+  <tabstop>btn_edit_model</tabstop>
+  <tabstop>btn_redraw</tabstop>
+  <tabstop>btnNewModel</tabstop>
+  <tabstop>btn_setup</tabstop>
+  <tabstop>btn_close</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

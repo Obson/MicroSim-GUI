@@ -71,7 +71,15 @@ Model *Model::createModel(QString name)
     settings.setValue(parameter_keys[ParamType::firm_creation_prob], 0);
     settings.setValue(parameter_keys[ParamType::dedns],              0);
     settings.setValue(parameter_keys[ParamType::unemp_ben_rate],    60);
-    settings.setValue(parameter_keys[ParamType::active_pop],        60);    // percent? not used at present
+
+    // This setting is not currently used and should not be confused with the
+    // emp_rate property. active_pop was intended to allow a distinction to be
+    // made between the population as a whole and the part of it that was
+    // actually active. In practice this hasn't been needed as we have
+    // assumed that the whole population is active (or equivalently that the
+    // nominal population size refers only to the active population).
+    settings.setValue(parameter_keys[ParamType::active_pop],        60);
+
     settings.setValue(parameter_keys[ParamType::distrib],          100);
     settings.setValue(parameter_keys[ParamType::prop_inv],           2);
     settings.setValue(parameter_keys[ParamType::boe_int],            1);
@@ -117,7 +125,7 @@ Model::Model(QString model_name)
 
     // _notes and _iterations must be retrieved from settings. Possibly best not
     // to do this until they are needed as this constructor is called while
-    // traversing settings and looking up differnt settings seems likely to
+    // traversing settings and looking up different settings seems likely to
     // disrupt the process. Haven't checked this.
     //_notes = notes;
     //_iterations = iterations;
@@ -125,7 +133,6 @@ Model::Model(QString model_name)
     // Set up a default set of parameters and copy them to settings
     // Same applies here...
     // Params *params = new Params();
-
 
     // Create the Government. This will automatically set up a single firm
     // representing nationalised industries, civil service, and any other
@@ -493,8 +500,13 @@ Bank *Model::bank()
 
 Firm *Model::createFirm(bool state_supported)
 {
-    //qDebug() << "Model::createFirm(): creating new firm";
+    qDebug() << "Model::createFirm(): creating new firm";
     Firm *firm = new Firm(this, state_supported);
+    if (state_supported)
+    {
+        QSettings settings;
+        hireSome(firm, getStdWage(), 0, settings.value("government-employees").toInt());
+    }
     firms.append(firm);
     return firm;
 }
@@ -859,7 +871,7 @@ Worker *Model::hire(Firm *employer, int wage, int period)
     int pop = population();
     int avail = pop - workers.count();      // number potentially available
     int access = (avail * 1000) / pop;      // accessibility as permillage
-    int prob = qrand() % 1000;
+    int prob = employer->isGovernmentSupported() ? 0 : qrand() % 1000;
     if (prob >= access)
     {
         return nullptr;
@@ -878,7 +890,7 @@ Worker *Model::hire(Firm *employer, int wage, int period)
     {
         // We've already checked availability, but in case the mechanism
         // changes in future we make sure you can't employ more people that
-        // there actually are. This constraint could conceivable be varied if
+        // there actually are. This constraint could conceivably be varied if
         // we want to allow differential labour values by treating one worker
         // as equivalent to several workers.
         if (workers.count() < population())     // (unscaled)
@@ -1184,31 +1196,17 @@ int Model::getLoanProb()
     return getParameterVal(ParamType::loan_prob);
 }
 
-int Model::getGovExpRate()
+int Model::getGovExpRate(int target_pop)
 {
-    // TODO: *** IMPORTANT ***
-    // This calculation gives the rate of expenditure required to sustain the
-    // economy at the given level assuming the government's only receipts are
-    // income tax. If the government is the only employer this expenditure can
-    // be supplied by direct subsidy, but this would not be politically
-    // acceptable where most firms are private. In this case the bulk (and in
-    // aggregate, all) of the funds will be supplied initially as bank loans
-    // and therefore financed via the Treasury.
-    //   We should probably input a target 'government industry size' and aim
-    // to finance that, rather than the whole of the working population
-    // directly.
-
-    //int active_pop = (population() * getActivePop()) / 100;
-
-    int target_emp = (population() * getTargetEmpRate()) / 100;
+    // We calculate govt. expenditure using the formula:
+    // population * target employment rate * average wage * tax rate.
+    // Tax rate here is the 'effective tax rate' taking into account all taxes.
+    // If we assume only income tax is applied then this is the income tax
+    // rate. Otherwise it's quite complicated -- we should probably look into
+    // this later.
+    int target_emp = (target_pop > 0 ? target_pop : (population() * getTargetEmpRate()) / 100);
     int basic_wage = target_emp * getStdWage();
-    int corrected_for_tax = (basic_wage * getIncTaxRate()) / 100;
-
-    //int prop_inv = getPropInv();
-    //int rate = (corrected_for_tax * 100) / prop_inv;
-
-    _gov_exp_rate = corrected_for_tax;
-    return _gov_exp_rate;   // recalculated each time params are read
+    return (basic_wage * getIncTaxRate()) / 100;
 }
 
 int Model::getActivePop()

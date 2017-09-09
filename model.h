@@ -183,7 +183,7 @@ public:
 
     int getIters();         // number of iterations (periods)
     int getActivePop();     // proportion of population that is economically active
-    int getGovExpRate();    // government expenditure (currency units per period)
+    int getGovExpRate(int target_pop = 0);    // government expenditure (currency units per period)
     int getTargetEmpRate(); // target rate of employment (%)
     int getStdWage();       // standard wage (currency units per employee per period)
     int getPropCon();       // propensity to consume (%)
@@ -229,8 +229,6 @@ private:
     int _first_period;
     int _scale;
     int _std_wage;
-
-    int _gov_exp_rate = -1;
 
     // See getPropertyValue
     int _exp, _bens, _rcpts, _gov_bal, _num_firms, _num_emps, _num_unemps,

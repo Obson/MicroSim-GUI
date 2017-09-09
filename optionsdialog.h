@@ -20,6 +20,7 @@ public:
     int startPeriod();
     int std_wage();
     int population();
+    int gov_ind_pop();
 
     void accept();
 

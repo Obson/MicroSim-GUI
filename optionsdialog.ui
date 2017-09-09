@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>491</width>
-    <height>245</height>
+    <height>299</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>190</y>
+     <y>250</y>
      <width>471</width>
      <height>41</height>
     </rect>
@@ -36,7 +36,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>175</y>
+     <y>230</y>
      <width>471</width>
      <height>16</height>
     </rect>
@@ -45,25 +45,25 @@
     <enum>Qt::Horizontal</enum>
    </property>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>22</x>
      <y>20</y>
      <width>448</width>
-     <height>147</height>
+     <height>201</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout">
-    <item row="0" column="0">
-     <widget class="QLabel" name="label_5">
+    <item row="3" column="0">
+     <widget class="QLabel" name="label_8">
       <property name="text">
-       <string>Run for</string>
+       <string>Assume:</string>
       </property>
      </widget>
     </item>
-    <item row="0" column="1">
-     <widget class="QLineEdit" name="lineEdit">
+    <item row="4" column="1">
+     <widget class="QLineEdit" name="lineEdit_4">
       <property name="toolTip">
        <string>Enter required number of iterations. Recommended max 200</string>
       </property>
@@ -76,27 +76,17 @@
       </property>
      </widget>
     </item>
-    <item row="1" column="0">
-     <widget class="QLabel" name="label_6">
-      <property name="text">
-       <string>Starting at period</string>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="1">
-     <widget class="QLineEdit" name="lineEdit_5"/>
-    </item>
     <item row="2" column="0">
      <widget class="QLabel" name="label_7">
       <property name="text">
-       <string>Start with</string>
+       <string>Start with:</string>
       </property>
      </widget>
     </item>
-    <item row="2" column="1">
-     <widget class="QLineEdit" name="lineEdit_2">
-      <property name="toolTip">
-       <string>Enter required number of iterations. Recommended max 200</string>
+    <item row="4" column="0">
+     <widget class="QLabel" name="label_9">
+      <property name="text">
+       <string>Pay:</string>
       </property>
      </widget>
     </item>
@@ -107,15 +97,15 @@
       </property>
      </widget>
     </item>
-    <item row="3" column="0">
-     <widget class="QLabel" name="label_8">
-      <property name="text">
-       <string>Assume</string>
+    <item row="3" column="1">
+     <widget class="QLineEdit" name="lineEdit_3">
+      <property name="toolTip">
+       <string>Enter required number of iterations. Recommended max 200</string>
       </property>
      </widget>
     </item>
-    <item row="3" column="1">
-     <widget class="QLineEdit" name="lineEdit_3">
+    <item row="0" column="1">
+     <widget class="QLineEdit" name="lineEdit">
       <property name="toolTip">
        <string>Enter required number of iterations. Recommended max 200</string>
       </property>
@@ -128,17 +118,17 @@
       </property>
      </widget>
     </item>
-    <item row="4" column="0">
-     <widget class="QLabel" name="label_9">
+    <item row="0" column="0">
+     <widget class="QLabel" name="label_5">
       <property name="text">
-       <string>Pay</string>
+       <string>Run for:</string>
       </property>
      </widget>
     </item>
-    <item row="4" column="1">
-     <widget class="QLineEdit" name="lineEdit_4">
-      <property name="toolTip">
-       <string>Enter required number of iterations. Recommended max 200</string>
+    <item row="1" column="0">
+     <widget class="QLabel" name="label_6">
+      <property name="text">
+       <string>Starting at period:</string>
       </property>
      </widget>
     </item>
@@ -146,6 +136,26 @@
      <widget class="QLabel" name="label_4">
       <property name="text">
        <string>per work unit per period</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QLineEdit" name="lineEdit_5"/>
+    </item>
+    <item row="2" column="1">
+     <widget class="QLineEdit" name="lineEdit_2">
+      <property name="toolTip">
+       <string>Enter required number of iterations. Recommended max 200</string>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="1">
+     <widget class="QLineEdit" name="lineEdit_6"/>
+    </item>
+    <item row="5" column="0">
+     <widget class="QLabel" name="label_10">
+      <property name="text">
+       <string>Government employees: </string>
       </property>
      </widget>
     </item>

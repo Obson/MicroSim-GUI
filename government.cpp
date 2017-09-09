@@ -79,10 +79,25 @@ Firm *Government::gov_firm()
 void Government::trigger(int period)
 {
     // Government grants (incl support of gov-owned businesses)
-    int amt = model()->getGovExpRate();
+
+    // This should probably be divided between support of govt industries
+    // (gov_firm) and direct govt purchasing. Gap-filling by gov_firm (if
+    // necessary) should be counted as 'unbudgeted govt expenditure'
+    QSettings settings;
+
+    // Direct government support
+    /*
+    int amt = settings.value("government-employees").toInt() * model()->getStdWage();
     _gov_firm->grant(amt);
     balance -= amt;
     exp += amt;
+    */
+
+    // TODO: currently gov_firm recruits dynamically according to availability
+    // of funds (and other criteria). Should start off with designated number
+    // of employees and request funds as equired. This may mean we can dispense
+    // with the 'grant' mechanism,although it's probably worth keeping in place
+    // in case it's needed for oter purposes.
 
     // Pay benefits to all unemployed workers
 
