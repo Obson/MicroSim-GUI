@@ -59,7 +59,7 @@ bool Account::transferSafely(Account *recipient, int amount, Account *creditor)
     }
 }
 
-void Account::credit(int amount, Account *creditor)
+void Account::credit(int amount, Account *creditor, bool force)
 {
     balance += amount;
 }

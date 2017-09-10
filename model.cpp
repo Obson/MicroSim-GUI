@@ -8,6 +8,7 @@ Model *Model::current = nullptr;
 
 QMap<ParamType,QString> Model::parameter_keys
 {
+    {ParamType::procurement, "govt-procurement"},
     {ParamType::emp_rate, "employment-rate"},
     {ParamType::prop_con, "propensity-to-consume"},
     {ParamType::inc_tax_rate, "income-tax-rate"},
@@ -49,21 +50,21 @@ int Model::loadAllModels()
 Model *Model::createModel(QString name)
 {
     qDebug() << "Model::createModel(): name =" << name;
-
     qDebug() << "Model::createModel(): setting default parameters for model" << name;
-    // Store default parameters
-    QSettings settings;
 
+    // Store default parameters:
     // Note that global parameters (model-wide) are not listed in ParamType
     // because they have no conditional values and so cannot be looked up in
     // the general parameter retrieval function getParameterVal(). They are
     // therefore dealt with as special cases without the convenience of being
     // listed in parameter_keys[ParamType].
+    QSettings settings;
     settings.beginGroup(name);
 
-    // Add any model-specific parameters with default values here,,,
+    // Add all model-specific parameters with default values here,,,
 
     settings.beginGroup("/default");
+    settings.setValue(parameter_keys[ParamType::procurement],        0);
     settings.setValue(parameter_keys[ParamType::emp_rate],          95);
     settings.setValue(parameter_keys[ParamType::prop_con],          80);
     settings.setValue(parameter_keys[ParamType::inc_tax_rate],      10);
@@ -241,8 +242,8 @@ int Model::scale(Property p)
 
 void Model::readDefaultParameters()
 {
-    // Get parameters from settings. Currently we don't do anything with the
-    // notes but this will probably change.
+    // Get parameters from settings.
+
     QSettings settings;
 
     qDebug() << "Model::readDefaultParameters(): file is" << settings.fileName();
@@ -270,6 +271,7 @@ void Model::readDefaultParameters()
 
     Params *p = new Params;     // default parameter set
 
+    p->procurement.val        = settings.value(parameter_keys[ParamType::procurement]).toInt();
     p->emp_rate.val           = settings.value(parameter_keys[ParamType::emp_rate]).toInt();
     p->prop_con.val           = settings.value(parameter_keys[ParamType::prop_con]).toInt();
     p->inc_tax_rate.val       = settings.value(parameter_keys[ParamType::inc_tax_rate]).toInt();
@@ -391,8 +393,8 @@ void Model::run()
         // Trigger objects
         // -------------------------------------------
 
-        // Triggering government will transfer grants and benefits to firms
-        // and workers before they are triggered
+        // Triggering government will direct payments to firms and benefits to
+        //  workers before they are triggered
         _gov->trigger(_period);
 
         // Triggering firms will pay deductions to government and wages to
@@ -868,13 +870,18 @@ int Model::getNumUnemployed()
 Worker *Model::hire(Firm *employer, int wage, int period)
 {
     // Calculate friction
-    int pop = population();
-    int avail = pop - workers.count();      // number potentially available
-    int access = (avail * 1000) / pop;      // accessibility as permillage
-    int prob = employer->isGovernmentSupported() ? 0 : qrand() % 1000;
-    if (prob >= access)
+    if (period > 0)
     {
-        return nullptr;
+        int pop = population();
+        Q_ASSERT(pop != 0);
+
+        int avail = pop - workers.count();      // number potentially available
+        int access = (avail * 1000) / pop;      // accessibility as permillage
+        int prob = employer->isGovernmentSupported() ? 0 : qrand() % 1000;
+        if (prob >= access)
+        {
+            return nullptr;
+        }
     }
 
     Worker *w = nullptr;
@@ -984,7 +991,7 @@ int Model::getWagesPaid()
     return tot;
 }
 
-// Tis should be the sames as getSalesReceipts(), which would be quicker to
+// This should be the same as getSalesReceipts(), which would be quicker to
 // evaluate, but we use two different functions in case they should ever differ
 // in future. This is the one we use for consumption as it looks at it from the
 // consumers' end.
@@ -1104,11 +1111,12 @@ int Model::getParameterVal(ParamType type)
     // TODO: Currently we only check the default parameter set. This needs
     // extending to check conditional parameter sets (not yet implemented).
 
-    // qDebug() << "Model::getParameterVal()";
+    // qDebug() << "Model::getParameterVal(): parameter_sets[0]->procurement.val =" << parameter_sets[0]->procurement.val;
 
     int i = 0;      // only default parameter set at present
 
-    Pair p = (type == ParamType::emp_rate) ? parameter_sets[i]->emp_rate
+    Pair p =    (type == ParamType::procurement) ? parameter_sets[i]->procurement
+             : ((type == ParamType::emp_rate) ? parameter_sets[i]->emp_rate
              : ((type == ParamType::prop_con) ? parameter_sets[i]->prop_con
              : ((type == ParamType::inc_tax_rate) ? parameter_sets[i]->inc_tax_rate
              : ((type == ParamType::sales_tax_rate) ? parameter_sets[i]->sales_tax_rate
@@ -1122,11 +1130,16 @@ int Model::getParameterVal(ParamType type)
              : ((type == ParamType::bus_int) ? parameter_sets[i]->bus_int
              : ((type == ParamType::loan_prob) ? parameter_sets[i]->loan_prob
              : parameter_sets[i]->invalid
-             ))))))))))));
+             )))))))))))));
 
 
-    // qDebug() << "Model::getParameterVal(): returning" << p.val;
+    //qDebug() << "Model::getParameterVal(): returning" << p.val;
     return p.val;
+}
+
+int Model::getProcurement()
+{
+    return getParameterVal(ParamType::procurement);
 }
 
 int Model::getTargetEmpRate()
@@ -1196,6 +1209,7 @@ int Model::getLoanProb()
     return getParameterVal(ParamType::loan_prob);
 }
 
+/* Discontinued, but the formula might be useful some time
 int Model::getGovExpRate(int target_pop)
 {
     // We calculate govt. expenditure using the formula:
@@ -1208,6 +1222,7 @@ int Model::getGovExpRate(int target_pop)
     int basic_wage = target_emp * getStdWage();
     return (basic_wage * getIncTaxRate()) / 100;
 }
+*/
 
 int Model::getActivePop()
 {

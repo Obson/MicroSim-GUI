@@ -19,6 +19,7 @@ QT_CHARTS_USE_NAMESPACE
 
 // Only potentially conditional parameters are listed here
 enum class ParamType {
+    procurement,
     emp_rate,
     prop_con,
     inc_tax_rate,
@@ -183,7 +184,7 @@ public:
 
     int getIters();         // number of iterations (periods)
     int getActivePop();     // proportion of population that is economically active
-    int getGovExpRate(int target_pop = 0);    // government expenditure (currency units per period)
+    int getProcurement();   //direct government expenditure
     int getTargetEmpRate(); // target rate of employment (%)
     int getStdWage();       // standard wage (currency units per employee per period)
     int getPropCon();       // propensity to consume (%)
@@ -270,6 +271,7 @@ protected:
 
     struct Params
     {
+        Pair procurement;
         Pair iters;
         Pair count;
         Pair emp_rate;

@@ -34,7 +34,7 @@ public:
 
     // This function is declared as virtual to allow derived class to add
     // functionality, e.g. diagnostics
-    virtual void credit(int amount, Account *creditor = nullptr);
+    virtual void credit(int amount, Account *creditor = nullptr, bool force = false);
 
     virtual void loan(int amount, int rate, Account *creditor);
 
@@ -131,7 +131,7 @@ public:
     bool isNewHire(int period);
 
     // Overrides
-    void credit(int amount, Account *creditor = nullptr);
+    void credit(int amount, Account *creditor = nullptr, bool force = false);
     void trigger(int period);
 
     void setAgreedWage(int wage);
@@ -210,7 +210,7 @@ public:
     void epilogue(int period);
 
     // Overrides base mmethod to give additional functionality
-    void credit(int amount, Account *creditor = nullptr);
+    void credit(int amount, Account *creditor = nullptr, bool force = false);
 
     int getAmountGranted();
     int getWagesPaid();
@@ -240,7 +240,7 @@ private:
 
     Firm *_gov_firm;     // (see constructor for assignment to firms)
 
-    int exp, rec, ben;
+    int exp, rec, ben, proc;
 
 protected:
 
@@ -248,11 +248,11 @@ protected:
     // prohibits transfers that would leave a negative balance. This
     // restriction doesn't apply to the government, which creates money
     // precisely by creating transfers that leave a negative balance.
-    bool transferSafely(Account *recipient, int amount, Account*);
+    bool transferSafely(Account *recipient, int amount, Account*, bool procurement = false);
 
     // We override the base method here just so we can extract the balance for
     // statistics.
-    void credit(int amount, Account *creditor = nullptr);
+    void credit(int amount, Account *creditor = nullptr, bool force = false);
 
     void init();
     void reset();

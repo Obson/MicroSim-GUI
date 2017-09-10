@@ -1,10 +1,13 @@
 #include "account.h"
+#include <QDebug>
 
 void Government::init()
 {
     exp = 0;
     rec = 0;
     ben = 0;
+    proc = 0;
+    last_triggered = -1;
 }
 
 void Government::reset()
@@ -16,24 +19,11 @@ void Government::reset()
 
 Government::Government(Model *model) : Account(model)
 {
-    // This must be the first Firm created, as this ensures that government
-    // money is always spent at the start of the period.
+    // The 'true' argument tells the model that this is a (the) government-
+    // supported firm and tat it should have a preset (user-defined) number
+    //of employees.
     _gov_firm = model->createFirm(true);
 }
-
-// TO DO NEXT. OR AT LEAST VERY SOON
-// ---------------------------------
-// This method creates and registers a new independent firm with, at present,
-// no visible means of support. To fix this we will need to provide a means
-// of accessing government funds. Conventionally this is achieved via banks,
-// so what we probably need to do is implement the Bank class and set the
-// new firm up with a 'line of credit'. I think this means that the firm can
-// keep borrowing more money as long as it keeps up the repayments on the
-// existing loan and pays the interest due. I suspect this is inherently
-// unstable and is only sustainable as long as the firm continues to grow.
-// Eventually the market becomes saturated and the firm dies -- or possibly
-// it just sucks in business from other less successful firms in the same
-// field, and they die.
 
 size_t Government::getNumEmployees()
 {
@@ -78,42 +68,48 @@ Firm *Government::gov_firm()
 
 void Government::trigger(int period)
 {
+    /* This code originally allowed for government-supported industries to
+     * receive a grant that was designed to cover the expected number of
+     * employees. This has now been superseded and government-supported
+     * industries are now allocated a user-defined number of employees and can
+     * claim the necessary funds to pay them as and when required. However, it
+     * makes sense to retain the grant mechanism in case it is needed in
+     * future. Change and uncomment as required...
+     *
     // Government grants (incl support of gov-owned businesses)
-
-    // This should probably be divided between support of govt industries
-    // (gov_firm) and direct govt purchasing. Gap-filling by gov_firm (if
-    // necessary) should be counted as 'unbudgeted govt expenditure'
     QSettings settings;
-
-    // Direct government support
-    /*
     int amt = settings.value("government-employees").toInt() * model()->getStdWage();
     _gov_firm->grant(amt);
     balance -= amt;
     exp += amt;
     */
 
-    // TODO: currently gov_firm recruits dynamically according to availability
-    // of funds (and other criteria). Should start off with designated number
-    // of employees and request funds as equired. This may mean we can dispense
-    // with the 'grant' mechanism,although it's probably worth keeping in place
-    // in case it's needed for oter purposes.
+    if (period > last_triggered)    // to prevent double counting
+    {
+        last_triggered = period;
 
-    // Pay benefits to all unemployed workers
+        // Direct purchases (procurement), adjusts balance automatically
+        int amt = model()->getProcurement();
+        transferSafely(model()->selectRandomFirm(), amt, this, true);
+        proc += amt;
+        exp += amt;     // include in expenditure not as a separate item as
+                        // less confusing
 
-    ben += model()->payWorkers((model()->getStdWage() * model()->getUBR()) / 100,
-                           0,                   // no max amount
-                           this,                // source
-                           Model::for_benefits // reason
-                           );
-
-    balance -= ben;
+        // Benefits payments to all unemployed workers (doesn't adjust balance,
+        // so we must do this on return
+        ben += model()->payWorkers((model()->getStdWage() * model()->getUBR()) / 100,
+                               0,                   // no max amount
+                               this,                // source
+                               Model::for_benefits  // reason
+                               );
+        balance -= ben;
+    }
 }
 
 //
-// This function overrides Account::transferTo to allow a negative balance.
+// This function is an alternative to Account::transferTo allowing a negative balance.
 //
-bool Government::transferSafely(Account *recipient, int amount, Account *)
+bool Government::transferSafely(Account *recipient, int amount, Account *, bool procurement)
 {
     // We adopt the convention that receipts from the government are not
     // taxable. This is probably a rather murky area, given that the
@@ -123,7 +119,7 @@ bool Government::transferSafely(Account *recipient, int amount, Account *)
     // and the 'armed forces' the mechanism is probably more direct.
     // Anyway, to go into this would be a distraction so we'll simply
     // treat it as untaxable payment for services.
-    recipient->credit(amount, this);
+    recipient->credit(amount, this, procurement);
     balance -= amount;
 
     // The government can always transfer any amount
@@ -135,7 +131,7 @@ bool Government::transferSafely(Account *recipient, int amount, Account *)
 // record as well. However we don't distinguish between income tax, sales
 // tax, and 'pre-tax deductions'. These are all accounted for elsewhere.
 // Obviously, the government doesn't pay tax.
-void Government::credit(int amount, Account *creditor)
+void Government::credit(int amount, Account *creditor, bool force)
 {
     Account::credit(amount);
     rec += amount;

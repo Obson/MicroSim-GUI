@@ -32,6 +32,7 @@ OptionsDialog::OptionsDialog(QWidget *parent) :
     if (!ok) {
         gov_ind = 200;
     }
+
     int wage = settings.value("unit-wage", 100).toInt(&ok);
 
     ui->lineEdit->setText(QString::number(iterations));
@@ -111,6 +112,7 @@ void OptionsDialog::accept()
                             settings.setValue("nominal-population", nom_pop);
                             settings.setValue("unit-wage", unit_wage);
                             settings.setValue("government-employees", gov_ind_pop);
+
                             QDialog::accept();
                             return;
                         }

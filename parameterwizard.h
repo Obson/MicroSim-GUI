@@ -64,8 +64,7 @@ private:
 
     ParameterWizard *wiz;
 
-    QLineEdit *pop_size;
-    QLineEdit *std_wage;
+    QLineEdit *le_dir_exp_rate;
 
     QSpinBox *sb_emp_rate;
     QSpinBox *sb_prop_con;

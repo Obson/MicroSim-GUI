@@ -69,7 +69,7 @@ void Worker::setAgreedWage(int wage)
     agreed_wage = wage;
 }
 
-void Worker::credit(int amount, Account *creditor)
+void Worker::credit(int amount, Account *creditor, bool force)
 {
     // qDebug() << "Worker::credit(): amount =" << amount;
 

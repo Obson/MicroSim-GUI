@@ -133,6 +133,9 @@ DefaultPage::DefaultPage(ParameterWizard *w)
 {
     wiz = w;
 
+    le_dir_exp_rate = new QLineEdit();
+    le_dir_exp_rate->setFixedWidth(48);
+
     sb_emp_rate = wiz->getSpinBox(0, 100);
     sb_prop_con = wiz->getSpinBox(0, 100);
     sb_dedns = wiz->getSpinBox(0, 100);
@@ -154,7 +157,7 @@ DefaultPage::DefaultPage(ParameterWizard *w)
     cb_loan_prob->addItem(tr("Always"));
 
     QFormLayout *layout = new QFormLayout;
-    layout->addRow(new QLabel(tr("Target employment rate (%)")), sb_emp_rate);
+    layout->addRow(new QLabel(tr("Periodic procurement expenditure")), le_dir_exp_rate);
     layout->addRow(new QLabel(tr("Propensity to consume (%)")), sb_prop_con);
     layout->addRow(new QLabel(tr("Pre-tax deductions (%)")), sb_dedns);
     layout->addRow(new QLabel(tr("Income tax (%)")), sb_inc_tax);
@@ -174,6 +177,7 @@ void DefaultPage::readSettings(QString model)
     // Read the default parameters from settings.We use 'sensible' default
     // defaults so they will have a workable model to start with
     QSettings settings;
+    le_dir_exp_rate->setText(settings.value(model + "/default/govt-procurement", 0).toString());
     sb_emp_rate->setValue(settings.value(model + "/default/employment-rate", 95).toInt());
     sb_prop_con->setValue(settings.value(model + "/default/propensity-to-consume", 80).toInt());
     sb_dedns->setValue(settings.value(model + "/default/pre-tax-dedns-rate", 0).toInt());
@@ -203,7 +207,10 @@ bool DefaultPage::validatePage()
 
     QString model = wiz->current_model;
 
+    // TODO: We don't currently do any actual valdation here!
+
     QSettings settings;
+    settings.setValue(model + "/default/govt-procurement", le_dir_exp_rate->text().toInt());
     settings.setValue(model + "/default/employment-rate", sb_emp_rate->value());
     settings.setValue(model + "/default/propensity-to-consume", sb_prop_con->value());
     settings.setValue(model + "/default/pre-tax-dedns-rate", sb_dedns->value());
@@ -250,6 +257,7 @@ ExtraPage::ExtraPage(ParameterWizard *w)
     top_layout->addWidget(hdg_2);
 
     QFormLayout *bottom_layout = new QFormLayout;
+    bottom_layout->addRow(new QLabel(tr("Government procurement")), new QLineEdit);
     bottom_layout->addRow(new QLabel(tr("Standard wage")), new QLineEdit);
     bottom_layout->addRow(new QLabel(tr("Target employment rate (%)")), wiz->getSpinBox(0, 100));
     bottom_layout->addRow(new QLabel(tr("Propensity to consume (%)")), wiz->getSpinBox(0, 100));

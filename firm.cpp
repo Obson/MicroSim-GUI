@@ -145,7 +145,7 @@ void Firm::epilogue(int period)
     }
 }
 
-void Firm::credit(int amount, Account *creditor)
+void Firm::credit(int amount, Account *creditor, bool force)
 {
     Account::credit(amount);
 
@@ -156,7 +156,7 @@ void Firm::credit(int amount, Account *creditor)
     // supported firms to be commercial, in which case a better check might
     // be to see whether the creditor is the government.
 
-    if (!creditor->isGovernment())
+    if (!creditor->isGovernment() || force)
     {
         sales_receipts += amount;
 
