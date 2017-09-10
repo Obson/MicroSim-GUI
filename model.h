@@ -136,6 +136,7 @@ public:
         bus_size,
         hundred,
         zero,
+        procurement,
         num_properties
     };
 
@@ -177,6 +178,7 @@ public:
     int getWorkersBal(Model::Status status);
     int population();
     int getAmountOwed();
+    int getProcurementExpenditure();
 
     // ------------------------------------------------------------------------
     // Parameters
@@ -235,7 +237,7 @@ private:
     int _exp, _bens, _rcpts, _gov_bal, _num_firms, _num_emps, _num_unemps,
     _num_gov_emps, _num_hired, _num_fired, _prod_bal, _wages, _consumption,
     _bonuses, _dedns, _inc_tax, _sales_tax, _dom_bal, _deficit, _pop_size,
-    _loan_prob, _amount_owed, _bus_size, _pc_active;
+    _loan_prob, _amount_owed, _bus_size, _pc_active, _proc_exp;
 
 protected:
 

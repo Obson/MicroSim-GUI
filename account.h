@@ -270,6 +270,7 @@ public:
     int getExpenditure();   // Gov expenditure in current period (excl benefits)
     int getBenefitsPaid();  // Benefits paid this period
     int getReceipts();      // Gov receipts (taxes and dedns) in current period
+    int getProcExp();       // Procurement expenditure
 
     int debit(Account *requester, int amount);
 

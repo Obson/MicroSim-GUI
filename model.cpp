@@ -181,7 +181,8 @@ Model::Model(QString model_name)
               << Property::bus_size
               << Property::hundred
               << Property::zero
-              << Property::num_properties;      // dummy
+              << Property::procurement
+              << Property::num_properties;      // dummy (keep at end)
 
     // Set up an empty series for each property
     qDebug() << "Model::Model():" << model_name << "setting up results series";
@@ -236,6 +237,7 @@ int Model::scale(Property p)
     case Property::dom_bal:
     case Property::amount_owed:
     case Property::bus_size:
+    case Property::procurement:
         return val * _scale;
     }
 }
@@ -814,6 +816,10 @@ int Model::getPropertyVal(Property p)
     case Property::zero:
         return 0;
 
+    case Property::procurement:
+        _proc_exp = getProcurementExpenditure();
+        return _proc_exp;
+
     case Property::num_properties:
         Q_ASSERT(false);
         return 0;                       // prevent compiler warning
@@ -865,6 +871,11 @@ int Model::getNumUnemployed()
     }
 
     return n;
+}
+
+int Model::getProcurementExpenditure()
+{
+    return gov()->getProcExp();
 }
 
 Worker *Model::hire(Firm *employer, int wage, int period)

@@ -45,6 +45,11 @@ int Government::getReceipts()
     return rec;
 }
 
+int Government::getProcExp()
+{
+    return proc;
+}
+
 int Government::debit(Account *requester, int amount)
 {
     // If this is called by a non-govt-supported firm the program will abort

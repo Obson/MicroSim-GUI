@@ -151,10 +151,9 @@ void Firm::credit(int amount, Account *creditor, bool force)
 
     // If state-supported the reason we are being credited must be that we have
     // asked for additional support to pay wages, in which case we have now
-    // finished. If we are not state-supported the credit will be for a sale,
-    // and sales tax is therefore due. This could change if we allow state-
-    // supported firms to be commercial, in which case a better check might
-    // be to see whether the creditor is the government.
+    // finished (unless direct purchasing, in which case force == true). If we
+    // are not state-supported (or it's a direct purchase) the credit will be
+    // for a sale, and sales tax is therefore due.
 
     if (!creditor->isGovernment() || force)
     {
