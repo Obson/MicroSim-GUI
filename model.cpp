@@ -770,11 +770,11 @@ int Model::getPropertyVal(Property p)
         return _prod_bal;
 
     case Property::wages:
-        _wages = getWagesPaid();
+        _wages = getWagesPaid();                // not cumulative
         return _wages;
 
     case Property::consumption:
-        _consumption = getPurchasesMade();
+        _consumption = getPurchasesMade();      // not cumulative
         return _consumption;
 
     case Property::deficit_pc:

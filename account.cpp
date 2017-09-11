@@ -41,7 +41,7 @@ bool Account::isGovernment()
     return false;
 }
 
-// Use transferTo() in preference to credit() as credit() doesn't upate our
+// Use transferSafely() in preference to credit() as credit() doesn't upate our
 // balance
 bool Account::transferSafely(Account *recipient, int amount, Account *creditor)
 {

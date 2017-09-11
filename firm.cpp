@@ -75,7 +75,8 @@ void Firm::trigger(int period)
             balance = balance;
         }
 
-        wages_paid += model()->payWages(this, period);
+        // Important: wages_paid is not cumulative!
+        wages_paid = model()->payWages(this, period);
         balance -= wages_paid;
 
         // TODO: We've knocked this out in the reorganisation. Reinstate.
