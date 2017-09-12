@@ -64,6 +64,8 @@ void Worker::trigger(int period)
 
 void Worker::epilogue(int period)
 {
+    // This is all pointless
+    /*
     // We only need to keep track of the average when we are cloe to the end
     QSettings settings;
     int window = settings.value("sample-size", 10).toInt();
@@ -72,6 +74,7 @@ void Worker::epilogue(int period)
     {
         wages_history.append(wages);
     }
+    */
 }
 
 int Worker::agreedWage()
@@ -134,22 +137,9 @@ void Worker::credit(int amount, Account *creditor, bool force)
     // qDebug() << "Worker::credit(): done";
 }
 
-int Worker::getWagesReceived(bool average)
+int Worker::getWagesReceived()
 {
-    QSettings settings;
-    int window = settings.value("sample-size").toInt();
-    if (!average || wages_history.count() < window) {
-        return wages;
-    } else {
-        int res = 0;
-        int denom = 0;
-        for (int i = window; i > 0; i--) {
-            denom += i;
-            res += i * wages_history.at(i - 1);
-        }
-        //qDebug() << "Worker::getWagesReceived():  res =" << res << ",  denom =" << denom << ",  returning" << (res/denom);
-        return res / denom;
-    }
+    return wages;
 }
 
 int Worker::getBenefitsReceived()

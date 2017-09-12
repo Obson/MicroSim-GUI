@@ -255,7 +255,7 @@ double Model::gini()
     for (int i = 0; i < pop; i++)
     {
         Worker *w = workers[i];
-        n[i] = w->getWagesReceived(true);    // extend as required
+        n[i] = w->getWagesReceived();       // extend as required
     }
 
     std::sort(n, n + pop);                  // ascending order

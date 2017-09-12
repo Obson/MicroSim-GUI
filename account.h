@@ -141,7 +141,7 @@ public:
 
     void setAgreedWage(int wage);
 
-    int getWagesReceived(bool average = false);
+    int getWagesReceived();
     int getBenefitsReceived();
     int getPurchasesMade();
     int getIncTaxPaid();
