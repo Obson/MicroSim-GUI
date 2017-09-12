@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <QSettings>
 #include "newmodeldlg.h"
+#include <math.h>
 
 ControlWidget::ControlWidget(QWidget *parent) :
     QWidget(parent),
@@ -94,6 +95,11 @@ void ControlWidget::setStats(QString caption, int min_val, int max_val, int mean
     ui->lab_minimum->setText(QString::number(min_val));
     ui->lab_maximum->setText(QString::number(max_val));
     ui->lab_mean->setText(QString::number(mean));
+}
+
+void ControlWidget::setGini(double gini)
+{
+    ui->lab_gini->setText(QString::number(round(gini * 100)) + "%");
 }
 
 void ControlWidget::setNotes(QString s)

@@ -160,9 +160,9 @@
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>60</x>
+     <x>20</x>
      <y>10</y>
-     <width>131</width>
+     <width>101</width>
      <height>101</height>
     </rect>
    </property>
@@ -283,6 +283,50 @@
     <string>Edit</string>
    </property>
   </widget>
+  <widget class="QLabel" name="label_6">
+   <property name="geometry">
+    <rect>
+     <x>140</x>
+     <y>20</y>
+     <width>101</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>15</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>Gini coefficient</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
+  </widget>
+  <widget class="QLabel" name="lab_gini">
+   <property name="geometry">
+    <rect>
+     <x>140</x>
+     <y>50</y>
+     <width>101</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>21</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
+  </widget>
   <zorder>layoutWidget</zorder>
   <zorder>layoutWidget</zorder>
   <zorder>layoutWidget</zorder>
@@ -293,6 +337,8 @@
   <zorder>label_notes</zorder>
   <zorder>line_3</zorder>
   <zorder>btn_edit_model</zorder>
+  <zorder>label_6</zorder>
+  <zorder>lab_gini</zorder>
  </widget>
  <tabstops>
   <tabstop>le_start</tabstop>

@@ -203,6 +203,8 @@ public:
 
     int getLoanProb();
 
+    double getGini();
+
     static int getId();
 
     int num_hired;
@@ -220,6 +222,8 @@ private:
     int _period;
     Government *_gov;
     Bank *_bank;
+
+    double _gini;
 
     // Constants
 
@@ -244,7 +248,7 @@ protected:
     Model(QString model_name);
     int scale(Property p);
 
-    int gini();
+    double gini();
 
     enum class Opr
     {

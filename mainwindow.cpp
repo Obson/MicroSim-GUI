@@ -258,7 +258,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     QSettings settings;
     settings.beginGroup("State");
 
-    for (int i = 0, n = 0; i < propertyList->count(); i++)
+    for (int i = 0; i < propertyList->count(); i++)
     {
         QListWidgetItem *item;
         item = propertyList->item(i);
@@ -394,6 +394,7 @@ void MainWindow::editParameters()
     if (wiz->exec() == QDialog::Accepted)
     {
         current_model()->run();
+        ctrl->setGini(current_model()->getGini());
     }
     propertyChanged(nullptr);
 }
@@ -598,6 +599,7 @@ void MainWindow::drawChart(bool rerun)    // uses _current_model
     if (rerun)
     {
         _current_model->run();
+        ctrl->setGini(_current_model->getGini());
     }
 
     chart->legend()->show();
