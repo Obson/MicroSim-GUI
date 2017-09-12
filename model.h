@@ -244,6 +244,8 @@ protected:
     Model(QString model_name);
     int scale(Property p);
 
+    int gini();
+
     enum class Opr
     {
         invalid_op,

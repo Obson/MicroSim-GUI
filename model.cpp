@@ -2,6 +2,8 @@
 #include <QtGlobal>
 #include "account.h"
 #include <QDebug>
+#include <limits>
+#include <algorithm>
 
 QList<Model*> Model::models;
 Model *Model::current = nullptr;
@@ -242,6 +244,37 @@ int Model::scale(Property p)
     }
 }
 
+int Model::gini()
+{
+    int pop = workers.count();
+
+    int a = 0;
+
+    int cum_tot = 0;    // total income received
+    int n[pop];         //
+
+    for (int i = 0; i < pop; i++)
+    {
+        Worker *w = workers[i];
+        int val = w->getWagesReceived();    // extend as required
+        cum_tot += val;
+        n[i] = cum_tot;
+    }
+
+    int a_tot = (cum_tot * pop) / 2;        // area A+B
+
+    // TODO: It might be an idea to scale these quantities for accuracy, or
+    // perhaps to use doubles...
+    for (int i = 0; i < pop; i++)
+    {
+        int diff = ((cum_tot * i) / pop) - n[i];
+        a += diff;                          // area A
+    }
+
+    qDebug() << "Model::gini():  cum_tot =" << cum_tot << ",  pop =" << pop << ",  a =" << a << ",  a_tot =" << a_tot;
+    return (a * 100) / a_tot;
+}
+
 void Model::readDefaultParameters()
 {
     // Get parameters from settings.
@@ -469,7 +502,7 @@ void Model::run()
         }
     }
 
-    qDebug() << "Model::run(): _name =" << _name << "done";
+    qDebug() << "Model::run(): _name =" << _name << "  gini =" << gini();
 }
 
 int Model::period()
