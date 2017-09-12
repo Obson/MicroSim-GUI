@@ -15,6 +15,8 @@ void Worker::init()
     benefits = 0;
     purchases = 0;
     inc_tax = 0;
+
+    wages_history.clear();
 }
 
 bool Worker::isEmployed()
@@ -54,9 +56,22 @@ void Worker::trigger(int period)
         if (purch > 0 && transferSafely(model()->selectRandomFirm(), purch, this))
         {
             purchases += purch;
+
         }
     }
     // qDebug() << "Worker::trigger(): done";
+}
+
+void Worker::epilogue(int period)
+{
+    // We only need to keep track of the average when we are cloe to the end
+    QSettings settings;
+    int window = settings.value("sample-size", 10).toInt();
+
+    if (period >= model()->getIters() + model()->getStartPeriod() - window)
+    {
+        wages_history.append(wages);
+    }
 }
 
 int Worker::agreedWage()
@@ -119,9 +134,22 @@ void Worker::credit(int amount, Account *creditor, bool force)
     // qDebug() << "Worker::credit(): done";
 }
 
-int Worker::getWagesReceived()
+int Worker::getWagesReceived(bool average)
 {
-    return wages;
+    QSettings settings;
+    int window = settings.value("sample-size").toInt();
+    if (!average || wages_history.count() < window) {
+        return wages;
+    } else {
+        int res = 0;
+        int denom = 0;
+        for (int i = window; i > 0; i--) {
+            denom += i;
+            res += i * wages_history.at(i - 1);
+        }
+        //qDebug() << "Worker::getWagesReceived():  res =" << res << ",  denom =" << denom << ",  returning" << (res/denom);
+        return res / denom;
+    }
 }
 
 int Worker::getBenefitsReceived()

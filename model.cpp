@@ -250,18 +250,24 @@ double Model::gini()
 
     double a = 0.0;
 
-    double cum_tot = 0.0;    // total income received
-    double n[pop];         //
+    int n[pop];         //
 
     for (int i = 0; i < pop; i++)
     {
         Worker *w = workers[i];
-        int val = w->getWagesReceived();    // extend as required
-        cum_tot += val;
-        n[i] = cum_tot;
+        n[i] = w->getWagesReceived(true);    // extend as required
     }
 
-    double a_tot = (cum_tot * pop) / 2.0;        // area A+B
+    std::sort(n, n + pop);                  // ascending order
+
+    for (int i = 1; i < pop; i++)
+    {
+       n[i] += n[i - 1];                    // make values cumulative
+    }
+
+    double cum_tot = n[pop - 1];
+
+    double a_tot = (cum_tot * pop) / 2.0;   // area A+B
 
     for (int i = 0; i < pop; i++)
     {
@@ -353,6 +359,16 @@ void Model::readDefaultParameters()
 QString Model::name()
 {
     return _name;
+}
+
+int Model::getIters()
+{
+    return _iterations;
+}
+
+int Model::getStartPeriod()
+{
+    return _first_period;
 }
 
 void Model::restart()
@@ -460,6 +476,11 @@ void Model::run()
         // bonuses, and hire more employees (investment)
         for (int i = 0, c = firms.count(); i < c; i++) {
             firms[i]->epilogue(_period);
+        }
+
+        // Same for workers so they can keep rolling averages up to date
+        for (int i = 0, c = workers.count(); i < c; i++) {
+            workers[i]->epilogue(_period);
         }
 
         // -------------------------------------------

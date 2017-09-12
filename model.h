@@ -61,6 +61,9 @@ public:
     void run();
     void restart();
 
+    int getIters();         // number of iterations (periods)
+    int getStartPeriod();
+
     Government *gov();
     Bank *bank();
 
@@ -184,7 +187,6 @@ public:
     // Parameters
     // ------------------------------------------------------------------------
 
-    int getIters();         // number of iterations (periods)
     int getActivePop();     // proportion of population that is economically active
     int getProcurement();   //direct government expenditure
     int getTargetEmpRate(); // target rate of employment (%)

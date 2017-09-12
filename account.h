@@ -5,6 +5,7 @@
 #include <model.h>
 #include <iostream>
 #include <list>
+#include <QList>
 
 // Account is the base class for every active entity in the system and provides
 // the basic overrideable functionality.
@@ -111,6 +112,10 @@ private:
 
     int agreed_wage;
 
+    int average_wages;
+
+    QList<int> wages_history;
+
 protected:
 
     Government *gov;
@@ -123,7 +128,6 @@ protected:
 public:
 
     Worker(Model *model);
-    //Worker(int wage, Firm *emp, int period, QObject *parent = nullptr);
 
     Firm *getEmployer();
     bool isEmployed();
@@ -133,10 +137,11 @@ public:
     // Overrides
     void credit(int amount, Account *creditor = nullptr, bool force = false);
     void trigger(int period);
+    void epilogue(int period);
 
     void setAgreedWage(int wage);
 
-    int getWagesReceived();
+    int getWagesReceived(bool average = false);
     int getBenefitsReceived();
     int getPurchasesMade();
     int getIncTaxPaid();

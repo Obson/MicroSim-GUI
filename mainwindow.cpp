@@ -71,6 +71,7 @@ MainWindow::MainWindow()
         settings.setValue("nominal-population", 1000);
         settings.setValue("unit-wage", 100);
         settings.setValue("government-employees", 200); // approx tot pop / 5
+        settings.setValue("sample-size", 10); // for moving averages -- adjust as necessary
     }
 
     createChart();
