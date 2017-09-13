@@ -157,18 +157,25 @@ DefaultPage::DefaultPage(ParameterWizard *w)
     cb_loan_prob->addItem(tr("Always"));
 
     QFormLayout *layout = new QFormLayout;
+    layout->addRow(new QLabel(tr("<b>Government</b>")));
     layout->addRow(new QLabel(tr("Periodic procurement expenditure")), le_dir_exp_rate);
+    layout->addRow(new QLabel(tr("Unemployment benefit (%)")), sb_ubr);
+
+    layout->addRow(new QLabel(tr("<b>Workers</b>")));
     layout->addRow(new QLabel(tr("Propensity to consume (%)")), sb_prop_con);
-    layout->addRow(new QLabel(tr("Pre-tax deductions (%)")), sb_dedns);
     layout->addRow(new QLabel(tr("Income tax (%)")), sb_inc_tax);
+
+    layout->addRow(new QLabel(tr("<b>Businesses</b>")));
+    layout->addRow(new QLabel(tr("Pre-tax deductions (%)")), sb_dedns);
     layout->addRow(new QLabel(tr("Sales tax (%)")), sb_sales_tax);
-    layout->addRow(new QLabel(tr("Business creation rate (%)")), sb_bcr);
     layout->addRow(new QLabel(tr("Profit distribution rate (%)")), sb_distrib);
     layout->addRow(new QLabel(tr("Investment rate (%)")), sb_prop_inv);
-    layout->addRow(new QLabel(tr("Unemployment benefit (%)")), sb_ubr);
+    layout->addRow(new QLabel(tr("Borrow if needed to pay wages")), cb_loan_prob);
+    layout->addRow(new QLabel(tr("Business creation rate (%)")), sb_bcr);
+
+    layout->addRow(new QLabel(tr("<b>Banks</b>")));
     layout->addRow(new QLabel(tr("BOE lending rate (%)")), sb_boe_loan_int);
     layout->addRow(new QLabel(tr("Retail lending rate (%)")), sb_bus_loan_int);
-    layout->addRow(new QLabel(tr("Borrow if needed to pay wages")), cb_loan_prob);
     setLayout(layout);
 }
 

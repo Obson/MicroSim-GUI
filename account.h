@@ -158,7 +158,6 @@ class Firm: public Account
 
 private:
 
-    int amount_granted = 0;
     int wages_paid = 0;
     int bonuses_paid = 0;
     int sales_tax_paid = 0;
@@ -174,10 +173,6 @@ private:
 protected:
 
     Government *gov;
-
-    // Only government can make a grant, so this should be protected
-    // and the Government class made a friend class
-    void grant(int amount);
 
     void init();
 
@@ -217,7 +212,6 @@ public:
     // Overrides base mmethod to give additional functionality
     void credit(int amount, Account *creditor = nullptr, bool force = false);
 
-    int getAmountGranted();
     int getWagesPaid();
     int getBonusesPaid();
     int getSalesTaxPaid();

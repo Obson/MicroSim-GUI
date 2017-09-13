@@ -38,7 +38,6 @@ void Firm::init()
     num_hired = 0;
     num_fired = 0;
     bonuses_paid = 0;
-    amount_granted = 0;
 }
 
 bool Firm::isGovernmentSupported()
@@ -51,7 +50,6 @@ void Firm::trigger(int period)
     if (period > last_triggered)
     {
         last_triggered = period;
-        balance += amount_granted;
 
         if (!_state_supported)
         {
@@ -92,47 +90,37 @@ void Firm::trigger(int period)
 // hire new workers if funds permit.
 void Firm::epilogue(int period)
 {
+    if (_state_supported) {
+        return;
+    }
+
     if (balance > wages_paid)
     {
-        // It seems odd that a government-supported industry should have to pay
-        // pre-tax deductions to the government but it supports the mythology
-        // that they amount to an insurance premium
+        // We must keep in hand at least the amount needed to pay wages
         int available = balance - wages_paid;   // now includes deductions
 
-        int investible, bonuses;
-        if (_state_supported)
+        int investible = (available * model()->getPropInv()) / 100;
+        int bonuses = ((available - investible) * model()->getDistributionRate()) / 100;
+
+        // We distribute the funds before hiring new workers to ensure they
+        // only get distributed to existing workers.
+        int emps = model()->getNumEmployedBy(this);
+        int amt_paid = 0;
+        if (emps > 0)
         {
-            investible = available;
-            bonuses = 0;
+            amt_paid = model()->payWorkers(bonuses/emps, bonuses, this, Model::for_bonus);
         }
-        else
+
+        // Adjust calculation if not all the bonus funds were used
+        if (amt_paid < bonuses)
         {
-            investible = (available * model()->getPropInv()) / 100;
-            bonuses = ((available - investible) * model()->getDistributionRate()) / 100;
+            investible += (bonuses_paid);
         }
 
-        // We distribute the funds before hiring new workers to ensure they only
-        // get distributed to existing workers.
-        if (!_state_supported)
-        {
-            int emps = model()->getNumEmployedBy(this);
-            int amt_paid = 0;
-            if (emps > 0)
-            {
-                amt_paid = model()->payWorkers(bonuses/emps, bonuses, this, Model::for_bonus);
-            }
+        balance -= amt_paid;
+        Q_ASSERT(balance >= 0);
 
-            // Adjust calculation if not all the bonus funds were used
-            if (amt_paid < bonuses)
-            {
-                investible += (bonuses_paid);
-            }
-
-            balance -= amt_paid;
-            Q_ASSERT(balance >= 0);
-
-            bonuses_paid += amt_paid;
-        }
+        bonuses_paid += amt_paid;
 
         // How many more employees can we afford?
         int wage = model()->getStdWage();
@@ -174,16 +162,6 @@ void Firm::credit(int amount, Account *creditor, bool force)
             }
         }
     }
-}
-
-void Firm::grant(int amount)
-{
-    amount_granted = amount;
-}
-
-int Firm::getAmountGranted()
-{
-    return amount_granted;
 }
 
 int Firm::getWagesPaid()
