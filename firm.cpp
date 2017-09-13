@@ -69,10 +69,6 @@ void Firm::trigger(int period)
             }
         }
 
-        if (balance < 0) {
-            balance = balance;
-        }
-
         // Important: wages_paid is not cumulative!
         wages_paid = model()->payWages(this, period);
         balance -= wages_paid;
@@ -91,6 +87,11 @@ void Firm::trigger(int period)
 void Firm::epilogue(int period)
 {
     if (_state_supported) {
+        // State-supported businesses are set up will a full quota of
+        // employees and do not receive funds from sales so have no need to
+        // (and cannot) recruit. As funds are supplied by government for
+        // payment of wages only (including expenses) bonuses cannot be paid
+        // either, so there's nothing to do here.
         return;
     }
 
@@ -104,6 +105,20 @@ void Firm::epilogue(int period)
 
         // We distribute the funds before hiring new workers to ensure they
         // only get distributed to existing workers.
+
+        // --------------------------------------------------------------------
+        // FIXME: This is OK only on the assumption that we are actually able
+        // to hire said workers. If not we have reserved funds that do not get
+        // sent with the result that business sector balance increases without
+        // limit and deficit stabilises at positive non-zero value. The implied
+        // question is what to do with funds when we don't pay bonuses and we
+        // can't recruit. I suppose the answer is that we either (a) save the
+        // money and let it build up until we can declae a dividend (how is
+        // this specified?), (b) poach employees by offering increased wages,
+        // or (c) invest in capital equipment. We don't currently have
+        // mechanisms for any of these...
+        // --------------------------------------------------------------------
+
         int emps = model()->getNumEmployedBy(this);
         int amt_paid = 0;
         if (emps > 0)
