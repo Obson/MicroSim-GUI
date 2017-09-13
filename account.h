@@ -114,8 +114,6 @@ private:
 
     int average_wages;
 
-    QList<int> wages_history;
-
 protected:
 
     Government *gov;
@@ -142,6 +140,7 @@ public:
     void setAgreedWage(int wage);
 
     int getWagesReceived();
+    int getAverageWages();
     int getBenefitsReceived();
     int getPurchasesMade();
     int getIncTaxPaid();

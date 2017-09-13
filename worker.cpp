@@ -6,6 +6,7 @@ Worker::Worker(Model *model) : Account(model)
     employer = nullptr;
     period_hired = -1;
     period_fired = 0;
+    average_wages = 0;
     init();
 }
 
@@ -15,8 +16,6 @@ void Worker::init()
     benefits = 0;
     purchases = 0;
     inc_tax = 0;
-
-    wages_history.clear();
 }
 
 bool Worker::isEmployed()
@@ -64,17 +63,7 @@ void Worker::trigger(int period)
 
 void Worker::epilogue(int period)
 {
-    // This is all pointless
-    /*
-    // We only need to keep track of the average when we are cloe to the end
-    QSettings settings;
-    int window = settings.value("sample-size", 10).toInt();
-
-    if (period >= model()->getIters() + model()->getStartPeriod() - window)
-    {
-        wages_history.append(wages);
-    }
-    */
+    average_wages = (wages + average_wages) / 2;
 }
 
 int Worker::agreedWage()
@@ -140,6 +129,11 @@ void Worker::credit(int amount, Account *creditor, bool force)
 int Worker::getWagesReceived()
 {
     return wages;
+}
+
+int Worker::getAverageWages()
+{
+    return average_wages;
 }
 
 int Worker::getBenefitsReceived()
