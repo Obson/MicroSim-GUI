@@ -124,44 +124,60 @@ void Firm::epilogue(int period)
         bonuses_paid += amt_paid;
 
         // How many more employees can we afford?
-        int wage = model()->getStdWage();
+        int std_wage = model()->getStdWage();
+        int current_wage_rate = (std_wage * productivity_pc) / 100;
         int num_to_hire = (investible * 100) /
-                (wage * (100 + model()->getPreTaxDedns()));
+                (current_wage_rate * (100 + model()->getPreTaxDedns()));
 
         if (num_to_hire > 0)
         {
-            int excess = investible - model()->hireSome(this, wage, period, num_to_hire);
+            int invested = model()->hireSome(this, current_wage_rate, period,
+                                             num_to_hire);
+            int excess = investible - invested;
 
-            // We may not actually be able to hire said workers. If not we will
-            // have reserved funds that do not get spent, with the result that
-            // the business sector balance will increases without limit and the
-            // deficit will stabilise at a positive non-zero value. The
-            // question is then what to do with funds when we don't pay bonuses
-            // and we can't recruit.
-            //    We can either (a) save the money and let it build up until we
-            // can declare a dividend (how is this specified?), (b) poach
-            // employees by offering increased wages, or (c) invest in capital
-            // equipment.
-            //    For the time being we assume option (c) only.
+            // If we are unable to hire all the workers we want we will
+            // have reserved funds that do not get spent. Even if we do there
+            // may well be a non-zero residue, although this would normally get
+            // incoporated into subsequent investments. Where this fails
+            // because there are no unemployed workers left to recruit, the
+            // business sector balance will increase without limit and the
+            // deficit will eventually stabilise at a positive non-zero value.
+            //    To avoid this we must dispose of the surplus funds. We can
+            // either (a) let the money build up until we can declare a
+            // dividend (how is this specified?), (b) poach employees by
+            // offering increased wages, or (c) invest in capital
+            // equipment. For the time being we adopt option (c) only.
 
             if (excess > 0)
             {
-                // purchase capital equipment to the value of 'excess'. Note
-                // that this operation distributes the excess funds around the
-                // other firms, which will be equally unable to use them.
-                // However as this is happening in the epilogue phase they will
-                // simply remain in their balances until next triggered, at
-                // which point they will also have to purchase capital
-                // equipment. The medium-term result will be a geral in flation.
-                Firm *supplier = model()->selectRandomFirm(this);
-                supplier->credit(excess, this);
-                balance -= excess;
+                int new_emps = model()->getNumEmployedBy(this);
 
-                // NEXT: Increase productivity here.
-                // ...
+                if (emps > 0 || new_emps > 0)
+                {
+                    // purchase capital equipment to the value of 'excess'. Note
+                    // that this operation distributes the excess funds around the
+                    // other firms, which will be equally unable to use them.
+                    // However as this is happening in the epilogue phase they will
+                    // simply remain in their balances until next triggered, at
+                    // which point they will also have to purchase capital
+                    // equipment. The medium-term result will be a geral in flation.
+                    Firm *supplier = model()->selectRandomFirm(this);
+                    supplier->credit(excess, this);
+                    balance -= excess;
 
-                // TODO: Integrate productivity into wages throughout
-                // ...
+                    // We assume we want to recoup the investment over ten periods
+                    // (this must be parameterised), so we need to raise an
+                    // additional (investment / 10) per period. This can be shared
+                    // out over the new number of employees giving an additional
+                    //     investment / (10 * (emps + new_emps))
+                    // per employee. The new wage rate will then be
+                    //     current_wage_rate + (invested / (10 * (emps + new_emps))
+                    // so productivity will be
+                    //     {current_wage_rate + (invested / (10 * (emps + new_emps))} / std_wage
+                    // I think!
+
+                    productivity_pc = ((current_wage_rate + (invested / (10 * (emps + new_emps)))) * 100) / std_wage;
+                }
             }
         }
     }

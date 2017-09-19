@@ -302,7 +302,7 @@ void Model::readDefaultParameters()
     _startups = settings.value("startups", 10).toInt();
     _first_period = settings.value("start-period", 1).toInt();
     _scale = settings.value("nominal-population", 1000).toInt() / 1000;
-    _std_wage = settings.value("unit-wage", 500).toInt();
+    _std_wage = settings.value("unit-wage", 100).toInt();
     _population = 1000;
 
     // Model-specific settings
