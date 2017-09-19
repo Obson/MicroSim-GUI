@@ -74,7 +74,7 @@ public:
     int total(int);
 
     Firm *createFirm(bool state_supported = false);
-    Firm *selectRandomFirm();
+    Firm *selectRandomFirm(Firm *exclude = nullptr);
 
     enum class Status {any, employed, unemployed};
 

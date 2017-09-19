@@ -578,14 +578,16 @@ Firm *Model::createFirm(bool state_supported)
     return firm;
 }
 
-Firm *Model::selectRandomFirm()
+Firm *Model::selectRandomFirm(Firm *exclude)
 {
     // Any firm apart from the government firm. This is a bit of a trick. We
     // make sure that the main (and currently, only) government-supported firm
     // is created first so it will always be firms[0]. This enables us to
     // select a random firm but excluding the government firm from the
     // selection.
-    return firms[(qrand() % (firms.size() - 1)) + 1];
+    Firm *res;
+    while ((res = firms[(qrand() % (firms.size() - 1)) + 1]) == exclude);
+    return res;
 }
 
 int Model::getWageBill(Firm *employer, bool include_dedns)

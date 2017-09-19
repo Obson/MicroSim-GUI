@@ -105,20 +105,6 @@ void Firm::epilogue(int period)
 
         // We distribute the funds before hiring new workers to ensure they
         // only get distributed to existing workers.
-
-        // --------------------------------------------------------------------
-        // FIXME: This is OK only on the assumption that we are actually able
-        // to hire said workers. If not we have reserved funds that do not get
-        // sent with the result that business sector balance increases without
-        // limit and deficit stabilises at positive non-zero value. The implied
-        // question is what to do with funds when we don't pay bonuses and we
-        // can't recruit. I suppose the answer is that we either (a) save the
-        // money and let it build up until we can declae a dividend (how is
-        // this specified?), (b) poach employees by offering increased wages,
-        // or (c) invest in capital equipment. We don't currently have
-        // mechanisms for any of these...
-        // --------------------------------------------------------------------
-
         int emps = model()->getNumEmployedBy(this);
         int amt_paid = 0;
         if (emps > 0)
@@ -144,7 +130,39 @@ void Firm::epilogue(int period)
 
         if (num_to_hire > 0)
         {
-            model()->hireSome(this, wage, period, num_to_hire);
+            int excess = investible - model()->hireSome(this, wage, period, num_to_hire);
+
+            // We may not actually be able to hire said workers. If not we will
+            // have reserved funds that do not get spent, with the result that
+            // the business sector balance will increases without limit and the
+            // deficit will stabilise at a positive non-zero value. The
+            // question is then what to do with funds when we don't pay bonuses
+            // and we can't recruit.
+            //    We can either (a) save the money and let it build up until we
+            // can declare a dividend (how is this specified?), (b) poach
+            // employees by offering increased wages, or (c) invest in capital
+            // equipment.
+            //    For the time being we assume option (c) only.
+
+            if (excess > 0)
+            {
+                // purchase capital equipment to the value of 'excess'. Note
+                // that this operation distributes the excess funds around the
+                // other firms, which will be equally unable to use them.
+                // However as this is happening in the epilogue phase they will
+                // simply remain in their balances until next triggered, at
+                // which point they will also have to purchase capital
+                // equipment. The medium-term result will be a geral in flation.
+                Firm *supplier = model()->selectRandomFirm(this);
+                supplier->credit(excess, this);
+                balance -= excess;
+
+                // NEXT: Increase productivity here.
+                // ...
+
+                // TODO: Integrate productivity into wages throughout
+                // ...
+            }
         }
     }
 }

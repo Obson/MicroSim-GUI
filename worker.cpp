@@ -80,10 +80,10 @@ void Worker::credit(int amount, Account *creditor, bool force)
 {
     // qDebug() << "Worker::credit(): amount =" << amount;
 
-    if (amount < 0) {
-        amount = amount;
+    if (amount < 0)
+    {
+        Q_ASSERT(false);
     }
-    Q_ASSERT(amount >= 0);
 
     Account::credit(amount);
 

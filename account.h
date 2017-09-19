@@ -168,6 +168,7 @@ private:
     //int wage_bill = 0;              // current cost of wages and deductions
 
     bool _state_supported = false;
+    int productivity_pc = 100;
 
 protected:
 
