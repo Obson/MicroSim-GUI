@@ -140,6 +140,7 @@ public:
         hundred,
         zero,
         procurement,
+        productivity,
         num_properties
     };
 
@@ -245,6 +246,8 @@ private:
     _num_gov_emps, _num_hired, _num_fired, _prod_bal, _wages, _consumption,
     _bonuses, _dedns, _inc_tax, _sales_tax, _dom_bal, _deficit, _pop_size,
     _loan_prob, _amount_owed, _bus_size, _pc_active, _proc_exp;
+
+    double _productivity;
 
 protected:
 

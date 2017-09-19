@@ -184,6 +184,7 @@ Model::Model(QString model_name)
               << Property::hundred
               << Property::zero
               << Property::procurement
+              << Property::productivity
               << Property::num_properties;      // dummy (keep at end)
 
     // Set up an empty series for each property
@@ -213,6 +214,7 @@ int Model::scale(Property p)
     case Property::deficit_pc:
     case Property::hundred:
     case Property::zero:
+    case Property::productivity:
     case Property::num_properties:
         return val;
 
@@ -537,6 +539,7 @@ void Model::run()
                     sum[j] += val;
                 }
             }
+            // productivity();     // testing
         }
 
         // -------------------------------------------
@@ -902,6 +905,10 @@ int Model::getPropertyVal(Property p)
     case Property::procurement:
         _proc_exp = getProcurementExpenditure();
         return _proc_exp;
+
+    case Property::productivity:
+        _productivity = productivity();
+        return _productivity + 0.5;
 
     case Property::num_properties:
         Q_ASSERT(false);
