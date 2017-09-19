@@ -167,16 +167,16 @@ void Firm::epilogue(int period)
 
                     // We assume we want to recoup the investment over ten periods
                     // (this must be parameterised), so we need to raise an
-                    // additional (investment / 10) per period. This can be shared
+                    // additional (excess / 10) per period. This can be shared
                     // out over the new number of employees giving an additional
-                    //     investment / (10 * (emps + new_emps))
+                    //     excess / (10 * (emps + new_emps))
                     // per employee. The new wage rate will then be
-                    //     current_wage_rate + (invested / (10 * (emps + new_emps))
+                    //     current_wage_rate + (excess / (10 * (emps + new_emps))
                     // so productivity will be
-                    //     {current_wage_rate + (invested / (10 * (emps + new_emps))} / std_wage
+                    //     {current_wage_rate + (excess / (10 * (emps + new_emps))} / std_wage
                     // I think!
 
-                    productivity = double(current_wage_rate + (invested / (10 * (emps + new_emps)))) / double(std_wage);
+                    productivity = double(current_wage_rate + (excess / (10 * (emps + new_emps)))) / double(std_wage);
                 }
             }
         }
