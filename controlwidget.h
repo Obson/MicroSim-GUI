@@ -18,7 +18,7 @@ public:
     void setStats(QString caption, int min_val, int max_val, int mean);
     void setNotes(QString);
     void updateStatus(QString);
-    void setGini(double gini);
+    void setGini(double gini, double prod);
 
 public slots:
     void statusChanged(QString status);

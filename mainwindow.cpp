@@ -394,8 +394,9 @@ void MainWindow::editParameters()
     wiz->setCurrentModel(model_name);
     if (wiz->exec() == QDialog::Accepted)
     {
-        current_model()->run();
-        ctrl->setGini(current_model()->getGini());
+        Model *mod = current_model();
+        mod->run();
+        ctrl->setGini(mod->getGini(), mod->getProductivity());
     }
     propertyChanged(nullptr);
 }
@@ -600,7 +601,7 @@ void MainWindow::drawChart(bool rerun)    // uses _current_model
     if (rerun)
     {
         _current_model->run();
-        ctrl->setGini(_current_model->getGini());
+        ctrl->setGini(_current_model->getGini(), _current_model->getProductivity());
     }
 
     chart->legend()->show();

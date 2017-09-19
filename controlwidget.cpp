@@ -97,9 +97,10 @@ void ControlWidget::setStats(QString caption, int min_val, int max_val, int mean
     ui->lab_mean->setText(QString::number(mean));
 }
 
-void ControlWidget::setGini(double gini)
+void ControlWidget::setGini(double gini, double prod)
 {
     ui->lab_gini->setText(QString::number(round(gini * 100)) + "%");
+    ui->lab_prod->setText(QString::number(round(prod + 0.5)) + "%");
 }
 
 void ControlWidget::setNotes(QString s)

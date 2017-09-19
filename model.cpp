@@ -289,6 +289,24 @@ double Model::getGini()
     return _gini;
 }
 
+double Model::getProductivity()
+{
+    return productivity();
+}
+
+double Model::productivity()
+{
+    double tot = 0.0;
+    int count = firms.count();
+    for (int i = 0; i < count; i++)
+    {
+        Firm *f = firms[i];
+        tot += f->getNumEmployees() * f->getProductivity();
+    }
+    double res = tot / count;
+    return res;
+}
+
 void Model::readDefaultParameters()
 {
     // Get parameters from settings.

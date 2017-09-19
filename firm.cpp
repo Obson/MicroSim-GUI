@@ -125,7 +125,7 @@ void Firm::epilogue(int period)
 
         // How many more employees can we afford?
         int std_wage = model()->getStdWage();
-        int current_wage_rate = (std_wage * productivity_pc) / 100;
+        int current_wage_rate = std_wage * productivity;
         int num_to_hire = (investible * 100) /
                 (current_wage_rate * (100 + model()->getPreTaxDedns()));
 
@@ -176,7 +176,7 @@ void Firm::epilogue(int period)
                     //     {current_wage_rate + (invested / (10 * (emps + new_emps))} / std_wage
                     // I think!
 
-                    productivity_pc = ((current_wage_rate + (invested / (10 * (emps + new_emps)))) * 100) / std_wage;
+                    productivity = double(current_wage_rate + (invested / (10 * (emps + new_emps)))) / double(std_wage);
                 }
             }
         }
@@ -211,6 +211,11 @@ void Firm::credit(int amount, Account *creditor, bool force)
             }
         }
     }
+}
+
+double Firm::getProductivity()
+{
+    return productivity;
 }
 
 int Firm::getWagesPaid()

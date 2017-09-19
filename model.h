@@ -206,6 +206,7 @@ public:
     int getLoanProb();
 
     double getGini();
+    double getProductivity();
 
     static int getId();
 
@@ -251,6 +252,7 @@ protected:
     int scale(Property p);
 
     double gini();
+    double productivity();
 
     enum class Opr
     {

@@ -168,7 +168,7 @@ private:
     //int wage_bill = 0;              // current cost of wages and deductions
 
     bool _state_supported = false;
-    int productivity_pc = 100;
+    double productivity = 1;
 
 protected:
 
@@ -222,6 +222,8 @@ public:
 
     int getNumHired();
     int getNumFired();
+
+    double getProductivity();
 };
 
 // There is just one instance of the Government class in each model, as we are
