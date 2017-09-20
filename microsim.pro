@@ -59,4 +59,4 @@ DISTFILES += \
     README.md
 
 RESOURCES += \
-    images.qrc
+    microsim.qrc
