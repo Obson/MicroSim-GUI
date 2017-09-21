@@ -59,7 +59,7 @@ void Firm::trigger(int period)
             // parameter that indicates the factor by which the balance has to
             // exceed the outstanding loan before we will repay it. Or
             // something...
-            int interest = (owed_to_bank * interest_rate) / 100;
+            double interest = owed_to_bank * interest_rate;
 
             // If interest is greater than balance we'll just skip the payment
             // and hope for better luck next time. A bank is unlikely to
@@ -71,7 +71,6 @@ void Firm::trigger(int period)
             }
             else if (interest == 0 && owed_to_bank > 0)
             {
-                double interest = (owed_to_bank * interest_rate) / 100;
                 qDebug() << "Firm::trigger(): adding interest of" << interest << "to loan";
                 owed_to_bank += interest;
             }
@@ -106,15 +105,15 @@ void Firm::epilogue(int period)
     if (balance > wages_paid)
     {
         // We must keep in hand at least the amount needed to pay wages
-        int available = balance - wages_paid;   // now includes deductions
+        double available = balance - wages_paid;   // now includes deductions
 
-        int investible = (available * model()->getPropInv()) / 100;
-        int bonuses = ((available - investible) * model()->getDistributionRate()) / 100;
+        double investible = (available * model()->getPropInv()) / 100;
+        double bonuses = ((available - investible) * model()->getDistributionRate()) / 100;
 
         // We distribute the funds before hiring new workers to ensure they
         // only get distributed to existing workers.
         int emps = model()->getNumEmployedBy(this);
-        int amt_paid = 0;
+        double amt_paid = 0;
         if (emps > 0)
         {
             amt_paid = model()->payWorkers(bonuses/emps, bonuses, this, Model::for_bonus);
@@ -123,7 +122,7 @@ void Firm::epilogue(int period)
         // Adjust calculation if not all the bonus funds were used
         if (amt_paid < bonuses)
         {
-            investible += (bonuses_paid);
+            investible += bonuses_paid;
         }
 
         balance -= amt_paid;
@@ -132,16 +131,16 @@ void Firm::epilogue(int period)
         bonuses_paid += amt_paid;
 
         // How many more employees can we afford?
-        int std_wage = model()->getStdWage();
-        int current_wage_rate = std_wage * productivity;
+        double std_wage = model()->getStdWage();
+        double current_wage_rate = productivity * std_wage;
         int num_to_hire = (investible * 100) /
                 (current_wage_rate * (100 + model()->getPreTaxDedns()));
 
         if (num_to_hire > 0)
         {
-            int invested = model()->hireSome(this, current_wage_rate, period,
+            double invested = model()->hireSome(this, current_wage_rate, period,
                                              num_to_hire);
-            int excess = investible - invested;
+            double excess = investible - invested;
 
             // If we are unable to hire all the workers we want we will
             // have reserved funds that do not get spent. Even if we do there
@@ -184,14 +183,14 @@ void Firm::epilogue(int period)
                     //     {current_wage_rate + (excess / (10 * (emps + new_emps))} / std_wage
                     // I think!
 
-                    productivity = double(current_wage_rate + (double(excess) / (10 * (emps + new_emps)))) / double(std_wage);
+                    productivity = (current_wage_rate + (double(excess) / (10 * (emps + new_emps)))) / std_wage;
                 }
             }
         }
     }
 }
 
-void Firm::credit(int amount, Account *creditor, bool force)
+void Firm::credit(double amount, Account *creditor, bool force)
 {
     Account::credit(amount);
 
@@ -209,11 +208,10 @@ void Firm::credit(int amount, Account *creditor, bool force)
         // not buyer, is responsible for paying sales tax and that payments
         // to a Firm are always for purchases and therefore subject to
         // sales tax.
-        int r = model()->getSalesTaxRate();    // e.g. 25%
+        double r = double(model()->getSalesTaxRate()) / 100;    // e.g. 25% -> 0.25
         if (r > 0)
         {
-            int r_eff = (100 * r) / (100 + r);      // e.g. 20%
-            int t = (amount * r_eff) / 100;
+            double t = (amount * r) / (r + 1.0);
             if (transferSafely(model()->gov(), t, this)) {
                 sales_tax_paid += t;
             }
@@ -226,27 +224,27 @@ double Firm::getProductivity()
     return productivity;
 }
 
-int Firm::getWagesPaid()
+double Firm::getWagesPaid()
 {
     return wages_paid;
 }
 
-int Firm::getBonusesPaid()
+double Firm::getBonusesPaid()
 {
     return bonuses_paid;
 }
 
-int Firm::getSalesTaxPaid()
+double Firm::getSalesTaxPaid()
 {
     return sales_tax_paid;
 }
 
-int Firm::getSalesReceipts()
+double Firm::getSalesReceipts()
 {
     return sales_receipts;
 }
 
-int Firm::getDednsPaid()
+double Firm::getDednsPaid()
 {
     return dedns_paid;
 }

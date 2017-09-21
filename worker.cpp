@@ -45,20 +45,15 @@ Firm *Worker::getEmployer()
 
 void Worker::trigger(int period)
 {
-    // qDebug() << "Worker::trigger(): period =" << period;
     if (period > last_triggered)    // to prevent double counting
     {
         last_triggered = period;
-        int purch = (balance * model()->getPropCon()) / 100;
-        // qDebug() << "Worker::trigger(): purchase amount" << purch;
-
+        double purch = (balance * model()->getPropCon()) / 100;
         if (purch > 0 && transferSafely(model()->selectRandomFirm(), purch, this))
         {
             purchases += purch;
-
         }
     }
-    // qDebug() << "Worker::trigger(): done";
 }
 
 void Worker::epilogue(int period)
@@ -66,17 +61,17 @@ void Worker::epilogue(int period)
     average_wages = (wages + average_wages) / 2;
 }
 
-int Worker::agreedWage()
+double Worker::agreedWage()
 {
     return agreed_wage;
 }
 
-void Worker::setAgreedWage(int wage)
+void Worker::setAgreedWage(double wage)
 {
     agreed_wage = wage;
 }
 
-void Worker::credit(int amount, Account *creditor, bool force)
+void Worker::credit(double amount, Account *creditor, bool force)
 {
     // qDebug() << "Worker::credit(): amount =" << amount;
 
@@ -96,7 +91,7 @@ void Worker::credit(int amount, Account *creditor, bool force)
         // receiving the payment in our capacity as Worker then it's probably
         // benefits or bonus. If not employed at all it must be bonus and we are
         // flagged for deletion. Surprising but perfectly possible.
-        int tax = (amount * model()->getIncTaxRate()) / 100;
+        double tax = (amount * model()->getIncTaxRate()) / 100;
 
         //qDebug() << "Worker::credit(): transferring tax" << tax << "to gov";
 
@@ -126,22 +121,22 @@ void Worker::credit(int amount, Account *creditor, bool force)
     // qDebug() << "Worker::credit(): done";
 }
 
-int Worker::getWagesReceived()
+double Worker::getWagesReceived()
 {
     return wages;
 }
 
-int Worker::getAverageWages()
+double Worker::getAverageWages()
 {
     return average_wages;
 }
 
-int Worker::getBenefitsReceived()
+double Worker::getBenefitsReceived()
 {
     return benefits;
 }
 
-int Worker::getPurchasesMade()
+double Worker::getPurchasesMade()
 {
     return purchases;
 }
@@ -151,7 +146,7 @@ void Worker::setEmployer(Firm *emp)
     employer = emp;
 }
 
-int Worker::getIncTaxPaid()
+double Worker::getIncTaxPaid()
 {
     return inc_tax;
 }

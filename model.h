@@ -83,7 +83,7 @@ public:
         int wages_due;
     } hire_data;
 
-    int hireSome(Firm *employer, int wage, int period, int number_to_hire);
+    double hireSome(Firm *employer, double wage, int period, int number_to_hire);
 
     Worker *hire(Firm *employer, int wage, int period);
 
@@ -100,7 +100,7 @@ public:
 
     bool randomCheck(int chances, int in);
 
-    int payWorkers(int amount, int max_tot, Account *source, Reason reason);
+    double payWorkers(double amount, int max_tot, Account *source, Reason reason);
 
     // ------------------------------------------------------------------------
     // Properties
@@ -172,8 +172,9 @@ public:
     int getNumJustFired();
     int getNumHired();
     int getNumFired();
-    int getProdBal();
-    int getWagesPaid();
+
+    double getProdBal();
+    double getWagesPaid();
     int getPurchasesMade();
     int getSalesReceipts();
     int getBonusesPaid();
@@ -190,7 +191,7 @@ public:
     // ------------------------------------------------------------------------
 
     int getActivePop();     // proportion of population that is economically active
-    int getProcurement();   //direct government expenditure
+    double getProcurement();   //direct government expenditure
     int getTargetEmpRate(); // target rate of employment (%)
     int getStdWage();       // standard wage (currency units per employee per period)
     int getPropCon();       // propensity to consume (%)
@@ -243,12 +244,12 @@ private:
     int _std_wage;
 
     // See getPropertyValue
-    int _exp, _bens, _rcpts, _gov_bal, _num_firms, _num_emps, _num_unemps,
-    _num_gov_emps, _num_hired, _num_fired, _prod_bal, _wages, _consumption,
-    _bonuses, _dedns, _inc_tax, _sales_tax, _dom_bal, _deficit, _pop_size,
-    _loan_prob, _amount_owed, _bus_size, _pc_active, _proc_exp;
+    int     _num_firms, _num_emps, _num_unemps, _num_gov_emps, _num_hired,
+            _num_fired, _pop_size, _bus_size, _pc_active, _proc_exp;
 
-    double _productivity, _rel_productivity;
+    double  _exp, _bens, _rcpts, _gov_bal, _prod_bal, _wages, _consumption,
+            _bonuses, _dedns, _inc_tax, _sales_tax, _dom_bal, _loan_prob,
+            _amount_owed, _deficit, _productivity, _rel_productivity;
 
 protected:
 

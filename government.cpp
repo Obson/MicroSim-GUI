@@ -50,7 +50,7 @@ int Government::getProcExp()
     return proc;
 }
 
-int Government::debit(Account *requester, int amount)
+double Government::debit(Account *requester, double amount)
 {
     // If this is called by a non-govt-supported firm the program will abort
     Q_ASSERT(requester->isGovernmentSupported());
@@ -94,7 +94,7 @@ void Government::trigger(int period)
         last_triggered = period;
 
         // Direct purchases (procurement), adjusts balance automatically
-        int amt = model()->getProcurement();
+        double amt = model()->getProcurement();
         transferSafely(model()->selectRandomFirm(), amt, this, true);
         proc += amt;
         exp += amt;     // include in expenditure not as a separate item as
@@ -102,7 +102,7 @@ void Government::trigger(int period)
 
         // Benefits payments to all unemployed workers (doesn't adjust balance,
         // so we must do this on return
-        ben += model()->payWorkers((model()->getStdWage() * model()->getUBR()) / 100,
+        ben += model()->payWorkers(double(model()->getStdWage() * model()->getUBR()) / 100,
                                0,                   // no max amount
                                this,                // source
                                Model::for_benefits  // reason
@@ -114,7 +114,7 @@ void Government::trigger(int period)
 //
 // This function is an alternative to Account::transferTo allowing a negative balance.
 //
-bool Government::transferSafely(Account *recipient, int amount, Account *, bool procurement)
+bool Government::transferSafely(Account *recipient, double amount, Account *, bool procurement)
 {
     // We adopt the convention that receipts from the government are not
     // taxable. This is probably a rather murky area, given that the
@@ -136,7 +136,7 @@ bool Government::transferSafely(Account *recipient, int amount, Account *, bool 
 // record as well. However we don't distinguish between income tax, sales
 // tax, and 'pre-tax deductions'. These are all accounted for elsewhere.
 // Obviously, the government doesn't pay tax.
-void Government::credit(int amount, Account *creditor, bool force)
+void Government::credit(double amount, Account *creditor, bool force)
 {
     Account::credit(amount);
     rec += amount;

@@ -30,14 +30,14 @@ public:
 
     Model *model();             // returns model that 'owns' this account
 
-    virtual int getBalance();
+    virtual double getBalance();
     virtual double getAmountOwed();
 
     // This function is declared as virtual to allow derived class to add
     // functionality, e.g. diagnostics
-    virtual void credit(int amount, Account *creditor = nullptr, bool force = false);
+    virtual void credit(double amount, Account *creditor = nullptr, bool force = false);
 
-    virtual void loan(int amount, int rate, Account *creditor);
+    virtual void loan(double amount, int rate, Account *creditor);
 
     // Every derived class must provide a trigger function, which will be
     // called once per period.
@@ -60,11 +60,10 @@ protected:
     // Government is derived from Account
     // Government *gov;
 
-    int balance = 0;
+    double balance = 0;
     double owed_to_bank = 0;
-    double interest_rate = 0.0;     // this has to be double because it's held
-                                    // as a rate per period, which is generally
-                                    // fractional
+    double interest_rate = 0;
+
     int last_triggered = -1;
 
     // If this account is a bank, the bank loan refers to its account at the
@@ -75,7 +74,7 @@ protected:
     // will be distributed to workers designated as staff and shareholders of
     // the bank.
 
-    bool transferSafely(Account *recipient, int amount, Account *creditor);
+    bool transferSafely(Account *recipient, double amount, Account *creditor);
 
 private:
 
@@ -105,16 +104,16 @@ private:
     // each trigger (unless re-triggered in same period) and accumulated
     // throughout period. 'Get' methods must be used to retrieve these values
     // at the end of each period, for statistics.
-    int purchases;
-    int benefits;
-    int wages;
-    int inc_tax;
+    double purchases;
+    double benefits;
+    double wages;
+    double inc_tax;
+
     int period_hired;
     int period_fired;
 
-    int agreed_wage;
-
-    int average_wages;
+    double agreed_wage;
+    double average_wages;
 
 protected:
 
@@ -130,24 +129,26 @@ public:
     Worker(Model *model);
 
     Firm *getEmployer();
+
     bool isEmployed();
     bool isEmployedBy(Account *emp);
     bool isNewHire(int period);
 
     // Overrides
-    void credit(int amount, Account *creditor = nullptr, bool force = false);
+    void credit(double amount, Account *creditor = nullptr, bool force = false);
     void trigger(int period);
+
     void epilogue(int period);
 
-    void setAgreedWage(int wage);
+    void setAgreedWage(double wage);
 
-    int getWagesReceived();
-    int getAverageWages();
-    int getBenefitsReceived();
-    int getPurchasesMade();
-    int getIncTaxPaid();
+    double getWagesReceived();
+    double getAverageWages();
+    double getBenefitsReceived();
+    double getPurchasesMade();
+    double getIncTaxPaid();
 
-    int agreedWage();
+    double agreedWage();
 };
 
 class Firm: public Account
@@ -159,17 +160,17 @@ class Firm: public Account
 
 private:
 
-    int wages_paid = 0;
-    int bonuses_paid = 0;
-    int sales_tax_paid = 0;
-    int sales_receipts = 0;
-    int dedns_paid = 0;
+    double wages_paid = 0;
+    double bonuses_paid = 0;
+    double sales_tax_paid = 0;
+    double sales_receipts = 0;
+    double dedns_paid = 0;
+
     int num_hired = 0;
     int num_fired = 0;
 
-    //int wage_bill = 0;              // current cost of wages and deductions
-
     bool _state_supported = false;
+
     double productivity = 1;
 
 protected:
@@ -212,13 +213,13 @@ public:
     void epilogue(int period);
 
     // Overrides base mmethod to give additional functionality
-    void credit(int amount, Account *creditor = nullptr, bool force = false);
+    void credit(double amount, Account *creditor = nullptr, bool force = false);
 
-    int getWagesPaid();
-    int getBonusesPaid();
-    int getSalesTaxPaid();
-    int getSalesReceipts();
-    int getDednsPaid();
+    double getWagesPaid();
+    double getBonusesPaid();
+    double getSalesTaxPaid();
+    double getSalesReceipts();
+    double getDednsPaid();
 
     size_t getNumEmployees();
 
@@ -243,7 +244,7 @@ private:
 
     Firm *_gov_firm;     // (see constructor for assignment to firms)
 
-    int exp, rec, ben, proc;
+    double exp, rec, ben, proc;
 
 protected:
 
@@ -251,11 +252,11 @@ protected:
     // prohibits transfers that would leave a negative balance. This
     // restriction doesn't apply to the government, which creates money
     // precisely by creating transfers that leave a negative balance.
-    bool transferSafely(Account *recipient, int amount, Account*, bool procurement = false);
+    bool transferSafely(Account *recipient, double amount, Account*, bool procurement = false);
 
     // We override the base method here just so we can extract the balance for
     // statistics.
-    void credit(int amount, Account *creditor = nullptr, bool force = false);
+    void credit(double amount, Account *creditor = nullptr, bool force = false);
 
     void init();
     void reset();
@@ -275,7 +276,7 @@ public:
     int getReceipts();      // Gov receipts (taxes and dedns) in current period
     int getProcExp();       // Procurement expenditure
 
-    int debit(Account *requester, int amount);
+    double debit(Account *requester, double amount);
 
     size_t getNumEmployees();  // Number of government employees
 };
@@ -290,7 +291,7 @@ class Bank: public Account
 public:
     Bank(Model *model);
 
-    void lend(int amount, int rate, Account *recipient);
+    void lend(double amount, int rate, Account *recipient);
     void trigger(int period);
 };
 

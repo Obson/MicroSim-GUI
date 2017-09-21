@@ -20,7 +20,7 @@ Model *Account::model()
     return _model;
 }
 
-int Account::getBalance()
+double Account::getBalance()
 {
     return balance;
 }
@@ -43,7 +43,7 @@ bool Account::isGovernment()
 
 // Use transferSafely() in preference to credit() as credit() doesn't upate our
 // balance
-bool Account::transferSafely(Account *recipient, int amount, Account *creditor)
+bool Account::transferSafely(Account *recipient, double amount, Account *creditor)
 {
     if (amount > balance)
     {
@@ -59,22 +59,21 @@ bool Account::transferSafely(Account *recipient, int amount, Account *creditor)
     }
 }
 
-void Account::credit(int amount, Account *creditor, bool force)
+void Account::credit(double amount, Account *creditor, bool force)
 {
     balance += amount;
 }
 
-void Account::loan(int amount, int rate, Account *creditor)
+void Account::loan(double amount, int rate, Account *creditor)
 {
     balance += amount;
     if (creditor == model()->bank())
     {
-        owed_to_bank += amount;
-
         // TODO: Note that if interest rate changes on subsequent loans, the
         // new rate will replace the old rate for the whole amount. This is not
         // very realistic and should be changed eventually.
-        interest_rate = double(rate) / 52;  // assuming 52 periods per year
+        owed_to_bank += amount;
+        interest_rate = double(rate) / 100;         // rate is %
     }
     else
     {

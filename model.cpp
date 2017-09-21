@@ -635,12 +635,12 @@ int Model::getWageBill(Firm *employer, bool include_dedns)
 
 int Model::payWages(Firm *payer, int period)
 {
-    int amt_paid = 0;
+    double amt_paid = 0;
     num_just_fired = 0;
 
     QSettings settings;
 
-    int dedns_rate = settings.value("pre-tax-dedns-rate", 0).toInt();
+    double dedns_rate = settings.value("pre-tax-dedns-rate", 0).toInt() / 100;
     int num_workers = workers.count();
 
     for (int i = 0; i < num_workers; i++)
@@ -648,15 +648,15 @@ int Model::payWages(Firm *payer, int period)
         Worker *w = workers[i];
         if (w->isEmployedBy(payer))
         {
-            int wage_due = w->agreedWage();
-            int dedns = (wage_due * dedns_rate) / 100;
-            int funds_available = payer->getBalance();
+            int wage_due = w->agreedWage();         // TODO: Change to getStdWage() (?)
+            double dedns = dedns_rate * wage_due;
+            double funds_available = payer->getBalance();
 
             bool ok_to_pay = false;
 
             if (funds_available - amt_paid < wage_due + dedns)
             {
-                int shortfall = wage_due + dedns - funds_available + amt_paid;
+                double shortfall = wage_due + dedns - funds_available + amt_paid;
                 if (payer->isGovernmentSupported())
                 {
                     // Get additional funds from government
@@ -714,9 +714,9 @@ int Model::payWages(Firm *payer, int period)
     return amt_paid;                // so caller can update balance
 }
 
-int Model::payWorkers(int amount, int max_tot, Account *source, Reason reason)
+double Model::payWorkers(double amount, int max_tot, Account *source, Reason reason)
 {
-    int amt_paid = 0;
+    double amt_paid = 0;
     int num_workers = workers.count();
 
     for (int i = 0; i < num_workers; i++)
@@ -1031,10 +1031,10 @@ Worker *Model::hire(Firm *employer, int wage, int period)
     return w;
 }
 
-int Model::hireSome(Firm *employer, int wage, int period, int number_to_hire)
+double Model::hireSome(Firm *employer, double wage, int period, int number_to_hire)
 {
     int count;
-    int wages_due;
+    double wages_due;
     for (count = 0, wages_due = 0; count < number_to_hire; count++)
     {
         Worker *w = hire(employer, wage, period);
@@ -1079,9 +1079,9 @@ int Model::getNumFired()
     return num_fired;
 }
 
-int Model::getProdBal()
+double Model::getProdBal()
 {
-    int bal = 0;
+    double bal = 0;
     for (int i = 0; i < firms.count(); i++)
     {
         bal += firms[i]->getBalance();
@@ -1090,9 +1090,9 @@ int Model::getProdBal()
     return bal;
 }
 
-int Model::getWagesPaid()
+double Model::getWagesPaid()
 {
-    int tot = 0;
+    double tot = 0.0;
     for (int i = 0; i < firms.count(); i++)
     {
         tot += firms[i]->getWagesPaid();
@@ -1173,7 +1173,7 @@ int Model::getSalesTaxPaid()
 
 int Model::getWorkersBal(Model::Status status)
 {
-    int tot = 0;
+    double tot = 0.0;
     for (int i = 0; i < workers.count(); i++)
     {
         switch (status)
@@ -1247,7 +1247,7 @@ int Model::getParameterVal(ParamType type)
     return p.val;
 }
 
-int Model::getProcurement()
+double Model::getProcurement()
 {
     return getParameterVal(ParamType::procurement);
 }
