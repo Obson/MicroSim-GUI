@@ -57,6 +57,7 @@ MainWindow::MainWindow()
     property_map[tr("100 reference line")] = Model::Property::hundred;
     property_map[tr("Procurement expenditure")] = Model::Property::procurement;
     property_map[tr("Productivity")] = Model::Property::productivity;
+    property_map[tr("Productivity (relative)")] = Model::Property::rel_productivity;
     property_map[tr("Zero reference line")] = Model::Property::zero;
 
     // If non-zero, points to currently selected listwidget item

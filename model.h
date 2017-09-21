@@ -141,6 +141,7 @@ public:
         zero,
         procurement,
         productivity,
+        rel_productivity,
         num_properties
     };
 
@@ -247,7 +248,7 @@ private:
     _bonuses, _dedns, _inc_tax, _sales_tax, _dom_bal, _deficit, _pop_size,
     _loan_prob, _amount_owed, _bus_size, _pc_active, _proc_exp;
 
-    double _productivity;
+    double _productivity, _rel_productivity;
 
 protected:
 

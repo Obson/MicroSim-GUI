@@ -176,7 +176,7 @@ void Firm::epilogue(int period)
                     //     {current_wage_rate + (excess / (10 * (emps + new_emps))} / std_wage
                     // I think!
 
-                    productivity = double(current_wage_rate + (excess / (10 * (emps + new_emps)))) / double(std_wage);
+                    productivity = double(current_wage_rate + (double(excess) / (10 * (emps + new_emps)))) / double(std_wage);
                 }
             }
         }

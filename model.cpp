@@ -185,6 +185,7 @@ Model::Model(QString model_name)
               << Property::zero
               << Property::procurement
               << Property::productivity
+              << Property::rel_productivity
               << Property::num_properties;      // dummy (keep at end)
 
     // Set up an empty series for each property
@@ -215,6 +216,7 @@ int Model::scale(Property p)
     case Property::hundred:
     case Property::zero:
     case Property::productivity:
+    case Property::rel_productivity:
     case Property::num_properties:
         return val;
 
@@ -305,7 +307,7 @@ double Model::productivity()
         Firm *f = firms[i];
         tot += f->getNumEmployees() * f->getProductivity();
     }
-    double res = tot / count;
+    double res = count == 0 ? 0 : (tot * 100) / _pop_size;
     return res;
 }
 
@@ -839,7 +841,7 @@ int Model::getPropertyVal(Property p)
         return _num_gov_emps;
 
     case Property::pc_active:
-        // We are assuming granularity is 1000
+        // TODO: CHECK THIS! We are assuming granularity is 1000
         _pc_active = (_num_emps + _num_unemps) / 10;
         return _pc_active;
 
@@ -909,6 +911,15 @@ int Model::getPropertyVal(Property p)
     case Property::productivity:
         _productivity = productivity();
         return _productivity + 0.5;
+
+    case Property::rel_productivity:
+        // Strictly speaking, if _num_emps is zero and _productivity is
+        // non-zero, then _rel_productivity is infinite. However we will
+        // show it as zero in this case.
+        _rel_productivity = _num_emps == 0
+                ? 100.0
+                : (_productivity * _pop_size) / _num_emps;
+        return _rel_productivity + 0.5;
 
     case Property::num_properties:
         Q_ASSERT(false);
