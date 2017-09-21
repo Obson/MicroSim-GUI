@@ -508,11 +508,22 @@ void MainWindow::createDockWindows()
     connect(this, &MainWindow::drawingCompleted, ctrl, &ControlWidget::chartDrawn);
 }
 
-void MainWindow::showStats()
+void MainWindow::showStats(QListWidgetItem *current, QListWidgetItem *prev)
 {
+    // FIXME: This function seems to be triggered at the start even if the user
+    // hasn't selected an. In which case prev has a zero value so it seems
+    // to be safe to use it to indicate this condition. As no item has been
+    // selected we cannot show any stats. This isn't quite right as it prevents
+    // stats for the first selection being displayed if it'd the top item in the
+    // list, but at least it doesn't display nonsense.
+    if (prev == nullptr) {
+        return;
+    }
+
     QSettings settings;
     int range = settings.value("iterations", 100).toInt();
-    QListWidgetItem *it = propertyList->currentItem();
+
+    QListWidgetItem *it = current; // propertyList->currentItem();
     QString key = it->text();
     Model::Property prop = property_map[key];
     int ix = static_cast<int>(prop);

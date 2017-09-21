@@ -70,7 +70,7 @@ protected:
     void errorMessage(QString);
     void setOptions();
     void showHelp();
-    void showStats();
+    void showStats(QListWidgetItem *current, QListWidgetItem *prev);
 
     void closeEvent(QCloseEvent *event);
     void restoreState();

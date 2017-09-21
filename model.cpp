@@ -532,8 +532,7 @@ void Model::run()
                     {
                         max_val[j] = val;
                     }
-
-                    if (val < min_val[j])
+                    else if (val < min_val[j])
                     {
                         min_val[j] = val;
                     }
@@ -541,7 +540,6 @@ void Model::run()
                     sum[j] += val;
                 }
             }
-            // productivity();     // testing
         }
 
         // -------------------------------------------
