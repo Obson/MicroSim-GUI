@@ -31,7 +31,7 @@ public:
     Model *model();             // returns model that 'owns' this account
 
     virtual int getBalance();
-    virtual int getAmountOwed();
+    virtual double getAmountOwed();
 
     // This function is declared as virtual to allow derived class to add
     // functionality, e.g. diagnostics
@@ -61,8 +61,10 @@ protected:
     // Government *gov;
 
     int balance = 0;
-    int owed_to_bank = 0;
-    int interest_rate = 0;
+    double owed_to_bank = 0;
+    double interest_rate = 0.0;     // this has to be double because it's held
+                                    // as a rate per period, which is generally
+                                    // fractional
     int last_triggered = -1;
 
     // If this account is a bank, the bank loan refers to its account at the

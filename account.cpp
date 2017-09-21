@@ -25,7 +25,7 @@ int Account::getBalance()
     return balance;
 }
 
-int Account::getAmountOwed()
+double Account::getAmountOwed()
 {
     return owed_to_bank;
 }
@@ -74,7 +74,7 @@ void Account::loan(int amount, int rate, Account *creditor)
         // TODO: Note that if interest rate changes on subsequent loans, the
         // new rate will replace the old rate for the whole amount. This is not
         // very realistic and should be changed eventually.
-        interest_rate = rate;
+        interest_rate = double(rate) / 52;  // assuming 52 periods per year
     }
     else
     {

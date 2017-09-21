@@ -51,6 +51,7 @@ void Firm::trigger(int period)
     {
         last_triggered = period;
 
+        // TODO: This needs sorting out properly!
         if (!_state_supported)
         {
             // Pay interest on bank loans.
@@ -65,7 +66,14 @@ void Firm::trigger(int period)
             // foreclose unless this happens a lot...
             if (interest > 0 && interest <= balance)
             {
+                qDebug() << "Firm::trigger(): paying loan interest of" << interest;
                 transferSafely(model()->bank(), interest, this);
+            }
+            else if (interest == 0 && owed_to_bank > 0)
+            {
+                double interest = (owed_to_bank * interest_rate) / 100;
+                qDebug() << "Firm::trigger(): adding interest of" << interest << "to loan";
+                owed_to_bank += interest;
             }
         }
 
