@@ -68,7 +68,7 @@ void ControlWidget::on_btn_redraw_clicked()
             iters = _iters;
             settings.setValue("start-period", start_period);
             settings.setValue("iterations", iters);
-            emit redrawChart(true);
+            emit redrawChart(true, false);
             return;
         }
     }
@@ -134,4 +134,10 @@ void ControlWidget::on_btn_edit_model_clicked()
 void ControlWidget::on_btnNewModel_clicked()
 {
     emit newModelRequest();
+}
+
+void ControlWidget::on_btn_random_clicked()
+{
+    emit randomise();
+    ui->btn_redraw->setEnabled(true);
 }

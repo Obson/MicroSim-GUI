@@ -35,7 +35,7 @@
      <x>770</x>
      <y>14</y>
      <width>228</width>
-     <height>94</height>
+     <height>95</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout_2">
@@ -89,6 +89,13 @@
       </property>
       <property name="flat">
        <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <widget class="QPushButton" name="btn_random">
+      <property name="text">
+       <string>Randomise</string>
       </property>
      </widget>
     </item>

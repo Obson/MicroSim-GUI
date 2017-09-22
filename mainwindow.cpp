@@ -423,7 +423,7 @@ void MainWindow::setOptions()
     dlg.setModal(true);
     if (dlg.exec() == QDialog::Accepted && _current_model != nullptr)
     {
-        drawChart();
+        drawChart(true);
     }
 }
 
@@ -502,6 +502,7 @@ void MainWindow::createDockWindows()
     connect(ctrl, &ControlWidget::setupModel, this, &MainWindow::editParameters);
     connect(ctrl, &ControlWidget::closeDown, this, &MainWindow::close);
     connect(ctrl, &ControlWidget::redrawChart, this, &MainWindow::drawChart);
+    connect(ctrl, &ControlWidget::randomise, this, &MainWindow::drawChartRandomised);
     connect(ctrl, &ControlWidget::newModelRequest, this, &MainWindow::createNewModel);
 
     // Signal to bottom-area
@@ -586,7 +587,15 @@ QColor MainWindow::nextColour(int n)
     return colours[n % colours.count()];
 }
 
-void MainWindow::drawChart(bool rerun)    // uses _current_model
+void MainWindow::drawChartRandomised()
+{
+    int seed = QTime(0,0,0).secsTo(QTime::currentTime());
+    qDebug() << "MainWindow::drawChartRandomised(): reseeding with" << seed;
+    qsrand(seed);
+    drawChart(true, true);
+}
+
+void MainWindow::drawChart(bool rerun, bool randomised)    // uses _current_model
 {
     ctrl->updateStatus("Loading");
 
@@ -613,7 +622,7 @@ void MainWindow::drawChart(bool rerun)    // uses _current_model
 
     if (rerun)
     {
-        _current_model->run();
+        _current_model->run(randomised);
         ctrl->setGini(_current_model->getGini(), _current_model->getProductivity());
     }
 
@@ -701,6 +710,6 @@ void MainWindow::changeModel(QListWidgetItem *item)
     ctrl->setNotes(settings.value("notes", "No notes entered for this model").toString());
     settings.endGroup();
 
-    drawChart();
+    drawChart(true);
 }
 

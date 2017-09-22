@@ -36,10 +36,13 @@ private slots:
 
     void on_btnNewModel_clicked();
 
+    void on_btn_random_clicked();
+
 signals:
     void newModelRequest();
     void setupModel();
-    void redrawChart(bool);
+    void redrawChart(bool rerun, bool randomised);
+    void randomise();
     void closeDown();
 
 private:

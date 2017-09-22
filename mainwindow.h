@@ -115,7 +115,9 @@ private:
     void createMenus();
     void createStatusBar();
     void createDockWindows();
-    void drawChart(bool rerun = true);
+    void drawChart(bool rerun, bool randomised = true);
+    void drawChartRandomised();
+
     QColor nextColour(int n);
 
     void changeModel(QListWidgetItem*);

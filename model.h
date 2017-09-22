@@ -58,7 +58,7 @@ public:
 
     QString name();
 
-    void run();
+    void run(bool randomised = false);
     void restart();
 
     int getIters();         // number of iterations (periods)

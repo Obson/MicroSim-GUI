@@ -434,7 +434,7 @@ void Model::restart()
     }
 }
 
-void Model::run()
+void Model::run(bool randomised)
 {
     qDebug() << "Model::run(): _name =" << _name;
 
@@ -443,7 +443,10 @@ void Model::run()
     // Seed the pseudo-random number generator. We need reproducibility so we
     // always seed with the same number. This makes inter-model comparisons
     // more valid
-    qsrand(42);
+    if (!randomised) {
+        qDebug() << "Model::run(): using fixed seed (42)";
+        qsrand(42);
+    }
 
     for (int _period = 1; _period <= _iterations + _first_period; _period++)
     {
