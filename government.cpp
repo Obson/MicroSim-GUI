@@ -30,22 +30,22 @@ size_t Government::getNumEmployees()
     return _gov_firm->getNumEmployees();
 }
 
-int Government::getExpenditure()
+double Government::getExpenditure()
 {
     return exp;
 }
 
-int Government::getBenefitsPaid()
+double Government::getBenefitsPaid()
 {
     return ben;
 }
 
-int Government::getReceipts()
+double Government::getReceipts()
 {
     return rec;
 }
 
-int Government::getProcExp()
+double Government::getProcExp()
 {
     return proc;
 }
@@ -102,8 +102,7 @@ void Government::trigger(int period)
 
         // Benefits payments to all unemployed workers (doesn't adjust balance,
         // so we must do this on return
-        ben += model()->payWorkers(double(model()->getStdWage() * model()->getUBR()) / 100,
-                               0,                   // no max amount
+        ben += model()->payWorkers(model()->getStdWage() * model()->getUBR(),
                                this,                // source
                                Model::for_benefits  // reason
                                );

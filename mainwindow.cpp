@@ -685,9 +685,9 @@ void MainWindow::changeModel(QListWidgetItem *item)
 
     QSettings settings;
 
-    int nominal_population = settings.value("nominal-population", 1000).toInt();
-    int scale = nominal_population / 1000;
-    int startups = settings.value("startups", 0).toInt() * scale;
+    double nominal_population = settings.value("nominal-population", 1000).toDouble();
+    double scale = nominal_population / 1000;
+    int startups = scale * settings.value("startups", 0).toInt();
 
     QString model_name = item->text();
     statusBar()->showMessage(  tr("  Total population: ") + QString::number(nominal_population)

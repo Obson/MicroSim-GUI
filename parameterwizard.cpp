@@ -183,7 +183,7 @@ DefaultPage::DefaultPage(ParameterWizard *w)
 
 void DefaultPage::readSettings(QString model)
 {
-    // Read the default parameters from settings.We use 'sensible' default
+    // Read the default parameters from settings. We use 'sensible' default
     // defaults so they will have a workable model to start with
     QSettings settings;
     le_dir_exp_rate->setText(settings.value(model + "/default/govt-procurement", 0).toString());

@@ -714,7 +714,7 @@ int Model::payWages(Firm *payer, int period)
     return amt_paid;                // so caller can update balance
 }
 
-double Model::payWorkers(double amount, int max_tot, Account *source, Reason reason)
+double Model::payWorkers(double amount, Account *source, Reason reason)
 {
     double amt_paid = 0;
     int num_workers = workers.count();
@@ -775,7 +775,12 @@ double Model::payWorkers(double amount, int max_tot, Account *source, Reason rea
 // we save results on the way through so they can be used to deliver composite
 // results more efficiently. If we ever need the composite results
 // independently they should be calculated from scratch.
-int Model::getPropertyVal(Property p)
+//    Note also that this function returns a double, regardless of whether the
+// parameter is integral or not. Stored values (generally marked by having '_'
+// as the first character) are held in the most appropriate form, and access
+// functions (e.g. period(), getWagesPaid(), etc) also return the correct type.
+
+double Model::getPropertyVal(Property p)
 {
     switch(p)
     {
@@ -784,7 +789,7 @@ int Model::getPropertyVal(Property p)
 
     case Property::pop_size:
         _pop_size = population();
-        return _pop_size;
+        return double(_pop_size);
 
     case Property::gov_exp:
         _exp = gov()->getExpenditure();
@@ -818,38 +823,37 @@ int Model::getPropertyVal(Property p)
         // the government-owned firm. For the actually number (unscaled) use
         // firms.count().
         _num_firms = firms.count() - 1;
-        return _num_firms;
+        return double(_num_firms);
 
     case Property::num_emps:
         _num_emps = getNumEmployed();
-        return _num_emps;
+        return double(_num_emps);
 
     case Property::pc_emps:
-        return (_pop_size > 0 ? (_num_emps * 100) / _pop_size : 0);
+        return (_pop_size > 0 ? double(_num_emps * 100) / _pop_size : 0.0);
 
     case Property::num_unemps:
         _num_unemps = getNumUnemployed();
-        return _num_unemps;
+        return double(_num_unemps);
 
     case Property::pc_unemps:
-        return (_pop_size > 0 ? (_num_unemps * 100) / _pop_size : 0);
+        return (_pop_size > 0 ? double(_num_unemps * 100) / _pop_size : 0);
 
     case Property::num_gov_emps:
         _num_gov_emps = getNumEmployedBy(gov()->gov_firm());
-        return _num_gov_emps;
+        return double(_num_gov_emps);
 
     case Property::pc_active:
-        // TODO: CHECK THIS! We are assuming granularity is 1000
-        _pc_active = (_num_emps + _num_unemps) / 10;
+        _pc_active = double(_num_emps + _num_unemps) / 10;  // assuming granularity 1000
         return _pc_active;
 
     case Property::num_hired:
         _num_hired = getNumHired();
-        return _num_hired;
+        return double(_num_hired);
 
     case Property::num_fired:
         _num_fired = getNumFired();
-        return _num_fired;
+        return double(_num_fired);
 
     case Property::prod_bal:
         _prod_bal = getProdBal();
@@ -864,7 +868,7 @@ int Model::getPropertyVal(Property p)
         return _consumption;
 
     case Property::deficit_pc:
-        return _consumption == 0 ? 0 : (_deficit * 100) / _consumption;
+        return _consumption == 0 ? 0.0 : (_deficit * 100) / _consumption;
 
     case Property::bonuses:
         _bonuses = getBonusesPaid();
@@ -893,14 +897,14 @@ int Model::getPropertyVal(Property p)
     case Property::bus_size:
         // We take the government firm into account here because _num_emps
         // doesn't make a distinction
-        _bus_size = _num_emps  / (_num_firms + 1);
+        _bus_size = double(_num_emps)  / (_num_firms + 1);
         return _bus_size;
 
     case Property::hundred:
-        return 100;
+        return 100.0;
 
     case Property::zero:
-        return 0;
+        return 0.0;
 
     case Property::procurement:
         _proc_exp = getProcurementExpenditure();
@@ -908,16 +912,15 @@ int Model::getPropertyVal(Property p)
 
     case Property::productivity:
         _productivity = productivity();
-        return _productivity + 0.5;
+        return _productivity;
 
     case Property::rel_productivity:
         // Strictly speaking, if _num_emps is zero and _productivity is
         // non-zero, then _rel_productivity is infinite. However we will
-        // show it as zero in this case.
-        _rel_productivity = _num_emps == 0
-                ? 100.0
+        // show it as one (100%) in this case.
+        _rel_productivity = _num_emps == 0 ? 1.0
                 : (_productivity * _pop_size) / _num_emps;
-        return _rel_productivity + 0.5;
+        return _rel_productivity;
 
     case Property::num_properties:
         Q_ASSERT(false);
@@ -972,12 +975,12 @@ int Model::getNumUnemployed()
     return n;
 }
 
-int Model::getProcurementExpenditure()
+double Model::getProcurementExpenditure()
 {
     return gov()->getProcExp();
 }
 
-Worker *Model::hire(Firm *employer, int wage, int period)
+Worker *Model::hire(Firm *employer, double wage, int period)
 {
     // Calculate friction
     if (period > 0)
@@ -986,7 +989,7 @@ Worker *Model::hire(Firm *employer, int wage, int period)
         Q_ASSERT(pop != 0);
 
         int avail = pop - workers.count();      // number potentially available
-        int access = (avail * 1000) / pop;      // accessibility as permillage
+        int access = (avail * 1000) / pop;      // accessibility per thousand
         int prob = employer->isGovernmentSupported() ? 0 : qrand() % 1000;
         if (prob >= access)
         {
@@ -1105,9 +1108,9 @@ double Model::getWagesPaid()
 // evaluate, but we use two different functions in case they should ever differ
 // in future. This is the one we use for consumption as it looks at it from the
 // consumers' end.
-int Model::getPurchasesMade()
+double Model::getPurchasesMade()
 {
-    int tot = 0;
+    double tot = 0;
     for (int i = 0; i < workers.count(); i++)
     {
         tot += workers[i]->getPurchasesMade();
@@ -1116,9 +1119,9 @@ int Model::getPurchasesMade()
     return tot;
 }
 
-int Model::getSalesReceipts()
+double Model::getSalesReceipts()
 {
-    int tot = 0;
+    double tot = 0;
     for (int i = 0; i < firms.count(); i++)
     {
         tot += firms[i]->getSalesReceipts();
@@ -1127,9 +1130,9 @@ int Model::getSalesReceipts()
     return tot;
 }
 
-int Model::getBonusesPaid()
+double Model::getBonusesPaid()
 {
-    int tot = 0;
+    double tot = 0;
     for (int i = 0; i < firms.count(); i++)
     {
         tot += firms[i]->getBonusesPaid();
@@ -1138,7 +1141,7 @@ int Model::getBonusesPaid()
     return tot;
 }
 
-int Model::getDednsPaid()
+double Model::getDednsPaid()
 {
     int tot = 0;
     for (int i = 0; i < firms.count(); i++)
@@ -1149,9 +1152,9 @@ int Model::getDednsPaid()
     return tot;
 }
 
-int Model::getIncTaxPaid()
+double Model::getIncTaxPaid()
 {
-    int tot = 0;
+    double tot = 0;
     for (int i = 0; i < workers.count(); i++)
     {
         tot += workers[i]->getIncTaxPaid();
@@ -1160,9 +1163,9 @@ int Model::getIncTaxPaid()
     return tot;
 }
 
-int Model::getSalesTaxPaid()
+double Model::getSalesTaxPaid()
 {
-    int tot = 0;
+    double tot = 0;
     for (int i = 0; i < firms.count(); i++)
     {
         tot += firms[i]->getSalesTaxPaid();
@@ -1171,7 +1174,7 @@ int Model::getSalesTaxPaid()
     return tot;
 }
 
-int Model::getWorkersBal(Model::Status status)
+double Model::getWorkersBal(Model::Status status)
 {
     double tot = 0.0;
     for (int i = 0; i < workers.count(); i++)
@@ -1202,9 +1205,9 @@ int Model::getWorkersBal(Model::Status status)
 // TODO: At present only businesses can get loans, but this should be extended
 // to workers in due course. We also need to allow banks to get loans from the
 // central bank -- i.e. from the government.
-int Model::getAmountOwed()
+double Model::getAmountOwed()
 {
-    int tot = 0;
+    double tot = 0;
     for (int i = 0; i < firms.count(); i++)
     {
         tot += firms[i]->getAmountOwed();
@@ -1249,74 +1252,72 @@ int Model::getParameterVal(ParamType type)
 
 double Model::getProcurement()
 {
-    return getParameterVal(ParamType::procurement);
+    return double(getParameterVal(ParamType::procurement));
 }
 
-int Model::getTargetEmpRate()
+double Model::getTargetEmpRate()
 {
-    return getParameterVal(ParamType::emp_rate);
+    return double(getParameterVal(ParamType::emp_rate)) / 100;
 }
 
-int Model::getStdWage()
+double Model::getStdWage()
 {
     return _std_wage;
 }
 
-int Model::getPropCon()
+double Model::getPropCon()
 {
-    return getParameterVal(ParamType::prop_con);
+    return double(getParameterVal(ParamType::prop_con)) / 100;
 }
 
-int Model::getIncTaxRate()
+double Model::getIncTaxRate()
 {
-    int res = getParameterVal(ParamType::inc_tax_rate);
-    //qDebug() << "Model::getIncTaxRate() returning" << res;
-    return res;
+    return double(getParameterVal(ParamType::inc_tax_rate)) / 100;
 }
 
-int Model::getSalesTaxRate()
+double Model::getSalesTaxRate()
 {
-    return getParameterVal(ParamType::sales_tax_rate);
+    return double(getParameterVal(ParamType::sales_tax_rate)) / 100;
 }
 
-int Model::getPreTaxDedns()
+double Model::getPreTaxDedns()
 {
-    return getParameterVal(ParamType::dedns);
+    return double(getParameterVal(ParamType::dedns)) / 100;
 }
 
-int Model::getFCP()
+double Model::getFCP()
 {
-    return getParameterVal(ParamType::firm_creation_prob);
+    return double(getParameterVal(ParamType::firm_creation_prob)) / 100;
 }
 
-int Model:: getUBR()
+double Model::getUBR()
 {
-    return getParameterVal(ParamType::unemp_ben_rate);
+    return double(getParameterVal(ParamType::unemp_ben_rate)) / 100;
 }
 
-int Model::getDistributionRate()
+double Model::getDistributionRate()
 {
-    return getParameterVal(ParamType::distrib);
+    return double(getParameterVal(ParamType::distrib)) / 100;
 }
 
-int Model::getPropInv()
+double Model::getPropInv()
 {
-    return getParameterVal(ParamType::prop_inv);
+    return double(getParameterVal(ParamType::prop_inv)) / 100;
 }
 
-int Model::getBoeRate()
+double Model::getBoeRate()
 {
-    return getParameterVal(ParamType::boe_int);
+    return double(getParameterVal(ParamType::boe_int)) / 100;
 }
 
-int Model::getBusRate()
+double Model::getBusRate()
 {
-    return getParameterVal(ParamType::bus_int);
+    return double(getParameterVal(ParamType::bus_int)) / 100;
 }
 
-int Model::getLoanProb()
+double Model::getLoanProb()
 {
-    return getParameterVal(ParamType::loan_prob);
+    return double(getParameterVal(ParamType::loan_prob)) / 100;
 }
 
 /* Discontinued, but the formula might be useful some time

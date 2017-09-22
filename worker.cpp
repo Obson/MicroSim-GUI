@@ -48,7 +48,7 @@ void Worker::trigger(int period)
     if (period > last_triggered)    // to prevent double counting
     {
         last_triggered = period;
-        double purch = (balance * model()->getPropCon()) / 100;
+        double purch = balance * model()->getPropCon();
         if (purch > 0 && transferSafely(model()->selectRandomFirm(), purch, this))
         {
             purchases += purch;
@@ -91,7 +91,7 @@ void Worker::credit(double amount, Account *creditor, bool force)
         // receiving the payment in our capacity as Worker then it's probably
         // benefits or bonus. If not employed at all it must be bonus and we are
         // flagged for deletion. Surprising but perfectly possible.
-        double tax = (amount * model()->getIncTaxRate()) / 100;
+        double tax = amount * model()->getIncTaxRate();
 
         //qDebug() << "Worker::credit(): transferring tax" << tax << "to gov";
 

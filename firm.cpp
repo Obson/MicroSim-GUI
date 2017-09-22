@@ -107,8 +107,8 @@ void Firm::epilogue(int period)
         // We must keep in hand at least the amount needed to pay wages
         double available = balance - wages_paid;   // now includes deductions
 
-        double investible = (available * model()->getPropInv()) / 100;
-        double bonuses = ((available - investible) * model()->getDistributionRate()) / 100;
+        double investible = available * model()->getPropInv();
+        double bonuses = (available - investible) * model()->getDistributionRate();
 
         // We distribute the funds before hiring new workers to ensure they
         // only get distributed to existing workers.
@@ -116,7 +116,7 @@ void Firm::epilogue(int period)
         double amt_paid = 0;
         if (emps > 0)
         {
-            amt_paid = model()->payWorkers(bonuses/emps, bonuses, this, Model::for_bonus);
+            amt_paid = model()->payWorkers(bonuses/emps, this, Model::for_bonus);
         }
 
         // Adjust calculation if not all the bonus funds were used
@@ -133,8 +133,8 @@ void Firm::epilogue(int period)
         // How many more employees can we afford?
         double std_wage = model()->getStdWage();
         double current_wage_rate = productivity * std_wage;
-        int num_to_hire = (investible * 100) /
-                (current_wage_rate * (100 + model()->getPreTaxDedns()));
+        int num_to_hire = investible /
+                (current_wage_rate * (1 + model()->getPreTaxDedns()));
 
         if (num_to_hire > 0)
         {
@@ -208,7 +208,7 @@ void Firm::credit(double amount, Account *creditor, bool force)
         // not buyer, is responsible for paying sales tax and that payments
         // to a Firm are always for purchases and therefore subject to
         // sales tax.
-        double r = double(model()->getSalesTaxRate()) / 100;    // e.g. 25% -> 0.25
+        double r = model()->getSalesTaxRate();
         if (r > 0)
         {
             double t = (amount * r) / (r + 1.0);

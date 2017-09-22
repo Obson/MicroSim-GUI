@@ -85,7 +85,7 @@ public:
 
     double hireSome(Firm *employer, double wage, int period, int number_to_hire);
 
-    Worker *hire(Firm *employer, int wage, int period);
+    Worker *hire(Firm *employer, double wage, int period);
 
     void fire(Worker *w, int period);
 
@@ -100,7 +100,7 @@ public:
 
     bool randomCheck(int chances, int in);
 
-    double payWorkers(double amount, int max_tot, Account *source, Reason reason);
+    double payWorkers(double amount, Account *source, Reason reason);
 
     // ------------------------------------------------------------------------
     // Properties
@@ -162,7 +162,7 @@ public:
     int sum[static_cast<int>(Property::num_properties)];
 
     // Retrieve the current (periodic) value associated with a given Property
-    int getPropertyVal(Property p);
+    double getPropertyVal(Property p);
 
     // These are the functions that actually interrogate the components of the
     // model to evaluate its propertis
@@ -175,38 +175,39 @@ public:
 
     double getProdBal();
     double getWagesPaid();
-    int getPurchasesMade();
-    int getSalesReceipts();
-    int getBonusesPaid();
-    int getDednsPaid();
-    int getIncTaxPaid();
-    int getSalesTaxPaid();
-    int getWorkersBal(Model::Status status);
+    double getPurchasesMade();
+    double getSalesReceipts();
+    double getBonusesPaid();
+    double getDednsPaid();
+    double getIncTaxPaid();
+    double getSalesTaxPaid();
+    double getWorkersBal(Model::Status status);
     int population();
-    int getAmountOwed();
-    int getProcurementExpenditure();
+    double getAmountOwed();
+    double getProcurementExpenditure();
 
     // ------------------------------------------------------------------------
     // Parameters
     // ------------------------------------------------------------------------
 
     int getActivePop();     // proportion of population that is economically active
+
     double getProcurement();   //direct government expenditure
-    int getTargetEmpRate(); // target rate of employment (%)
-    int getStdWage();       // standard wage (currency units per employee per period)
-    int getPropCon();       // propensity to consume (%)
-    int getIncTaxRate();    // income tax rate (%)
-    int getSalesTaxRate();  // sales tax rate (%)
-    int getPreTaxDedns();   // pre-tax deductions (%)
-    int getFCP();           // firm creaton probability (%)
-    int getUBR();           // unemployment benefit rate (% of std wage)
-    int getPropInv();       // propensity to invest
-    int getDistributionRate();       // funds kept in reserve for next period (%)
+    double getTargetEmpRate(); // target rate of employment (%)
+    double getStdWage();       // standard wage (currency units per employee per period)
+    double getPropCon();       // propensity to consume (%)
+    double getIncTaxRate();    // income tax rate (%)
+    double getSalesTaxRate();  // sales tax rate (%)
+    double getPreTaxDedns();   // pre-tax deductions (%)
+    double getFCP();           // firm creaton probability (%)
+    double getUBR();           // unemployment benefit rate (% of std wage)
+    double getPropInv();       // propensity to invest
+    double getDistributionRate();       // funds kept in reserve for next period (%)
 
-    int getBoeRate();       // BoE lending rate
-    int getBusRate();       // retail lending rate
+    double getBoeRate();       // BoE lending rate
+    double getBusRate();       // retail lending rate
 
-    int getLoanProb();
+    double getLoanProb();
 
     double getGini();
     double getProductivity();
@@ -241,15 +242,17 @@ private:
     int _startups;
     int _first_period;
     int _scale;
-    int _std_wage;
+
+    double _std_wage;
 
     // See getPropertyValue
     int     _num_firms, _num_emps, _num_unemps, _num_gov_emps, _num_hired,
-            _num_fired, _pop_size, _bus_size, _pc_active, _proc_exp;
+            _num_fired, _pop_size;
 
     double  _exp, _bens, _rcpts, _gov_bal, _prod_bal, _wages, _consumption,
             _bonuses, _dedns, _inc_tax, _sales_tax, _dom_bal, _loan_prob,
-            _amount_owed, _deficit, _productivity, _rel_productivity;
+            _amount_owed, _deficit, _pc_active, _bus_size, _proc_exp,
+            _productivity, _rel_productivity;
 
 protected:
 

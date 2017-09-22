@@ -37,7 +37,7 @@ public:
     // functionality, e.g. diagnostics
     virtual void credit(double amount, Account *creditor = nullptr, bool force = false);
 
-    virtual void loan(double amount, int rate, Account *creditor);
+    virtual void loan(double amount, double rate, Account *creditor);
 
     // Every derived class must provide a trigger function, which will be
     // called once per period.
@@ -271,10 +271,10 @@ public:
 
     void trigger(int period);
 
-    int getExpenditure();   // Gov expenditure in current period (excl benefits)
-    int getBenefitsPaid();  // Benefits paid this period
-    int getReceipts();      // Gov receipts (taxes and dedns) in current period
-    int getProcExp();       // Procurement expenditure
+    double getExpenditure();   // Gov expenditure in current period (excl benefits)
+    double getBenefitsPaid();  // Benefits paid this period
+    double getReceipts();      // Gov receipts (taxes and dedns) in current period
+    double getProcExp();       // Procurement expenditure
 
     double debit(Account *requester, double amount);
 
@@ -291,7 +291,7 @@ class Bank: public Account
 public:
     Bank(Model *model);
 
-    void lend(double amount, int rate, Account *recipient);
+    void lend(double amount, double rate, Account *recipient);
     void trigger(int period);
 };
 

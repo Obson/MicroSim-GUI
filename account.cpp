@@ -64,7 +64,7 @@ void Account::credit(double amount, Account *creditor, bool force)
     balance += amount;
 }
 
-void Account::loan(double amount, int rate, Account *creditor)
+void Account::loan(double amount, double rate, Account *creditor)
 {
     balance += amount;
     if (creditor == model()->bank())
@@ -73,7 +73,7 @@ void Account::loan(double amount, int rate, Account *creditor)
         // new rate will replace the old rate for the whole amount. This is not
         // very realistic and should be changed eventually.
         owed_to_bank += amount;
-        interest_rate = double(rate) / 100;         // rate is %
+        interest_rate = double(rate);
     }
     else
     {
