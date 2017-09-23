@@ -66,7 +66,7 @@ void Firm::trigger(int period)
             // foreclose unless this happens a lot...
             if (interest > 0 && interest <= balance)
             {
-                qDebug() << "Firm::trigger(): paying loan interest of" << interest;
+                //qDebug() << "Firm::trigger(): paying loan interest of" << interest;
                 transferSafely(model()->bank(), interest, this);
             }
             else if (interest == 0 && owed_to_bank > 0)

@@ -35,6 +35,8 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName("MicroSim");
 
     QSettings::setDefaultFormat(QSettings::IniFormat);
+    QSettings settings;
+    settings.setFallbacksEnabled(false);
     MainWindow mainwindow;
     mainwindow.show();
 

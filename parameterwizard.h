@@ -43,7 +43,7 @@ protected:
 
     int pid;                    // This is the CURRENT page id -- i.e. the id of
                                 // the page currently being processed. Qt's
-                                // currentId gives the NEXT page id when changing
+                                // currentId gives the next page id when changing
                                 // pages, which isn't much help if we want to
                                 // validate the page we are just leaving!
 

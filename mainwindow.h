@@ -57,8 +57,7 @@ protected:
     int getPropInv();       // propensity to invest
     int getReserve();       // funds kept in reserve for next period (%)
 
-    void clearModels();
-    void saveCVS();
+    void saveCSV();
     void copy();
     void editParameters();
     void createFirstModel();
@@ -105,6 +104,8 @@ private:
 
     bool first_time_shown;
     bool first_time_loaded;
+
+    bool reloading = false;
 
     QStringList prop_names;
 

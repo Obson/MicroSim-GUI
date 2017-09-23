@@ -15,6 +15,7 @@
 
 #include "account.h"
 #include "optionsdialog.h"
+#include "removemodeldlg.h"
 
 MainWindow::MainWindow()
 {
@@ -133,14 +134,10 @@ void MainWindow::createChart()
 
 void MainWindow::createActions()
 {
-    clearModelsAction = new QAction(tr("Clear models..."), this);
-    connect(clearModelsAction, &QAction::triggered, this,
-            &MainWindow::clearModels);
-
-    saveCVSAction = new QAction(tr("&Save as CVS file..."), this);
+    saveCVSAction = new QAction(tr("&Save as CSV file..."), this);
     saveCVSAction->setDisabled(!isModelSelected());
     connect(saveCVSAction, &QAction::triggered, this,
-            &MainWindow::saveCVS);
+            &MainWindow::saveCSV);
 
     copyAction = new QAction(tr("&Copy chart to clipboard"), this);
     copyAction->setDisabled(!isModelSelected());
@@ -155,8 +152,7 @@ void MainWindow::createActions()
     newAction->setStatusTip(tr("Create a new model"));
     connect(newAction, &QAction::triggered, this, &MainWindow::createNewModel);
 
-    removeAction = new QAction(tr("&Remove model..."));
-    removeAction->setDisabled(!isModelSelected());
+    removeAction = new QAction(tr("&Remove models..."));
     connect(removeAction, &QAction::triggered, this, &MainWindow::remove);
 
     setOptionsAction = new QAction(tr("&Preferences"));
@@ -201,33 +197,19 @@ void MainWindow::createMenus()
     setMenuBar(myMenuBar);
 }
 
-void MainWindow::clearModels()
-{
-    QMessageBox msgBox(this);
-    msgBox.setText(tr("This will delete all your models!"));
-    msgBox.setInformativeText(tr("Do you wish to continue?"));
-    msgBox.setStandardButtons(QMessageBox::No | QMessageBox::Yes);
-    msgBox.setDefaultButton(QMessageBox::No);
-    if (msgBox.exec() == QMessageBox::Yes) {
-        QSettings settings;
-        settings.clear();
-        modelList->clear();
-    }
-}
-
 Model *MainWindow::current_model()
 {
     return _current_model;
 }
 
-void MainWindow::saveCVS()
+void MainWindow::saveCSV()
 {
-
+    nyi();
 }
 
 void MainWindow::copy()
 {
-
+    nyi();
 }
 
 void MainWindow::nyi()
@@ -302,7 +284,6 @@ void MainWindow::restoreState()
             changeModel(items[0]);
         }
     }
-
 }
 
 #include "model.h"
@@ -378,7 +359,15 @@ void MainWindow::createNewModel()
 
 void MainWindow::remove()
 {
+    RemoveModelDlg dlg;
+    dlg.exec();
 
+
+    // NEXT: Now we need to remove any deleted model names from the model list
+    // ...
+    reloading = true;
+    loadModelList();
+    reloading = false;
 }
 
 ///
@@ -684,6 +673,11 @@ void MainWindow::drawChart(bool rerun, bool randomised)    // uses _current_mode
 
 void MainWindow::changeModel(QListWidgetItem *item)
 {
+    if (reloading)
+    {
+        return;
+    }
+
     selectedModelItem = item;
     changeAction->setDisabled(false);
     _current_model = Model::model(item->text());

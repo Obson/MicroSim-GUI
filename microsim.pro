@@ -39,7 +39,8 @@ SOURCES += \
     bank.cpp \
     model.cpp \
     optionsdialog.cpp \
-    controlwidget.cpp
+    controlwidget.cpp \
+    removemodeldlg.cpp
 
 HEADERS += \
     mainwindow.h \
@@ -48,12 +49,14 @@ HEADERS += \
     account.h \
     model.h \
     optionsdialog.h \
-    controlwidget.h
+    controlwidget.h \
+    removemodeldlg.h
 
 FORMS += \
     newmodeldlg.ui \
     optionsdialog.ui \
-    controlwidget.ui
+    controlwidget.ui \
+    removemodeldlg.ui
 
 DISTFILES += \
     README.md
