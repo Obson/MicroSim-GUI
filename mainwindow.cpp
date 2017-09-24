@@ -139,10 +139,6 @@ void MainWindow::createActions()
     connect(saveCVSAction, &QAction::triggered, this,
             &MainWindow::saveCSV);
 
-    copyAction = new QAction(tr("&Copy chart to clipboard"), this);
-    copyAction->setDisabled(!isModelSelected());
-    connect(copyAction, &QAction::triggered, this, &MainWindow::copy);
-
     changeAction = new QAction(tr("Edit &parameters..."));
     changeAction->setDisabled(!isModelSelected());
     connect(changeAction, &QAction::triggered, this,
