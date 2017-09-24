@@ -702,6 +702,6 @@ void MainWindow::changeModel(QListWidgetItem *item)
     ctrl->setNotes(settings.value("notes", "No notes entered for this model").toString());
     settings.endGroup();
 
-    drawChart(true);
+    drawChart(true, false);
 }
 

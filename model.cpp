@@ -436,7 +436,7 @@ void Model::restart()
 
 void Model::run(bool randomised)
 {
-    qDebug() << "Model::run(): _name =" << _name;
+    qDebug() << "Model::run(): randomised =" << randomised << "  _name =" << _name;
 
     restart();
 

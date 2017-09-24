@@ -11,11 +11,6 @@
 
 ParameterWizard::ParameterWizard(QWidget *parent) : QWizard(parent)
 {
-    // WARNING: During testing (at least) we don't want to clutter up the settings
-    // with values we can't remove with a settings.clear() call. This can probably
-    // be changed once it's all working.
-    // settings.setFallbacksEnabled(false);
-
     setWindowTitle("MicroSim Parameter Setup");
     setPixmap(QWizard::BackgroundPixmap, QPixmap(":/background.png"));
 
