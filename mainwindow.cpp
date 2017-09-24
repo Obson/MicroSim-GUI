@@ -12,6 +12,8 @@
 #include <QMenuBar>
 #include <QDockWidget>
 #include <QDialogButtonBox>
+#include <QFileDialog>
+#include <QUrl>
 
 #include "account.h"
 #include "optionsdialog.h"
@@ -134,9 +136,9 @@ void MainWindow::createChart()
 
 void MainWindow::createActions()
 {
-    saveCVSAction = new QAction(tr("&Save as CSV file..."), this);
-    saveCVSAction->setDisabled(!isModelSelected());
-    connect(saveCVSAction, &QAction::triggered, this,
+    saveCSVAction = new QAction(tr("&Save as CSV file..."), this);
+    saveCSVAction->setDisabled(!isModelSelected());
+    connect(saveCSVAction, &QAction::triggered, this,
             &MainWindow::saveCSV);
 
     changeAction = new QAction(tr("Edit &parameters..."));
@@ -178,7 +180,7 @@ void MainWindow::createMenus()
     fileMenu->addAction(removeAction);
     fileMenu->addAction(clearModelsAction);
     fileMenu->addSeparator();
-    fileMenu->addAction(saveCVSAction);
+    fileMenu->addAction(saveCSVAction);
 
     editMenu = myMenuBar->addMenu(tr("&Edit"));
     editMenu->addAction(copyAction);
@@ -201,12 +203,69 @@ Model *MainWindow::current_model()
 
 void MainWindow::saveCSV()
 {
-    nyi();
-}
+    qDebug() << "MainWindow::saveCSV():  called";
 
-void MainWindow::copy()
-{
-    nyi();
+    Model *model = current_model();
+    QString filename = QFileDialog::getSaveFileName(this, tr("Save As"),
+                                "~/" + model->name() + ".csv",
+                                tr("CSV files (*.csv)"));
+
+    if (filename.isEmpty()) {
+        qDebug() << "MainWindow::saveCSV():  no file selected";
+        return;
+    }
+
+    qDebug() << "MainWindow::saveCSV():  output file =" << filename;
+
+    // Open the selected file for writing
+    QFile csv(filename);
+    if (!csv.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        // TODO: Replace this with a proper messagebox
+        QErrorMessage msg;
+        msg.showMessage(tr("Cannot open file ") + filename);
+        return;
+    }
+
+    QTextStream out(&csv);
+
+    // Output headers and set up points lists for series
+    bool first = true;
+    int iters = model->getIters(), n = 0;
+    QList<QPointF>lists[iters];
+    for (int j = 0; j < propertyList->count(); j++)
+    {
+        QListWidgetItem *item;
+        item = propertyList->item(j);
+        bool selected = item->checkState();
+        if (selected)
+        {
+            if (first) {
+                first = false;
+                out << "\"Period\"";
+            }
+            QString series_name = item->text();
+            out << ",\"" << series_name << "\"";
+            Model::Property prop = property_map[series_name];
+            lists[n++] = _current_model->series[prop]->points();
+        }
+    }
+
+    int start = model->getStartPeriod();
+    for (int i = 0; i < iters; i++)
+    {
+        first = true;
+        for (int j = 0; j < n; j++)
+        {
+            // qDebug() << "i =" << i << ",  j =" << j << ",  start =" << start << ",  end =" << end;
+            if (first) {
+                out << "\n\"" << i + start << "\"";
+                first = false;
+            }
+
+            // Output the ith value in the series
+            out << ",\"" << lists[j].at(i).y() << "\"";
+        }
+    }
 }
 
 void MainWindow::nyi()
@@ -674,6 +733,7 @@ void MainWindow::changeModel(QListWidgetItem *item)
 
     selectedModelItem = item;
     changeAction->setDisabled(false);
+    saveCSVAction->setDisabled(false);
     _current_model = Model::model(item->text());
 
     if (_current_model == nullptr) {

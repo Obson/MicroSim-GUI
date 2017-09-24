@@ -58,7 +58,6 @@ protected:
     int getReserve();       // funds kept in reserve for next period (%)
 
     void saveCSV();
-    void copy();
     void editParameters();
     void createFirstModel();
     void createNewModel();
@@ -84,7 +83,7 @@ protected:
     QMenu *helpMenu;
 
     QAction *clearModelsAction;
-    QAction *saveCVSAction;
+    QAction *saveCSVAction;
     QAction *copyAction;
     QAction *changeAction;
     QAction *newAction;
