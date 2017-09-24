@@ -181,6 +181,7 @@ void MainWindow::createMenus()
     fileMenu->addAction(newAction);
     fileMenu->addAction(removeAction);
     fileMenu->addAction(clearModelsAction);
+    fileMenu->addSeparator();
     fileMenu->addAction(saveCVSAction);
 
     editMenu = myMenuBar->addMenu(tr("&Edit"));
@@ -362,9 +363,6 @@ void MainWindow::remove()
     RemoveModelDlg dlg;
     dlg.exec();
 
-
-    // NEXT: Now we need to remove any deleted model names from the model list
-    // ...
     reloading = true;
     loadModelList();
     reloading = false;

@@ -10,6 +10,7 @@
 #include <QListWidgetItem>
 
 #include <QComboBox>
+#include <QCheckBox>
 
 class ParameterWizard : public QWizard
 {
@@ -79,6 +80,10 @@ private:
     QSpinBox *sb_bus_loan_int;
 
     QComboBox *cb_loan_prob;
+
+    QCheckBox *xb_locked;
+
+    void toggleLock();
 };
 
 class ExtraPage : public QWizardPage

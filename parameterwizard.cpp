@@ -117,12 +117,6 @@ void ParameterWizard::createNewPage()
     next();
 }
 
-///
-/// \brief ParameterWizard::getSpinBox
-/// \param min Minimum value the spinbox can hold
-/// \param max Maximum value the spinbox can hold
-/// \return a pointer to a new QSpinBox with the given min and max values
-///
 QSpinBox *ParameterWizard::getSpinBox(int min, int max)
 {
     QSpinBox *sb = new QSpinBox;
@@ -151,6 +145,8 @@ DefaultPage::DefaultPage(ParameterWizard *w)
     sb_boe_loan_int = wiz->getSpinBox(0,99);
     sb_bus_loan_int = wiz->getSpinBox(0,99);
 
+    xb_locked = new QCheckBox("  Locked");
+
     cb_loan_prob = new QComboBox;
     cb_loan_prob->addItem(tr("Never"));
     cb_loan_prob->addItem(tr("Rarely"));
@@ -159,6 +155,7 @@ DefaultPage::DefaultPage(ParameterWizard *w)
     cb_loan_prob->addItem(tr("Always"));
 
     QFormLayout *layout = new QFormLayout;
+
     layout->addRow(new QLabel(tr("<b>Government</b>")));
     layout->addRow(new QLabel(tr("Periodic procurement expenditure")), le_dir_exp_rate);
     layout->addRow(new QLabel(tr("Unemployment benefit (%)")), sb_ubr);
@@ -178,6 +175,9 @@ DefaultPage::DefaultPage(ParameterWizard *w)
     layout->addRow(new QLabel(tr("<b>Banks</b>")));
     layout->addRow(new QLabel(tr("BOE lending rate (%)")), sb_boe_loan_int);
     layout->addRow(new QLabel(tr("Retail lending rate (%)")), sb_bus_loan_int);
+
+    layout->addRow(xb_locked);
+
     setLayout(layout);
 }
 
@@ -199,6 +199,33 @@ void DefaultPage::readSettings(QString model)
     sb_boe_loan_int->setValue(settings.value(model + "/default/boe-interest", 1).toInt());
     sb_bus_loan_int->setValue(settings.value(model + "/default/bus-interest", 3).toInt());
     cb_loan_prob->setCurrentIndex(settings.value(model + "/default/loan-prob", 0).toInt());
+    xb_locked->setChecked(settings.value(model + "/locked", false).toBool());
+
+    connect(xb_locked, &QCheckBox::toggled, this, &DefaultPage::toggleLock);
+    toggleLock();
+}
+
+void DefaultPage::toggleLock()
+{
+    qDebug() << "DefaultPage::toggleLock(): called";
+
+    bool unlocked = !xb_locked->isChecked();
+
+    le_dir_exp_rate;
+
+    sb_emp_rate->setEnabled(unlocked);
+    sb_prop_con->setEnabled(unlocked);
+    sb_dedns->setEnabled(unlocked);
+    sb_inc_tax->setEnabled(unlocked);
+    sb_sales_tax->setEnabled(unlocked);
+    sb_bcr->setEnabled(unlocked);
+    sb_distrib->setEnabled(unlocked);
+    sb_prop_inv->setEnabled(unlocked);
+    sb_ubr->setEnabled(unlocked);
+    sb_boe_loan_int->setEnabled(unlocked);
+    sb_bus_loan_int->setEnabled(unlocked);
+
+    cb_loan_prob->setEnabled(unlocked);
 }
 
 // This function should not be called unless wiz->current_model has been set.
@@ -234,6 +261,8 @@ bool DefaultPage::validatePage()
     settings.setValue(model + "/default/bus-interest", sb_bus_loan_int->value());
 
     settings.setValue(model + "/default/loan-prob", cb_loan_prob->currentIndex());
+
+    settings.setValue(model + "/locked", xb_locked->isChecked());
 
     return true;
 }
