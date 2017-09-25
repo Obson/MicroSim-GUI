@@ -26,6 +26,7 @@ enum class ParamType {
     inc_thresh,
     sales_tax_rate,
     firm_creation_prob,
+    recoup,
     dedns,
     unemp_ben_rate,
     active_pop,
@@ -201,6 +202,7 @@ public:
     double getIncomeThreshold();    // 100% of threshold is spent regardless of prop con
     double getSalesTaxRate();       // sales tax rate (%)
     double getPreTaxDedns();        // pre-tax deductions (%)
+    double getCapexRecoupTime();    // number of periods to recoup capex
     double getFCP();                // firm creaton probability (%)
     double getUBR();                // unemployment benefit rate (% of std wage)
     double getPropInv();            // propensity to invest
@@ -310,6 +312,7 @@ protected:
         Pair boe_int;
         Pair bus_int;
         Pair loan_prob;
+        Pair recoup;
         Pair invalid;           // Just a marker -- value immaterial
     };
 

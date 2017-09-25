@@ -25,6 +25,7 @@ QMap<ParamType,QString> Model::parameter_keys
     {ParamType::boe_int, "boe-interest"},
     {ParamType::bus_int, "bus-interest"},
     {ParamType::loan_prob, "loan-prob"},
+    {ParamType::recoup, "capex-recoup-periods"},
 };
 
 int Model::loadAllModels()
@@ -90,6 +91,7 @@ Model *Model::createModel(QString name)
     settings.setValue(parameter_keys[ParamType::boe_int],            1);
     settings.setValue(parameter_keys[ParamType::bus_int],            3);
     settings.setValue(parameter_keys[ParamType::loan_prob],          0);
+    settings.setValue(parameter_keys[ParamType::recoup],            10);
 
     settings.endGroup();
     settings.endGroup();
@@ -359,6 +361,9 @@ void Model::readDefaultParameters()
     p->boe_int.val            = settings.value(parameter_keys[ParamType::boe_int]).toInt();
     p->bus_int.val            = settings.value(parameter_keys[ParamType::bus_int]).toInt();
     p->loan_prob.val          = settings.value(parameter_keys[ParamType::loan_prob]).toInt();
+
+
+    p->recoup.val             = settings.value(parameter_keys[ParamType::recoup]).toInt();
 
     settings.endGroup();
     settings.endGroup();
@@ -1225,11 +1230,10 @@ int Model::getParameterVal(ParamType type)
              : ((type == ParamType::bus_int) ? parameter_sets[i]->bus_int
              : ((type == ParamType::loan_prob) ? parameter_sets[i]->loan_prob
              : ((type == ParamType::inc_thresh) ? parameter_sets[i]->inc_thresh
+             : ((type == ParamType::recoup) ? parameter_sets[i]->recoup
              : parameter_sets[i]->invalid
-             ))))))))))))));
+             )))))))))))))));
 
-
-    //qDebug() << "Model::getParameterVal(): returning" << p.val;
     return p.val;
 }
 
@@ -1271,6 +1275,11 @@ double Model::getSalesTaxRate()
 double Model::getPreTaxDedns()
 {
     return double(getParameterVal(ParamType::dedns)) / 100;
+}
+
+double Model::getCapexRecoupTime()
+{
+    return double(getParameterVal(ParamType::recoup));
 }
 
 double Model::getFCP()

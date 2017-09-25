@@ -179,7 +179,7 @@ void Firm::epilogue(int period)
                     //     {current_wage_rate + (excess / (10 * (emps + new_emps))} / std_wage
                     // I think!
 
-                    productivity = (current_wage_rate + (double(excess) / (10 * (emps + new_emps)))) / std_wage;
+                    productivity = (current_wage_rate + (double(excess) / (model()->getCapexRecoupTime() * (emps + new_emps)))) / std_wage;
                 }
             }
         }

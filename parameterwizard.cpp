@@ -21,7 +21,7 @@ ParameterWizard::ParameterWizard(QWidget *parent) : QWizard(parent)
 
     import_model.clear();
 
-    setMinimumHeight(560);
+    setMinimumHeight(720);
 
     props << "Current period"
           << "Govt expenditure excl benefits"
@@ -136,6 +136,7 @@ DefaultPage::DefaultPage(ParameterWizard *w)
     sb_inc_tax = wiz->getSpinBox(0, 100);
     sb_sales_tax = wiz->getSpinBox(0, 100);
     sb_bcr = wiz->getSpinBox(0, 100);
+    sb_recoup = wiz->getSpinBox(1, 100);
     sb_distrib = wiz->getSpinBox(0, 100);
     sb_prop_inv = wiz->getSpinBox(1, 100);
     sb_ubr = wiz->getSpinBox(0, 100);
@@ -170,6 +171,7 @@ DefaultPage::DefaultPage(ParameterWizard *w)
     layout->addRow(new QLabel(tr("Investment rate (%)")), sb_prop_inv);
     layout->addRow(new QLabel(tr("Borrow if needed to pay wages")), cb_loan_prob);
     layout->addRow(new QLabel(tr("Business creation rate (%)")), sb_bcr);
+    layout->addRow(new QLabel(tr("Time (periods) to recoup capex")), sb_recoup);
 
     layout->addRow(new QLabel(tr("<b>Banks</b>")));
     layout->addRow(new QLabel(tr("BOE lending rate (%)")), sb_boe_loan_int);
@@ -193,6 +195,7 @@ void DefaultPage::readSettings(QString model)
     sb_inc_tax->setValue(settings.value(model + "/default/income-tax-rate", 10).toInt());
     sb_sales_tax->setValue(settings.value(model + "/default/sales-tax-rate", 0).toInt());
     sb_bcr->setValue(settings.value(model + "/default/firm-creation-prob", 0).toInt());
+    sb_recoup->setValue(settings.value(model + "/default/capex-recoup-periods", 10).toInt());
     sb_distrib->setValue(settings.value(model + "/default/reserve-rate", 100).toInt());
     sb_prop_inv->setValue(settings.value(model + "/default/prop-invest", 2).toInt());
     sb_ubr->setValue(settings.value(model + "/default/unempl-benefit-rate", 60).toInt());
@@ -220,6 +223,7 @@ void DefaultPage::toggleLock()
     sb_inc_tax->setEnabled(unlocked);
     sb_sales_tax->setEnabled(unlocked);
     sb_bcr->setEnabled(unlocked);
+    sb_recoup->setEnabled(unlocked);
     sb_distrib->setEnabled(unlocked);
     sb_prop_inv->setEnabled(unlocked);
     sb_ubr->setEnabled(unlocked);
@@ -255,6 +259,8 @@ bool DefaultPage::validatePage()
     settings.setValue(model + "/default/income-tax-rate", sb_inc_tax->value());
     settings.setValue(model + "/default/sales-tax-rate", sb_sales_tax->value());
     settings.setValue(model + "/default/firm-creation-prob", sb_bcr->value());
+    settings.setValue(model + "/default/capex-recoup-periods", sb_recoup->value());
+
     settings.setValue(model + "/default/reserve-rate", sb_distrib->value());
     settings.setValue(model + "/default/prop-invest", sb_prop_inv->value());
     settings.setValue(model + "/default/unempl-benefit-rate", sb_ubr->value());
@@ -311,7 +317,7 @@ ExtraPage::ExtraPage(ParameterWizard *w)
 
     QGridLayout *main_layout = new QGridLayout;
     main_layout->addLayout(top_layout, 0, 0, 2, 2);
-    main_layout->addLayout(bottom_layout, 2, 0, 11, 2);
+    main_layout->addLayout(bottom_layout, 2, 0, 12, 2);
     setLayout(main_layout);
 
     QString page_id = QString::number(wiz->currentId());
