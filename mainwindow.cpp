@@ -210,7 +210,7 @@ void MainWindow::saveCSV()
 
     Model *model = current_model();
     QString filename = QFileDialog::getSaveFileName(this, tr("Save As"),
-                                "~/" + model->name() + ".csv",
+                                QDir::homePath() + QDir::separator() + model->name() + ".csv",
                                 tr("CSV files (*.csv)"));
 
     if (filename.isEmpty()) {
