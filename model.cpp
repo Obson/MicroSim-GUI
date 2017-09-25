@@ -997,11 +997,11 @@ Worker *Model::hire(Firm *employer, double wage, int period)
     if (w == nullptr)
     {
         // We've already checked availability, but in case the mechanism
-        // changes in future we make sure you can't employ more people that
+        // changes in future we make sure you can't employ more people than
         // there actually are. This constraint could conceivably be varied if
         // we want to allow differential labour values by treating one worker
         // as equivalent to several workers.
-        if (workers.count() < population())     // (unscaled)
+        if (workers.count() < population() || period == 0)     // (unscaled)
         {
             w = new Worker(this);
             workers.push_back(w);

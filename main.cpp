@@ -26,7 +26,7 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
     }
 }
 #else
-void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+void myMessageOutput(QtMsgType type, const QMessageLogContext&, const QString&msg)
 {
     QByteArray localMsg = msg.toLocal8Bit();
     switch (type) {
