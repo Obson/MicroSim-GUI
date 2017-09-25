@@ -51,7 +51,6 @@ protected:
     int getPropCon();       // propensity to consume (%)
     int getIncTaxRate();    // income tax rate (%)
     int getSalesTaxRate();  // sales tax rate (%)
-    int getPreTaxDedns();   // pre-tax deductions (%)
     int getFCP();           // firm creaton probability (%)
     int getUBR();           // unemployment benefit rate (% of std wage)
     int getPropInv();       // propensity to invest

@@ -295,6 +295,7 @@ void MainWindow::errorMessage(QString msg)
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     qDebug() << "MainWindow::closeEvent() called";
+
     // Save current config to settings
     QSettings settings;
     settings.beginGroup("State");

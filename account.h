@@ -164,7 +164,6 @@ private:
     double bonuses_paid = 0;
     double sales_tax_paid = 0;
     double sales_receipts = 0;
-    double dedns_paid = 0;
 
     int num_hired = 0;
     int num_fired = 0;
@@ -219,7 +218,6 @@ public:
     double getBonusesPaid();
     double getSalesTaxPaid();
     double getSalesReceipts();
-    double getDednsPaid();
 
     size_t getNumEmployees();
 

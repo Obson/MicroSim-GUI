@@ -363,9 +363,6 @@ void Model::readDefaultParameters()
     settings.endGroup();
     settings.endGroup();
 
-    //qDebug() << "p->inc_tax_rate.val =" << p->inc_tax_rate.val;
-    //qDebug() << "Model::readDefaultParameters(): p->dedns.val =" << p->dedns.val << ", key =" << parameter_keys[ParamType::dedns];
-
     // Conditional parameter sets must be appended, but the default set must
     // always be the first, so clear the list
     parameter_sets.clear();
@@ -456,6 +453,9 @@ void Model::run(bool randomised)
         // -------------------------------------------
         // Initialise objects ready for next iteration
         // -------------------------------------------
+
+        _dedns = 0;         // deductions are tracked by the model object and are
+                            // accumulated within but not across periods
 
         _gov->init();
 
@@ -631,8 +631,7 @@ int Model::getWageBill(Firm *employer, bool include_dedns)
 
     if (include_dedns)
     {
-        QSettings settings;
-        tot = (tot * (100 + settings.value("pre-tax-dedns-rate", 0).toInt())) / 100;
+        tot *= (1.0 + getPreTaxDedns());
     }
 
     return tot;
@@ -645,7 +644,7 @@ int Model::payWages(Firm *payer, int period)
 
     QSettings settings;
 
-    double dedns_rate = settings.value("pre-tax-dedns-rate", 0).toInt() / 100;
+    double dedns_rate = getPreTaxDedns();
     int num_workers = workers.count();
 
     for (int i = 0; i < num_workers; i++)
@@ -699,6 +698,7 @@ int Model::payWages(Firm *payer, int period)
                 gov()->credit(dedns, payer);
 
                 amt_paid += wage_due + dedns;
+                _dedns += dedns;
             }
             else
             {
@@ -730,17 +730,10 @@ double Model::payWorkers(double amount, Account *source, Reason reason)
         {
         case for_benefits:
 
-            // qDebug() << "Model::payWorkers(): paying benefits";
-
             if (!workers[i]->isEmployed())
             {
-                // qDebug() << "Model::payWorkers(): paying benefits (worker is unemployed)";
                 workers[i]->credit(amount, source);
                 amt_paid += amount;
-            }
-            else
-            {
-                // qDebug() << "Model::payWorkers(): no action (worker is employed)";
             }
             break;
 
@@ -751,24 +744,15 @@ double Model::payWorkers(double amount, Account *source, Reason reason)
             // ensure that the amount is correct. Any overpayment will
             // simply create a negative balance in the caller's account.
 
-            // qDebug() << "Model::payWorkers(): paying benefits";
-
             if (workers[i]->getEmployer() == source)
             {
-                // qDebug() << "Model::payWorkers(): worker is employee of payer";
-
                 workers[i]->credit(amount, source);
                 amt_paid += amount;
-            }
-            else
-            {
-                // qDebug() << "Model::payWorkers(): no action (worker is not employee of payer)";
             }
             break;
         }
     }
 
-    // qDebug() << "Model::payWorkers(): returning amt_paid" << amt_paid;
     return amt_paid;
 }
 
@@ -880,7 +864,6 @@ double Model::getPropertyVal(Property p)
         return _bonuses;
 
     case Property::dedns:
-        _dedns = getDednsPaid();
         return _dedns;
 
     case Property::inc_tax:
@@ -1148,13 +1131,7 @@ double Model::getBonusesPaid()
 
 double Model::getDednsPaid()
 {
-    int tot = 0;
-    for (int i = 0; i < firms.count(); i++)
-    {
-        tot += firms[i]->getDednsPaid();
-    }
-
-    return tot;
+    return _dedns;
 }
 
 double Model::getIncTaxPaid()

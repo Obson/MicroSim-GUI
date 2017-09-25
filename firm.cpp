@@ -34,7 +34,6 @@ void Firm::init()
     wages_paid = 0;
     sales_tax_paid = 0;
     sales_receipts = 0;
-    dedns_paid = 0;
     num_hired = 0;
     num_fired = 0;
     bonuses_paid = 0;
@@ -79,9 +78,6 @@ void Firm::trigger(int period)
         // Important: wages_paid is not cumulative!
         wages_paid = model()->payWages(this, period);
         balance -= wages_paid;
-
-        // TODO: We've knocked this out in the reorganisation. Reinstate.
-        // dedns_paid += dedns;
     }
 }
 
@@ -242,11 +238,6 @@ double Firm::getSalesTaxPaid()
 double Firm::getSalesReceipts()
 {
     return sales_receipts;
-}
-
-double Firm::getDednsPaid()
-{
-    return dedns_paid;
 }
 
 size_t Firm::getNumEmployees()
