@@ -48,7 +48,17 @@ void Worker::trigger(int period)
     if (period > last_triggered)    // to prevent double counting
     {
         last_triggered = period;
-        double purch = balance * model()->getPropCon();
+
+        double purch;
+        double thresh = model()->getIncomeThreshold();
+        double prop_con = model()->getPropCon();
+
+        if (balance <= thresh) {
+            purch = balance * prop_con;
+        } else {
+            purch = ((balance - thresh) * prop_con) + thresh;
+        }
+
         if (purch > 0 && transferSafely(model()->selectRandomFirm(), purch, this))
         {
             purchases += purch;

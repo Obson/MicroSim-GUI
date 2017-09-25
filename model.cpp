@@ -14,6 +14,7 @@ QMap<ParamType,QString> Model::parameter_keys
     {ParamType::emp_rate, "employment-rate"},
     {ParamType::prop_con, "propensity-to-consume"},
     {ParamType::inc_tax_rate, "income-tax-rate"},
+    {ParamType::inc_thresh, "income-threshold"},
     {ParamType::sales_tax_rate, "sales-tax-rate"},
     {ParamType::firm_creation_prob, "firm-creation-prob"},
     {ParamType::dedns, "pre-tax-dedns-rate"},
@@ -70,6 +71,7 @@ Model *Model::createModel(QString name)
     settings.setValue(parameter_keys[ParamType::emp_rate],          95);
     settings.setValue(parameter_keys[ParamType::prop_con],          80);
     settings.setValue(parameter_keys[ParamType::inc_tax_rate],      10);
+    settings.setValue(parameter_keys[ParamType::inc_thresh],        50);
     settings.setValue(parameter_keys[ParamType::sales_tax_rate],     0);
     settings.setValue(parameter_keys[ParamType::firm_creation_prob], 0);
     settings.setValue(parameter_keys[ParamType::dedns],              0);
@@ -346,6 +348,7 @@ void Model::readDefaultParameters()
     p->emp_rate.val           = settings.value(parameter_keys[ParamType::emp_rate]).toInt();
     p->prop_con.val           = settings.value(parameter_keys[ParamType::prop_con]).toInt();
     p->inc_tax_rate.val       = settings.value(parameter_keys[ParamType::inc_tax_rate]).toInt();
+    p->inc_thresh.val         = settings.value(parameter_keys[ParamType::inc_thresh]).toInt();
     p->sales_tax_rate.val     = settings.value(parameter_keys[ParamType::sales_tax_rate]).toInt();
     p->firm_creation_prob.val = settings.value(parameter_keys[ParamType::firm_creation_prob]).toInt();
     p->dedns.val              = settings.value(parameter_keys[ParamType::dedns]).toInt();
@@ -360,8 +363,8 @@ void Model::readDefaultParameters()
     settings.endGroup();
     settings.endGroup();
 
-    qDebug() << "p->inc_tax_rate.val =" << p->inc_tax_rate.val;
-    qDebug() << "Model::readDefaultParameters(): p->dedns.val =" << p->dedns.val << ", key =" << parameter_keys[ParamType::dedns];
+    //qDebug() << "p->inc_tax_rate.val =" << p->inc_tax_rate.val;
+    //qDebug() << "Model::readDefaultParameters(): p->dedns.val =" << p->dedns.val << ", key =" << parameter_keys[ParamType::dedns];
 
     // Conditional parameter sets must be appended, but the default set must
     // always be the first, so clear the list
@@ -1245,8 +1248,9 @@ int Model::getParameterVal(ParamType type)
              : ((type == ParamType::boe_int) ? parameter_sets[i]->boe_int
              : ((type == ParamType::bus_int) ? parameter_sets[i]->bus_int
              : ((type == ParamType::loan_prob) ? parameter_sets[i]->loan_prob
+             : ((type == ParamType::inc_thresh) ? parameter_sets[i]->inc_thresh
              : parameter_sets[i]->invalid
-             )))))))))))));
+             ))))))))))))));
 
 
     //qDebug() << "Model::getParameterVal(): returning" << p.val;
@@ -1271,6 +1275,11 @@ double Model::getStdWage()
 double Model::getPropCon()
 {
     return double(getParameterVal(ParamType::prop_con)) / 100;
+}
+
+double Model::getIncomeThreshold()
+{
+    return double(getParameterVal(ParamType::inc_thresh));
 }
 
 double Model::getIncTaxRate()

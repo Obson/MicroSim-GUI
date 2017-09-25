@@ -66,6 +66,7 @@ private:
     ParameterWizard *wiz;
 
     QLineEdit *le_dir_exp_rate;
+    QLineEdit *le_thresh;
 
     QSpinBox *sb_emp_rate;
     QSpinBox *sb_prop_con;

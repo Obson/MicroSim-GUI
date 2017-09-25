@@ -23,6 +23,7 @@ enum class ParamType {
     emp_rate,
     prop_con,
     inc_tax_rate,
+    inc_thresh,
     sales_tax_rate,
     firm_creation_prob,
     dedns,
@@ -190,22 +191,23 @@ public:
     // Parameters
     // ------------------------------------------------------------------------
 
-    int getActivePop();     // proportion of population that is economically active
+    int getActivePop();             // proportion of population that is economically active
 
-    double getProcurement();   //direct government expenditure
-    double getTargetEmpRate(); // target rate of employment (%)
-    double getStdWage();       // standard wage (currency units per employee per period)
-    double getPropCon();       // propensity to consume (%)
-    double getIncTaxRate();    // income tax rate (%)
-    double getSalesTaxRate();  // sales tax rate (%)
-    double getPreTaxDedns();   // pre-tax deductions (%)
-    double getFCP();           // firm creaton probability (%)
-    double getUBR();           // unemployment benefit rate (% of std wage)
-    double getPropInv();       // propensity to invest
-    double getDistributionRate();       // funds kept in reserve for next period (%)
+    double getProcurement();        //direct government expenditure
+    double getTargetEmpRate();      // target rate of employment (%)
+    double getStdWage();            // standard wage (currency units per employee per period)
+    double getPropCon();            // propensity to consume (%)
+    double getIncTaxRate();         // income tax rate (%)
+    double getIncomeThreshold();    // 100% of threshold is spent regardless of prop con
+    double getSalesTaxRate();       // sales tax rate (%)
+    double getPreTaxDedns();        // pre-tax deductions (%)
+    double getFCP();                // firm creaton probability (%)
+    double getUBR();                // unemployment benefit rate (% of std wage)
+    double getPropInv();            // propensity to invest
+    double getDistributionRate();   // funds kept in reserve for next period (%)
 
-    double getBoeRate();       // BoE lending rate
-    double getBusRate();       // retail lending rate
+    double getBoeRate();            // BoE lending rate
+    double getBusRate();            // retail lending rate
 
     double getLoanProb();
 
@@ -297,6 +299,7 @@ protected:
         Pair emp_rate;
         Pair prop_con;
         Pair inc_tax_rate;
+        Pair inc_thresh;
         Pair sales_tax_rate;
         Pair firm_creation_prob;
         Pair dedns;

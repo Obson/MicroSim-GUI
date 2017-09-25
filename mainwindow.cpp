@@ -14,6 +14,7 @@
 #include <QDialogButtonBox>
 #include <QFileDialog>
 #include <QUrl>
+#include <QDebug>
 
 #include "account.h"
 #include "optionsdialog.h"
@@ -68,6 +69,8 @@ MainWindow::MainWindow()
 
     // Make sure preferences exist
     QSettings settings;
+    qDebug() << "Settings are in" << settings.fileName();
+
     if (!settings.contains("iterations"))
     {
         settings.setValue("iterations", 99);

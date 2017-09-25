@@ -127,6 +127,9 @@ DefaultPage::DefaultPage(ParameterWizard *w)
     le_dir_exp_rate = new QLineEdit();
     le_dir_exp_rate->setFixedWidth(48);
 
+    le_thresh = new QLineEdit();
+    le_thresh->setFixedWidth(48);
+
     sb_emp_rate = wiz->getSpinBox(0, 100);
     sb_prop_con = wiz->getSpinBox(0, 100);
     sb_dedns = wiz->getSpinBox(0, 100);
@@ -158,6 +161,7 @@ DefaultPage::DefaultPage(ParameterWizard *w)
     layout->addRow(new QLabel(tr("<b>Workers</b>")));
     layout->addRow(new QLabel(tr("Propensity to consume (%)")), sb_prop_con);
     layout->addRow(new QLabel(tr("Income tax (%)")), sb_inc_tax);
+    layout->addRow(new QLabel(tr("Income threshold")), le_thresh);
 
     layout->addRow(new QLabel(tr("<b>Businesses</b>")));
     layout->addRow(new QLabel(tr("Pre-tax deductions (%)")), sb_dedns);
@@ -182,6 +186,7 @@ void DefaultPage::readSettings(QString model)
     // defaults so they will have a workable model to start with
     QSettings settings;
     le_dir_exp_rate->setText(settings.value(model + "/default/govt-procurement", 0).toString());
+    le_thresh->setText(settings.value(model + "/default/income-threshold", 50).toString());
     sb_emp_rate->setValue(settings.value(model + "/default/employment-rate", 95).toInt());
     sb_prop_con->setValue(settings.value(model + "/default/propensity-to-consume", 80).toInt());
     sb_dedns->setValue(settings.value(model + "/default/pre-tax-dedns-rate", 0).toInt());
@@ -206,7 +211,8 @@ void DefaultPage::toggleLock()
 
     bool unlocked = !xb_locked->isChecked();
 
-    le_dir_exp_rate;
+    le_dir_exp_rate->setEnabled(unlocked);
+    le_thresh->setEnabled(unlocked);
 
     sb_emp_rate->setEnabled(unlocked);
     sb_prop_con->setEnabled(unlocked);
@@ -244,6 +250,7 @@ bool DefaultPage::validatePage()
     settings.setValue(model + "/default/govt-procurement", le_dir_exp_rate->text().toInt());
     settings.setValue(model + "/default/employment-rate", sb_emp_rate->value());
     settings.setValue(model + "/default/propensity-to-consume", sb_prop_con->value());
+    settings.setValue(model + "/default/income-threshold", le_thresh->text().toInt());
     settings.setValue(model + "/default/pre-tax-dedns-rate", sb_dedns->value());
     settings.setValue(model + "/default/income-tax-rate", sb_inc_tax->value());
     settings.setValue(model + "/default/sales-tax-rate", sb_sales_tax->value());
