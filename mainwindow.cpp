@@ -181,12 +181,10 @@ void MainWindow::createMenus()
     fileMenu = myMenuBar->addMenu(tr("&File"));
     fileMenu->addAction(newAction);
     fileMenu->addAction(removeAction);
-    fileMenu->addAction(clearModelsAction);
     fileMenu->addSeparator();
     fileMenu->addAction(saveCSVAction);
 
     editMenu = myMenuBar->addMenu(tr("&Edit"));
-    editMenu->addAction(copyAction);
     editMenu->addAction(changeAction);
     setOptionsAction->setMenuRole(QAction::ApplicationSpecificRole);
     editMenu->addAction(setOptionsAction);

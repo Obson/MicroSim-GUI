@@ -82,9 +82,7 @@ protected:
     QMenu *editMenu;
     QMenu *helpMenu;
 
-    QAction *clearModelsAction;
     QAction *saveCSVAction;
-    QAction *copyAction;
     QAction *changeAction;
     QAction *newAction;
     QAction *removeAction;

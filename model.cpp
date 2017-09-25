@@ -594,7 +594,6 @@ Bank *Model::bank()
 
 Firm *Model::createFirm(bool state_supported)
 {
-    qDebug() << "Model::createFirm(): creating new firm";
     Firm *firm = new Firm(this, state_supported);
     if (state_supported)
     {
