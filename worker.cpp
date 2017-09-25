@@ -54,7 +54,7 @@ void Worker::trigger(int period)
         double prop_con = model()->getPropCon();
 
         if (balance <= thresh) {
-            purch = balance * prop_con;
+            purch = balance;
         } else {
             purch = ((balance - thresh) * prop_con) + thresh;
         }

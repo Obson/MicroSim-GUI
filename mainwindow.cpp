@@ -259,7 +259,6 @@ void MainWindow::saveCSV()
         first = true;
         for (int j = 0; j < n; j++)
         {
-            // qDebug() << "i =" << i << ",  j =" << j << ",  start =" << start << ",  end =" << end;
             if (first) {
                 out << "\n\"" << i + start << "\"";
                 first = false;
@@ -426,13 +425,6 @@ void MainWindow::remove()
     reloading = false;
 }
 
-///
-/// \brief MainWindow::edit
-/// Call the ParameterWizard to Edit the parameters for the currently
-/// selected model. If the parameters are changed (or, at least, if the
-/// wizard returns QDialog::Accepted), rerun the model and redisplay the chart.
-/// This is a slot so that it can be accessed (e.g.) from the menu.
-///
 void MainWindow::editParameters()
 {
     Q_ASSERT(selectedModelItem != 0);
@@ -577,8 +569,6 @@ void MainWindow::showStats(QListWidgetItem *current, QListWidgetItem *prev)
     int max = _current_model->max_value(ix);
     int total = _current_model->total(ix);
     int mean = total / range;
-
-    qDebug() << "MainWindow::showStats(): min =" << min << ", max =" << max << ", total =" << total << ", range =" << range << ", mean =" << mean;
 
     ctrl->setStats("<b>" + key + "</b>", min, max, mean);
 }
