@@ -318,7 +318,7 @@ void MainWindow::restoreState()
 {
     QSettings settings;
     settings.beginGroup("State");
-    for (int i = 0, n = 0; i < propertyList->count(); i++)
+     for (int i = 0, n = 0; i < propertyList->count(); i++)
     {
         QListWidgetItem *item;
         item = propertyList->item(i);
