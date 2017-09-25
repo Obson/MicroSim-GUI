@@ -67,7 +67,7 @@ protected:
     void nyi();
     void errorMessage(QString);
     void setOptions();
-    void showHelp();
+    void showWiki();
     void showStats(QListWidgetItem *current, QListWidgetItem *prev);
 
     void closeEvent(QCloseEvent *event);

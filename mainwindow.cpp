@@ -118,9 +118,9 @@ void MainWindow::show()
     }
 }
 
-void MainWindow::showHelp()
+void MainWindow::showWiki()
 {
-    nyi();
+    QDesktopServices::openUrl(QUrl("https://github.com/Obson/MicroSim-GUI/wiki", QUrl::StrictMode));
 }
 
 void MainWindow::createChart()
@@ -165,8 +165,8 @@ void MainWindow::createActions()
     aboutQtAction = new QAction(tr("A&bout Qt"), this);
     connect(aboutQtAction, &QAction::triggered, this, &MainWindow::aboutQt);
 
-    helpAction = new QAction(tr("&Manual"), this);
-    connect(helpAction, &QAction::triggered, this, &MainWindow::showHelp);
+    helpAction = new QAction(tr("Open &wiki in browser"), this);
+    connect(helpAction, &QAction::triggered, this, &MainWindow::showWiki);
 
     connect(this, &MainWindow::windowShown, this, &MainWindow::createFirstModel);
     connect(this, &MainWindow::windowLoaded, this, &MainWindow::restoreState);
