@@ -242,7 +242,7 @@ private:
 
     Firm *_gov_firm;     // (see constructor for assignment to firms)
 
-    double exp, rec, ben, proc;
+    double exp, unbudgeted, rec, ben, proc;
 
 protected:
 
@@ -270,6 +270,7 @@ public:
     void trigger(int period);
 
     double getExpenditure();   // Gov expenditure in current period (excl benefits)
+    double getUnbudgetedExp(); // Gov expenditure on demand from gov_firm
     double getBenefitsPaid();  // Benefits paid this period
     double getReceipts();      // Gov receipts (taxes and dedns) in current period
     double getProcExp();       // Procurement expenditure

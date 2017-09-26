@@ -190,6 +190,7 @@ Model::Model(QString model_name)
               << Property::procurement
               << Property::productivity
               << Property::rel_productivity
+              << Property::unbudgeted
               << Property::num_properties;      // dummy (keep at end)
 
     // Set up an empty series for each property
@@ -228,6 +229,7 @@ int Model::scale(Property p)
     case Property::gov_exp:
     case Property::bens_paid:
     case Property::gov_exp_plus:
+    case Property::unbudgeted:
     case Property::gov_recpts:
     case Property::deficit:
     case Property::gov_bal:
@@ -361,8 +363,6 @@ void Model::readDefaultParameters()
     p->boe_int.val            = settings.value(parameter_keys[ParamType::boe_int]).toInt();
     p->bus_int.val            = settings.value(parameter_keys[ParamType::bus_int]).toInt();
     p->loan_prob.val          = settings.value(parameter_keys[ParamType::loan_prob]).toInt();
-
-
     p->recoup.val             = settings.value(parameter_keys[ParamType::recoup]).toInt();
 
     settings.endGroup();
@@ -796,6 +796,9 @@ double Model::getPropertyVal(Property p)
     case Property::gov_exp_plus:
         return _exp + _bens;
 
+    case Property::unbudgeted:
+        return gov()->getUnbudgetedExp();
+
     case Property::gov_recpts:
         _rcpts = gov()->getReceipts();
         return _rcpts;
@@ -814,7 +817,7 @@ double Model::getPropertyVal(Property p)
 
     case Property::num_firms:
         // num_firms is (must be) only used for stats as it doesn't include
-        // the government-owned firm. For the actually number (unscaled) use
+        // the government-owned firm. For the actual number (unscaled) use
         // firms.count().
         _num_firms = firms.count() - 1;
         return double(_num_firms);
@@ -1210,8 +1213,6 @@ int Model::getParameterVal(ParamType type)
 {
     // TODO: Currently we only check the default parameter set. This needs
     // extending to check conditional parameter sets (not yet implemented).
-
-    // qDebug() << "Model::getParameterVal(): parameter_sets[0]->procurement.val =" << parameter_sets[0]->procurement.val;
 
     int i = 0;      // only default parameter set at present
 

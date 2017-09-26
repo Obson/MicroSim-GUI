@@ -4,6 +4,7 @@
 void Government::init()
 {
     exp = 0;
+    unbudgeted = 0;
     rec = 0;
     ben = 0;
     proc = 0;
@@ -35,6 +36,11 @@ double Government::getExpenditure()
     return exp;
 }
 
+double Government::getUnbudgetedExp()
+{
+    return unbudgeted;
+}
+
 double Government::getBenefitsPaid()
 {
     return ben;
@@ -57,7 +63,8 @@ double Government::debit(Account *requester, double amount)
 
     balance -= amount;
     exp += amount;          // include direct unbudgeted support as expenditure.
-                            // TODO: Keep account of this separately
+    unbudgeted += amount;
+
     return amount;
 }
 
@@ -101,7 +108,7 @@ void Government::trigger(int period)
                         // less confusing
 
         // Benefits payments to all unemployed workers (doesn't adjust balance,
-        // so we must do this on return
+        // so we must do this on return)
         ben += model()->payWorkers(model()->getStdWage() * model()->getUBR(),
                                this,                // source
                                Model::for_benefits  // reason
