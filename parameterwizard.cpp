@@ -14,14 +14,15 @@ ParameterWizard::ParameterWizard(QWidget *parent) : QWizard(parent)
     setWindowTitle("MicroSim Parameter Setup");
     setPixmap(QWizard::BackgroundPixmap, QPixmap(":/background.png"));
 
-    setButtonText(QWizard::CustomButton1, tr("&Conditional parameters"));
+    setButtonText(QWizard::CustomButton1, tr("&Add conditionals"));
     setOption(QWizard::HaveCustomButton1, true);
     setOption(QWizard::NoCancelButton, false);
     setOption(QWizard::CancelButtonOnLeft, true);
+    //setOption(QWizard::HaveFinishButtonOnEarlyPages, true);
 
     import_model.clear();
 
-    setMinimumHeight(720);
+    setMinimumHeight(800);
 
     props << "Current period"
           << "Govt expenditure excl benefits"
@@ -58,6 +59,7 @@ ParameterWizard::ParameterWizard(QWidget *parent) : QWizard(parent)
     connect(this, &QWizard::customButtonClicked, this, &ParameterWizard::createNewPage);
 }
 
+
 void ParameterWizard::importFrom(QString model_name)
 {
     import_model = model_name;
@@ -84,9 +86,15 @@ void ParameterWizard::setCurrentModel(QString model_name)
     qDebug() << "ParameterWizard::modelChanged(): adding default page";
     setPage(default_page, new DefaultPage(this));
     qDebug() << "ParameterWizard::modelChanged(): restarting";
-    //restart();
 
     // and then extra pages if needed
+    QSettings settings;
+    int num_pages = settings.value(model_name + "/pages", 1).toInt();
+    qDebug() << "ParameterWizard::setCurrentModel():  existing pages =" << num_pages;
+    for (int i = 0; i < num_pages - 1; i++) {
+        ExtraPage *page = createNewPage();
+        page->readSettings(current_model);
+    }
 }
 
 void ParameterWizard::done(int result)
@@ -94,22 +102,34 @@ void ParameterWizard::done(int result)
     qDebug() << "ParameterWizard::done() called: result =" << result << ", page id =" << currentId();
     if (result == QDialog::Accepted) {
         currentPage()->validatePage();
+        QSettings settings;
+        settings.setValue(current_model + "/pages", this->pageIds().count());
     }
     QDialog::done(result);
 }
 
-void ParameterWizard::currentIdChanged(int id)
+int ParameterWizard::nextId() const
 {
-    // WARNING: Check on id here was to prevent crash if they cancelled from the
-    // first page, but this no longer seems to be necessary. Check some time...
-    setOption(QWizard::HaveCustomButton1, /*id > 0 &&*/ currentPage()->isFinalPage());
+    // This is a 'read-once' value
+    return next_id == -1 ? QWizard::nextId() : next_id;
 }
 
-void ParameterWizard::createNewPage()
+void ParameterWizard::currentIdChanged(int id)
+{
+    qDebug() << "ParameterWizard::currentIdChanged():  id =" << id << ",  isFinalPage() returns" << currentPage()->isFinalPage();
+    setOption(QWizard::HaveCustomButton1, currentPage()->isFinalPage());
+}
+
+ExtraPage *ParameterWizard::createNewPage()
 {
     ExtraPage *page = new ExtraPage(this);
-    addPage(page);
+    int id = addPage(page);
+    qDebug() << "ParameterWizard::createNewPage():  new page id =" << id;
+    page->setPageNumber(id);
+    next_id = id;
     next();
+    next_id = -1;
+    return page;
 }
 
 QSpinBox *ParameterWizard::getSpinBox(int min, int max)
@@ -279,7 +299,7 @@ ExtraPage::ExtraPage(ParameterWizard *w)
 {
     wiz = w;
 
-    setTitle(tr("Conditional Parameters"));
+    qDebug() << "ExtraPage::ExtraPage():  called";
 
     QComboBox *comboProperty = new QComboBox;
     comboProperty->addItems(wiz->props);
@@ -292,37 +312,138 @@ ExtraPage::ExtraPage(ParameterWizard *w)
     QLabel *hdg_1 = new QLabel;
     hdg_1->setText("Condition:");
 
-    QLabel *hdg_2 = new QLabel;
-    hdg_2->setText("Parameters:");
-
     QVBoxLayout *top_layout = new QVBoxLayout;
     top_layout->addWidget(hdg_1);
     top_layout->addWidget(comboProperty);
     top_layout->addWidget(comboRel);
     top_layout->addWidget(leValue);
-    top_layout->addWidget(hdg_2);
+
+    le_dir_exp_rate = new QLineEdit();
+    le_dir_exp_rate->setFixedWidth(48);
+
+    le_thresh = new QLineEdit();
+    le_thresh->setFixedWidth(48);
+
+    sb_emp_rate = wiz->getSpinBox(0, 100);
+    sb_prop_con = wiz->getSpinBox(0, 100);
+    sb_dedns = wiz->getSpinBox(0, 100);
+    sb_inc_tax = wiz->getSpinBox(0, 100);
+    sb_sales_tax = wiz->getSpinBox(0, 100);
+    sb_bcr = wiz->getSpinBox(0, 100);
+    sb_recoup = wiz->getSpinBox(1, 100);
+    sb_distrib = wiz->getSpinBox(0, 100);
+    sb_prop_inv = wiz->getSpinBox(1, 100);
+    sb_ubr = wiz->getSpinBox(0, 100);
+
+    sb_boe_loan_int = wiz->getSpinBox(0,99);
+    sb_bus_loan_int = wiz->getSpinBox(0,99);
+
+    cb_loan_prob = new QComboBox;
+    cb_loan_prob->addItem(tr("Never"));
+    cb_loan_prob->addItem(tr("Rarely"));
+    cb_loan_prob->addItem(tr("Sometimes"));
+    cb_loan_prob->addItem(tr("Usually"));
+    cb_loan_prob->addItem(tr("Always"));
 
     QFormLayout *bottom_layout = new QFormLayout;
-    bottom_layout->addRow(new QLabel(tr("Government procurement")), new QLineEdit);
-    bottom_layout->addRow(new QLabel(tr("Standard wage")), new QLineEdit);
-    bottom_layout->addRow(new QLabel(tr("Target employment rate (%)")), wiz->getSpinBox(0, 100));
-    bottom_layout->addRow(new QLabel(tr("Propensity to consume (%)")), wiz->getSpinBox(0, 100));
-    bottom_layout->addRow(new QLabel(tr("Pre-tax deductions (%)")), wiz->getSpinBox(0, 100));
-    bottom_layout->addRow(new QLabel(tr("Income tax (%)")), wiz->getSpinBox(0, 100));
-    bottom_layout->addRow(new QLabel(tr("Sales tax (%)")), wiz->getSpinBox(0, 100));
-    bottom_layout->addRow(new QLabel(tr("Business creation rate (%)")), wiz->getSpinBox(0, 100));
-    bottom_layout->addRow(new QLabel(tr("Reserve rate (%)")), wiz->getSpinBox(0, 100));
-    bottom_layout->addRow(new QLabel(tr("Investment rate (%)")), wiz->getSpinBox(0, 100));
-    bottom_layout->addRow(new QLabel(tr("Unemployment benefit (%)")), wiz->getSpinBox(0, 100));
+    bottom_layout->addRow(new QLabel(tr("<b>Government</b>")));
+    bottom_layout->addRow(new QLabel(tr("Periodic procurement expenditure")), le_dir_exp_rate);
+    bottom_layout->addRow(new QLabel(tr("Unemployment benefit (%)")), sb_ubr);
+
+    bottom_layout->addRow(new QLabel(tr("<b>Workers</b>")));
+    bottom_layout->addRow(new QLabel(tr("Propensity to consume (%)")), sb_prop_con);
+    bottom_layout->addRow(new QLabel(tr("Income tax (%)")), sb_inc_tax);
+    bottom_layout->addRow(new QLabel(tr("Income threshold")), le_thresh);
+
+    bottom_layout->addRow(new QLabel(tr("<b>Businesses</b>")));
+    bottom_layout->addRow(new QLabel(tr("Pre-tax deductions (%)")), sb_dedns);
+    bottom_layout->addRow(new QLabel(tr("Sales tax (%)")), sb_sales_tax);
+    bottom_layout->addRow(new QLabel(tr("Profit distribution rate (%)")), sb_distrib);
+    bottom_layout->addRow(new QLabel(tr("Investment rate (%)")), sb_prop_inv);
+    bottom_layout->addRow(new QLabel(tr("Borrow if needed to pay wages")), cb_loan_prob);
+    bottom_layout->addRow(new QLabel(tr("Business creation rate (%)")), sb_bcr);
+    bottom_layout->addRow(new QLabel(tr("Time (periods) to recoup capex")), sb_recoup);
+
+    bottom_layout->addRow(new QLabel(tr("<b>Banks</b>")));
+    bottom_layout->addRow(new QLabel(tr("BOE lending rate (%)")), sb_boe_loan_int);
+    bottom_layout->addRow(new QLabel(tr("Retail lending rate (%)")), sb_bus_loan_int);
 
     QGridLayout *main_layout = new QGridLayout;
     main_layout->addLayout(top_layout, 0, 0, 2, 2);
     main_layout->addLayout(bottom_layout, 2, 0, 12, 2);
     setLayout(main_layout);
+}
 
-    QString page_id = QString::number(wiz->currentId());
+void ExtraPage::setPageNumber(int page_num)
+{
+    qDebug() << "ExtraPage::setPageNumber():  page_num =" << page_num;
+    pnum = page_num;
+    setTitle(tr("Conditional Parameters - Page ") + QString::number(page_num));
+    readSettings(wiz->import_model.isEmpty() ? wiz->current_model : wiz->import_model);
+}
 
-    qDebug() << "ExtraPage::ExtraPage(): page_id =" << page_id;
+// Attempts to read setting from the settings for the current page. if it
+// cannot be found, read the default setting instead
+QString ExtraPage::readCondSetting(QString model, QString key)
+{
+    QSettings settings;
+    QString base1 = model + "/condition-" + QString::number(pnum) + "/";
+    QString base2 = model + "/default/";
+    return (settings.value(base1 + key, settings.value(base2 + key)).toString());
+}
+
+void ExtraPage::readSettings(QString model)
+{
+    qDebug() << "ExtraPage::readSettings():  from model =" << model;
+
+    le_dir_exp_rate->setText(readCondSetting(model, "govt-procurement"));
+    le_thresh->setText(readCondSetting(model, "income-threshold"));
+    sb_emp_rate->setValue(readCondSetting(model, "employment-rate").toInt());
+    sb_prop_con->setValue(readCondSetting(model, "propensity-to-consume").toInt());
+    sb_dedns->setValue(readCondSetting(model, "pre-tax-dedns-rate").toInt());
+    sb_inc_tax->setValue(readCondSetting(model, "income-tax-rate").toInt());
+    sb_sales_tax->setValue(readCondSetting(model, "sales-tax-rate").toInt());
+    sb_bcr->setValue(readCondSetting(model, "firm-creation-prob").toInt());
+    sb_recoup->setValue(readCondSetting(model, "capex-recoup-periods").toInt());
+    sb_distrib->setValue(readCondSetting(model, "reserve-rate").toInt());
+    sb_prop_inv->setValue(readCondSetting(model, "prop-invest").toInt());
+    sb_ubr->setValue(readCondSetting(model, "unempl-benefit-rate").toInt());
+    sb_boe_loan_int->setValue(readCondSetting(model, "boe-interest").toInt());
+    sb_bus_loan_int->setValue(readCondSetting(model, "bus-interest").toInt());
+    cb_loan_prob->setCurrentIndex(readCondSetting(model, "loan-prob").toInt());
+}
+
+bool ExtraPage::validatePage()
+{
+    qDebug() << "ExtraPage::validatePage()";
+
+    QString model = wiz->current_model;
+    QString key = model + "/condition-" + QString::number(pnum) + "/";
+
+    // TODO: We don't currently do any actual validation here!
+
+    QSettings settings;
+    settings.setValue(key + "govt-procurement", le_dir_exp_rate->text().toInt());
+    settings.setValue(key + "employment-rate", sb_emp_rate->value());
+    settings.setValue(key + "propensity-to-consume", sb_prop_con->value());
+    settings.setValue(key + "income-threshold", le_thresh->text().toInt());
+    settings.setValue(key + "pre-tax-dedns-rate", sb_dedns->value());
+    settings.setValue(key + "income-tax-rate", sb_inc_tax->value());
+    settings.setValue(key + "sales-tax-rate", sb_sales_tax->value());
+    settings.setValue(key + "firm-creation-prob", sb_bcr->value());
+    settings.setValue(key + "capex-recoup-periods", sb_recoup->value());
+
+    settings.setValue(key + "reserve-rate", sb_distrib->value());
+    settings.setValue(key + "prop-invest", sb_prop_inv->value());
+    settings.setValue(key + "unempl-benefit-rate", sb_ubr->value());
+
+    settings.setValue(key + "boe-interest", sb_boe_loan_int->value());
+    settings.setValue(key + "bus-interest", sb_bus_loan_int->value());
+
+    settings.setValue(key + "loan-prob", cb_loan_prob->currentIndex());
+
+    return true;
+
 }
 
 
