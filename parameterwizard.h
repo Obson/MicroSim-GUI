@@ -12,6 +12,8 @@
 #include <QComboBox>
 #include <QCheckBox>
 
+#include "model.h"
+
 class ExtraPage;
 
 class ParameterWizard : public QWizard
@@ -26,6 +28,7 @@ public:
 
     void setCurrentModel(QString model_name);
     void importFrom(QString model_name);
+    void setProperties(QMap<QString,Model::Property> map);
 
     void done(int result);
     int nextId() const;
@@ -38,8 +41,11 @@ private:
 
 protected:
     QSettings settings;
-    QStringList props;
+    QStringList prop_names;
     QStringList rels;
+    //QList<Model::Property> properties;
+
+    QMap<QString,Model::Property> property_map;
 
     QStringList models;         // list of defined model names
     QString current_model;
@@ -111,6 +117,10 @@ private:
     ParameterWizard *wiz;
 
     int pnum;
+
+    QComboBox *cb_property;
+    QComboBox *cb_rel;
+    QLineEdit *le_value;
 
     QLineEdit *le_dir_exp_rate;
     QLineEdit *le_thresh;

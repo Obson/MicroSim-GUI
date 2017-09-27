@@ -148,6 +148,7 @@ public:
         num_properties
     };
 
+    Property getProperty(int);          // return the property with the given value
     QList<Property> prop_list;          // to simplify iterations
 
     // This gives us a set of pointers to line series, ordered by the Properties
@@ -185,9 +186,10 @@ public:
     double getIncTaxPaid();
     double getSalesTaxPaid();
     double getWorkersBal(Model::Status status);
-    int population();
     double getAmountOwed();
     double getProcurementExpenditure();
+
+    int population();
 
     // ------------------------------------------------------------------------
     // Parameters
@@ -269,7 +271,7 @@ protected:
 
     enum class Opr
     {
-        invalid_op,
+        invalid_op = -1,
         eq,
         neq,
         lt,
@@ -296,6 +298,7 @@ protected:
 
     struct Params
     {
+        Condition condition;
         Pair procurement;
         Pair iters;
         Pair count;
@@ -317,12 +320,12 @@ protected:
         Pair invalid;           // Just a marker -- value immaterial
     };
 
-    bool applies(Condition *);
+    bool applies(Condition);
     bool compare(int lhs, int rhs, Opr op);
 
-    // Conditional parameters
-    QVector<Condition*> conditions;
     QVector<Params*> parameter_sets;
+
+    int num_parameter_sets;
 
     static QMap<ParamType,QString> parameter_keys;
 
@@ -332,7 +335,7 @@ protected:
     //int loadDefaultParameter(QSettings &settings, ParamType p);
     int getParameterVal(ParamType type);
 
-    void readDefaultParameters();
+    void readParameters();
 
 };
 

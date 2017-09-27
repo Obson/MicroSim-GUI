@@ -103,8 +103,6 @@ private:
 
     bool reloading = false;
 
-    QStringList prop_names;
-
     QMap<QString,Model::Property> property_map;
 
     void createChart();

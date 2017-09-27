@@ -529,6 +529,7 @@ void MainWindow::createDockWindows()
 
     // Create the parameter wizard
     wiz = new ParameterWizard(this);
+    wiz->setProperties(property_map);
     wiz->setModal(true);
 
     // Connect signals for changing selection and double-click

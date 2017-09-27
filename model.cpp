@@ -202,7 +202,7 @@ Model::Model(QString model_name)
     }
 
     qDebug() << "Model::Model():" << model_name << "reading default parameters";
-    readDefaultParameters();
+    readParameters();
 
     // TODO: Add conditional parameters
 }
@@ -317,13 +317,13 @@ double Model::productivity()
     return res;
 }
 
-void Model::readDefaultParameters()
+void Model::readParameters()
 {
     // Get parameters from settings.
 
     QSettings settings;
 
-    qDebug() << "Model::readDefaultParameters(): file is" << settings.fileName();
+    qDebug() << "Model::readParameters(): file is" << settings.fileName();
 
     // Global settings
     _iterations = settings.value("iterations", 100).toInt();
@@ -366,21 +366,88 @@ void Model::readDefaultParameters()
     p->recoup.val             = settings.value(parameter_keys[ParamType::recoup]).toInt();
 
     settings.endGroup();
-    settings.endGroup();
 
     // Conditional parameter sets must be appended, but the default set must
     // always be the first, so clear the list
     parameter_sets.clear();
     parameter_sets.append(p);
 
-    // TODO: Read the conditions from settings (for the time being we will only
-    // use default settings, which will always have index zero, so there's no
-    // need to bother with this yet).
-    // settings.beginReadArray(_name + "/conditions");
-    // ...
-    // settings.endArray();
+    num_parameter_sets = settings.value("pages", 1).toInt();
+    qDebug() << "Model::readParameters():  model" << _name << "has" << num_parameter_sets << "pages";
+    for (int page = 1; page < num_parameter_sets; page++)
+    {
+        p = new Params;         // conditional parameter set
 
-    qDebug() << "Model::readDefaultParameters(): completed OK";
+        settings.beginGroup("condition-" + QString::number(page));
+
+        p->condition.property = getProperty(settings.value("property").toInt());
+
+        int rel = settings.value("rel").toInt();
+        switch (rel)
+        {
+        case 0:
+            p->condition.opr = Opr::eq;
+            break;
+        case 1:
+            p->condition.opr = Opr::neq;
+            break;
+        case 2:
+            p->condition.opr = Opr::lt;
+            break;
+        case 3:
+            p->condition.opr = Opr::gt;
+            break;
+        case 4:
+            p->condition.opr = Opr::leq;
+            break;
+        case 5:
+            p->condition.opr = Opr::geq;
+            break;
+        default:
+            p->condition.opr = Opr::invalid_op;
+            break;
+        }
+
+        p->condition.val = settings.value("value").toInt();
+
+        p->procurement.val        = settings.value(parameter_keys[ParamType::procurement]).toInt();
+        p->emp_rate.val           = settings.value(parameter_keys[ParamType::emp_rate]).toInt();
+        p->prop_con.val           = settings.value(parameter_keys[ParamType::prop_con]).toInt();
+        p->inc_tax_rate.val       = settings.value(parameter_keys[ParamType::inc_tax_rate]).toInt();
+        p->inc_thresh.val         = settings.value(parameter_keys[ParamType::inc_thresh]).toInt();
+        p->sales_tax_rate.val     = settings.value(parameter_keys[ParamType::sales_tax_rate]).toInt();
+        p->firm_creation_prob.val = settings.value(parameter_keys[ParamType::firm_creation_prob]).toInt();
+        p->dedns.val              = settings.value(parameter_keys[ParamType::dedns]).toInt();
+        p->unemp_ben_rate.val     = settings.value(parameter_keys[ParamType::unemp_ben_rate]).toInt();
+        p->active_pop.val         = settings.value(parameter_keys[ParamType::active_pop]).toInt();
+        p->distrib.val            = settings.value(parameter_keys[ParamType::distrib]).toInt();
+        p->prop_inv.val           = settings.value(parameter_keys[ParamType::prop_inv]).toInt();
+        p->boe_int.val            = settings.value(parameter_keys[ParamType::boe_int]).toInt();
+        p->bus_int.val            = settings.value(parameter_keys[ParamType::bus_int]).toInt();
+        p->loan_prob.val          = settings.value(parameter_keys[ParamType::loan_prob]).toInt();
+        p->recoup.val             = settings.value(parameter_keys[ParamType::recoup]).toInt();
+
+        settings.endGroup();
+
+        parameter_sets.append(p);
+    }
+
+
+    qDebug() << "Model::readParameters(): completed OK";
+}
+
+Model::Property Model::getProperty(int n)
+{
+    Property p;
+    foreach(p, prop_list)
+    {
+        if (n == static_cast<int>(p))
+        {
+            return p;
+        }
+    }
+    Q_ASSERT(false);
+    return Property::zero;  // prevent compiker warning
 }
 
 QString Model::name()
@@ -400,7 +467,7 @@ int Model::getStartPeriod()
 
 void Model::restart()
 {
-    readDefaultParameters();
+    readParameters();
 
     // Clear all series
     for (int i = 0; i < static_cast<int>(Property::num_properties); i++)
@@ -1211,29 +1278,32 @@ double Model::getAmountOwed()
 
 int Model::getParameterVal(ParamType type)
 {
-    // TODO: Currently we only check the default parameter set. This needs
-    // extending to check conditional parameter sets (not yet implemented).
-
-    int i = 0;      // only default parameter set at present
-
-    Pair p =    (type == ParamType::procurement) ? parameter_sets[i]->procurement
-             : ((type == ParamType::emp_rate) ? parameter_sets[i]->emp_rate
-             : ((type == ParamType::prop_con) ? parameter_sets[i]->prop_con
-             : ((type == ParamType::inc_tax_rate) ? parameter_sets[i]->inc_tax_rate
-             : ((type == ParamType::sales_tax_rate) ? parameter_sets[i]->sales_tax_rate
-             : ((type == ParamType::firm_creation_prob) ? parameter_sets[i]->firm_creation_prob
-             : ((type == ParamType::dedns) ? parameter_sets[i]->dedns
-             : ((type == ParamType::unemp_ben_rate) ? parameter_sets[i]->unemp_ben_rate
-             : ((type == ParamType::active_pop) ? parameter_sets[i]->active_pop
-             : ((type == ParamType::distrib) ? parameter_sets[i]->distrib
-             : ((type == ParamType::prop_inv) ? parameter_sets[i]->prop_inv
-             : ((type == ParamType::boe_int) ? parameter_sets[i]->boe_int
-             : ((type == ParamType::bus_int) ? parameter_sets[i]->bus_int
-             : ((type == ParamType::loan_prob) ? parameter_sets[i]->loan_prob
-             : ((type == ParamType::inc_thresh) ? parameter_sets[i]->inc_thresh
-             : ((type == ParamType::recoup) ? parameter_sets[i]->recoup
-             : parameter_sets[i]->invalid
-             )))))))))))))));
+    Pair p;
+    for (int i = 0; i < num_parameter_sets; i++)
+    {
+        if (i == 0 || applies(parameter_sets[i]->condition))
+        {
+            // TODO: p doesn't have to be a Pair as we now only use the val component
+            p =    (type == ParamType::procurement) ? parameter_sets[i]->procurement
+                 : ((type == ParamType::emp_rate) ? parameter_sets[i]->emp_rate
+                 : ((type == ParamType::prop_con) ? parameter_sets[i]->prop_con
+                 : ((type == ParamType::inc_tax_rate) ? parameter_sets[i]->inc_tax_rate
+                 : ((type == ParamType::sales_tax_rate) ? parameter_sets[i]->sales_tax_rate
+                 : ((type == ParamType::firm_creation_prob) ? parameter_sets[i]->firm_creation_prob
+                 : ((type == ParamType::dedns) ? parameter_sets[i]->dedns
+                 : ((type == ParamType::unemp_ben_rate) ? parameter_sets[i]->unemp_ben_rate
+                 : ((type == ParamType::active_pop) ? parameter_sets[i]->active_pop
+                 : ((type == ParamType::distrib) ? parameter_sets[i]->distrib
+                 : ((type == ParamType::prop_inv) ? parameter_sets[i]->prop_inv
+                 : ((type == ParamType::boe_int) ? parameter_sets[i]->boe_int
+                 : ((type == ParamType::bus_int) ? parameter_sets[i]->bus_int
+                 : ((type == ParamType::loan_prob) ? parameter_sets[i]->loan_prob
+                 : ((type == ParamType::inc_thresh) ? parameter_sets[i]->inc_thresh
+                 : ((type == ParamType::recoup) ? parameter_sets[i]->recoup
+                 : parameter_sets[i]->invalid
+                 )))))))))))))));
+        }
+    }
 
     return p.val;
 }
@@ -1342,7 +1412,7 @@ int Model::getActivePop()
 // Condition processing
 // ----------------------------------------------------------------------------
 
-bool Model::applies(Model::Condition *condition)
+bool Model::applies(Condition condition)
 {
     // Property::zero is always zero and can be used as a marker for the end of
     // the enum (Better to use num_properties). In a condition we also use it
@@ -1351,12 +1421,12 @@ bool Model::applies(Model::Condition *condition)
     // subsequent condition). In practice we currently access defaults
     // (unconditionals) separately from conditionals so we don't actually have
     // to eveluate the condition.
-    if (condition->property == Property::zero) {
+    if (condition.property == Property::zero) {
         return true;
     } else {
-        int lhs = getPropertyVal(condition->property);
-        Opr opr = condition->opr;
-        int rhs = condition->val;
+        int lhs = getPropertyVal(condition.property);
+        Opr opr = condition.opr;
+        int rhs = condition.val;
         return compare(lhs, rhs, opr);
     }
 }

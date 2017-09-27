@@ -24,31 +24,6 @@ ParameterWizard::ParameterWizard(QWidget *parent) : QWizard(parent)
 
     setMinimumHeight(800);
 
-    props << "Current period"
-          << "Govt expenditure excl benefits"
-          << "Govt expenditure incl benefits"
-          << "Benefits paid"
-          << "Government receipts"
-          << "Deficit (absolute)"
-          << "Deficit as % of GDP (consumption)"
-          << "Government sector balance"
-          << "Number of businesses"
-          << "Number employed"
-          << "Number unemployed"
-          << "Percent unemployed"
-          << "Percent employed"
-          << "Percent active"
-          << "Number of new hires"
-          << "Number of new fires"
-          << "Business sector balance"
-          << "Wages paid"
-          << "Consumption (sales/purchases)"
-          << "Bonuses paid"
-          << "Pre-tax deductions made"
-          << "Income tax"
-          << "Sales/purchase tax"
-          << "Domestic sector balance";
-
     rels << "is less than"
          << "is equal to"
          << "is more than"
@@ -59,6 +34,24 @@ ParameterWizard::ParameterWizard(QWidget *parent) : QWizard(parent)
     connect(this, &QWizard::customButtonClicked, this, &ParameterWizard::createNewPage);
 }
 
+void ParameterWizard::setProperties(QMap<QString,Model::Property> map)
+{
+    // NOTE: This includes the preudo-series 'Zero reference line' and
+    // 'Hundred reference line'. These serve no useful purpose here and
+    // should be removed. Care needed if translating to make sure the
+    // same translation is used here as in MainWindow. Any other redundant
+    // series (names) should also be removed here.
+    property_map = map;
+
+    prop_names.append(map.keys());
+    prop_names.removeOne(tr("Zero reference line"));
+    prop_names.removeOne(tr("100 reference line"));
+
+    // Storing the values in their own list means we can look the up by
+    // their index, which will be the same as the index of the selected
+    // item in the combobox'
+    // properties = map.values();
+}
 
 void ParameterWizard::importFrom(QString model_name)
 {
@@ -268,7 +261,8 @@ bool DefaultPage::validatePage()
 
     QString model = wiz->current_model;
 
-    // TODO: We don't currently do any actual valdation here!
+    // TODO: We don't currently do any actual validation here.
+    // We just save the default settings assuming they're OK.
 
     QSettings settings;
     settings.setValue(model + "/default/govt-procurement", le_dir_exp_rate->text().toInt());
@@ -301,22 +295,21 @@ ExtraPage::ExtraPage(ParameterWizard *w)
 
     qDebug() << "ExtraPage::ExtraPage():  called";
 
-    QComboBox *comboProperty = new QComboBox;
-    comboProperty->addItems(wiz->props);
+    cb_property = new QComboBox;
+    cb_property->addItems(wiz->prop_names);
 
-    QComboBox *comboRel = new QComboBox;
-    comboRel->addItems(wiz->rels);
-
-    QLineEdit *leValue = new QLineEdit;
+    cb_rel = new QComboBox;
+    cb_rel->addItems(wiz->rels);
+    le_value = new QLineEdit;
 
     QLabel *hdg_1 = new QLabel;
-    hdg_1->setText("Condition:");
+    hdg_1->setText("<b>Condition:</b>");
 
     QVBoxLayout *top_layout = new QVBoxLayout;
     top_layout->addWidget(hdg_1);
-    top_layout->addWidget(comboProperty);
-    top_layout->addWidget(comboRel);
-    top_layout->addWidget(leValue);
+    top_layout->addWidget(cb_property);
+    top_layout->addWidget(cb_rel);
+    top_layout->addWidget(le_value);
 
     le_dir_exp_rate = new QLineEdit();
     le_dir_exp_rate->setFixedWidth(48);
@@ -379,6 +372,8 @@ void ExtraPage::setPageNumber(int page_num)
     qDebug() << "ExtraPage::setPageNumber():  page_num =" << page_num;
     pnum = page_num;
     setTitle(tr("Conditional Parameters - Page ") + QString::number(page_num));
+
+
     readSettings(wiz->import_model.isEmpty() ? wiz->current_model : wiz->import_model);
 }
 
@@ -395,6 +390,12 @@ QString ExtraPage::readCondSetting(QString model, QString key)
 void ExtraPage::readSettings(QString model)
 {
     qDebug() << "ExtraPage::readSettings():  from model =" << model;
+
+    QSettings settings;
+    QString base = model + "/condition-" + QString::number(pnum) +"/";
+    cb_property->setCurrentIndex(settings.value(base + "property", 0).toInt());
+    cb_rel->setCurrentIndex(settings.value(base + "rel", 3).toInt());
+    le_value->setText(settings.value(base + "value", 0).toString());
 
     le_dir_exp_rate->setText(readCondSetting(model, "govt-procurement"));
     le_thresh->setText(readCondSetting(model, "income-threshold"));
@@ -420,9 +421,25 @@ bool ExtraPage::validatePage()
     QString model = wiz->current_model;
     QString key = model + "/condition-" + QString::number(pnum) + "/";
 
-    // TODO: We don't currently do any actual validation here!
+    // TODO: We don't currently do any actual validation here.
+    // We just save the default settings assuming they're OK.
 
     QSettings settings;
+    bool ok;
+
+    // We need to store an actual property (Model::Property enum) here
+    settings.setValue(key + "property", static_cast<int>(wiz->property_map[cb_property->currentText()]));
+    settings.setValue(key + "rel", cb_rel->currentIndex());
+
+    // TODO: We really ought to do something if !ok, but for now we'll
+    // just treat it as zero. If we force it to be numeric (integral)
+    // we won't need to check it.
+    int val = le_value->text().toInt(&ok);
+    if (!ok) {
+        val = 0;
+    }
+    settings.setValue(key + "value", val);
+
     settings.setValue(key + "govt-procurement", le_dir_exp_rate->text().toInt());
     settings.setValue(key + "employment-rate", sb_emp_rate->value());
     settings.setValue(key + "propensity-to-consume", sb_prop_con->value());
