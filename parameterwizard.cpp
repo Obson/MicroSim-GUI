@@ -383,13 +383,32 @@ QString ExtraPage::readCondSetting(QString model, QString key)
     return (settings.value(base1 + key, settings.value(base2 + key)).toString());
 }
 
+QString ExtraPage::getPropertyName(int prop)
+{
+    // Convert the int to a property
+    Model::Property p = static_cast<Model::Property>(prop);
+
+    // and look it up in the property map
+    QMapIterator<QString, Model::Property> it(wiz->property_map);
+    while (it.hasNext())
+    {
+        it.next();
+        if (it.value() == p) {
+            return it.key();
+        }
+    }
+    Q_ASSERT(false);
+    return QString(""); // prevent compiler warning
+}
+
 void ExtraPage::readSettings(QString model)
 {
     qDebug() << "ExtraPage::readSettings():  from model =" << model;
 
     QSettings settings;
     QString base = model + "/condition-" + QString::number(pnum) +"/";
-    cb_property->setCurrentIndex(settings.value(base + "property", 0).toInt());
+
+    cb_property->setCurrentText(getPropertyName(settings.value(base + "property", 0).toInt()));
     cb_rel->setCurrentIndex(settings.value(base + "rel", 3).toInt());
     le_value->setText(settings.value(base + "value", 0).toString());
 
@@ -424,7 +443,10 @@ bool ExtraPage::validatePage()
     bool ok;
 
     // We need to store an actual property (Model::Property enum) here
-    settings.setValue(key + "property", static_cast<int>(wiz->property_map[cb_property->currentText()]));
+    QString selected_text = cb_property->currentText();
+    Model::Property prop = wiz->property_map.value(selected_text);
+    settings.setValue(key + "property", static_cast<int>(prop));
+
     settings.setValue(key + "rel", cb_rel->currentIndex());
 
     // TODO: We really ought to do something if !ok, but for now we'll

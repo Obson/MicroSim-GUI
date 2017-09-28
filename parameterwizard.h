@@ -110,6 +110,7 @@ public:
     void setPageNumber(int page_num);
     bool validatePage();
     void readSettings(QString model);
+    QString getPropertyName(int prop);
 
 private:
     QString readCondSetting(QString model, QString key);

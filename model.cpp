@@ -447,7 +447,7 @@ Model::Property Model::getProperty(int n)
         }
     }
     Q_ASSERT(false);
-    return Property::zero;  // prevent compiker warning
+    return Property::zero;  // prevent compiler warning
 }
 
 QString Model::name()
