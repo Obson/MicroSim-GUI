@@ -142,7 +142,7 @@ bool Government::transferSafely(Account *recipient, double amount, Account *, bo
 // record as well. However we don't distinguish between income tax, sales
 // tax, and 'pre-tax deductions'. These are all accounted for elsewhere.
 // Obviously, the government doesn't pay tax.
-void Government::credit(double amount, Account *creditor, bool force)
+void Government::credit(double amount, Account*, bool)
 {
     Account::credit(amount);
     rec += amount;

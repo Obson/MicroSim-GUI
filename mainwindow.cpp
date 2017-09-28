@@ -320,7 +320,7 @@ void MainWindow::restoreState()
 {
     QSettings settings;
     settings.beginGroup("State");
-     for (int i = 0, n = 0; i < propertyList->count(); i++)
+     for (int i = 0; i < propertyList->count(); i++)
     {
         QListWidgetItem *item;
         item = propertyList->item(i);
@@ -438,7 +438,7 @@ void MainWindow::editParameters()
         mod->run();
         ctrl->setGini(mod->getGini(), mod->getProductivity());
     }
-    propertyChanged(nullptr);
+    propertyChanged();
 }
 
 void MainWindow::about()
@@ -471,7 +471,7 @@ void MainWindow::createStatusBar()
     statusBar()->showMessage(message);
 }
 
-void MainWindow::propertyChanged(QListWidgetItem *item)
+void MainWindow::propertyChanged()
 {
     qDebug() << "MainWindow::propertyChanged";
     // Allow the property to be changed even when there's no model selected.

@@ -34,16 +34,16 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext&, const QString&ms
         fprintf(stderr, "Debug: %s\n", localMsg.constData());
         break;
     case QtInfoMsg:
-        fprintf(stderr, "Info: %s (%s:%u, %s)\n", localMsg.constData());
+        fprintf(stderr, "Info: %s\n", localMsg.constData());
         break;
     case QtWarningMsg:
-        fprintf(stderr, "Warning: %s (%s:%u, %s)\n", localMsg.constData());
+        fprintf(stderr, "Warning: %s\n", localMsg.constData());
         break;
     case QtCriticalMsg:
-        fprintf(stderr, "Critical: %s (%s:%u, %s)\n", localMsg.constData());
+        fprintf(stderr, "Critical: %s\n", localMsg.constData());
         break;
     case QtFatalMsg:
-        fprintf(stderr, "Fatal: %s (%s:%u, %s)\n", localMsg.constData());
+        fprintf(stderr, "Fatal: %s\n", localMsg.constData());
         abort();
     }
 }

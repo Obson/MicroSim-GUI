@@ -66,7 +66,7 @@ void Worker::trigger(int period)
     }
 }
 
-void Worker::epilogue(int period)
+void Worker::epilogue(int)
 {
     average_wages = (wages + average_wages) / 2;
 }
@@ -81,7 +81,7 @@ void Worker::setAgreedWage(double wage)
     agreed_wage = wage;
 }
 
-void Worker::credit(double amount, Account *creditor, bool force)
+void Worker::credit(double amount, Account *creditor, bool)
 {
     // qDebug() << "Worker::credit(): amount =" << amount;
 

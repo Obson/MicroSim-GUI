@@ -72,7 +72,7 @@ protected:
     void closeEvent(QCloseEvent *event);
     void restoreState();
 
-    void propertyChanged(QListWidgetItem *item);
+    void propertyChanged();
 
     QMenuBar *myMenuBar;
 
