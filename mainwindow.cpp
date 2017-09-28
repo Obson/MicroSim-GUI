@@ -31,6 +31,7 @@ MainWindow::MainWindow()
     // is declared as static. And of course this is no help when it has to
     // point to instance members.
 
+    property_map[tr("Current period")] = Model::Property::current_period;
     property_map[tr("Population size")] = Model::Property::pop_size;
     property_map[tr("Govt exp excl benefits")] = Model::Property::gov_exp;
     property_map[tr("Govt exp incl benefits")] = Model::Property::gov_exp_plus;

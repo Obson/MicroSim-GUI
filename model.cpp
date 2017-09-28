@@ -520,7 +520,7 @@ void Model::run(bool randomised)
         qsrand(42);
     }
 
-    for (int _period = 1; _period <= _iterations + _first_period; _period++)
+    for (_period = 1; _period <= _iterations + _first_period; _period++)
     {
         // -------------------------------------------
         // Initialise objects ready for next iteration

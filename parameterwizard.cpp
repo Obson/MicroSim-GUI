@@ -47,10 +47,6 @@ void ParameterWizard::setProperties(QMap<QString,Model::Property> map)
     prop_names.removeOne(tr("Zero reference line"));
     prop_names.removeOne(tr("100 reference line"));
 
-    // Storing the values in their own list means we can look the up by
-    // their index, which will be the same as the index of the selected
-    // item in the combobox'
-    // properties = map.values();
 }
 
 void ParameterWizard::importFrom(QString model_name)
