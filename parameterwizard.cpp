@@ -115,6 +115,7 @@ ExtraPage *ParameterWizard::createNewPage()
     int id = addPage(page);
     qDebug() << "ParameterWizard::createNewPage():  new page id =" << id;
     page->setPageNumber(id);
+    page->setFinalPage(true);
     next_id = id;
     next();
     next_id = -1;
