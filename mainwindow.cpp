@@ -446,7 +446,7 @@ void MainWindow::about()
     QMessageBox::about(
                 this,
                 "About MicroSim",
-                "MicroSim version 0.1.2"
+                "MicroSim version 0.1.4"
                 );
 }
 
