@@ -22,7 +22,7 @@ ParameterWizard::ParameterWizard(QWidget *parent) : QWizard(parent)
 
     import_model.clear();
 
-    setMinimumHeight(800);
+    setMinimumHeight(660);
 
     rels << "is less than"
          << "is equal to"
@@ -189,6 +189,8 @@ DefaultPage::DefaultPage(ParameterWizard *w)
 
     layout->addRow(xb_locked);
 
+    layout->setVerticalSpacing(3);
+
     setLayout(layout);
 }
 
@@ -308,6 +310,8 @@ ExtraPage::ExtraPage(ParameterWizard *w)
     top_layout->addWidget(cb_rel);
     top_layout->addWidget(le_value);
 
+    top_layout->setSpacing(3);
+
     le_dir_exp_rate = new QLineEdit();
     le_dir_exp_rate->setFixedWidth(48);
 
@@ -357,6 +361,8 @@ ExtraPage::ExtraPage(ParameterWizard *w)
     bottom_layout->addRow(new QLabel(tr("<b>Banks</b>")));
     bottom_layout->addRow(new QLabel(tr("BOE lending rate (%)")), sb_boe_loan_int);
     bottom_layout->addRow(new QLabel(tr("Retail lending rate (%)")), sb_bus_loan_int);
+
+    bottom_layout->setVerticalSpacing(3);
 
     QGridLayout *main_layout = new QGridLayout;
     main_layout->addLayout(top_layout, 0, 0, 2, 2);
