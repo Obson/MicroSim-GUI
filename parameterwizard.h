@@ -109,8 +109,12 @@ public:
     ExtraPage(ParameterWizard *w);
     void setPageNumber(int page_num);
     bool validatePage();
+    bool isChecked(QString model, QString attrib);
     void readSettings(QString model);
     QString getPropertyName(int prop);
+
+    void showAssocCtrl(int);
+    QCheckBox *createCheckBox();
 
 private:
     QString readCondSetting(QString model, QString key);
@@ -123,10 +127,26 @@ private:
     QComboBox *cb_rel;
     QLineEdit *le_value;
 
+    QCheckBox *cbx_dir_exp_rate;
+    QCheckBox *cbx_thresh;
+
+    QCheckBox *cbx_prop_con;
+    QCheckBox *cbx_dedns;
+    QCheckBox *cbx_inc_tax;
+    QCheckBox *cbx_sales_tax;
+    QCheckBox *cbx_bcr;           // business creation rate
+    QCheckBox *cbx_recoup;        // time (periods) to recoup capex
+    QCheckBox *cbx_distrib;
+    QCheckBox *cbx_prop_inv;
+    QCheckBox *cbx_ubr;           // unempl benefit rate
+    QCheckBox *cbx_boe_loan_int;
+    QCheckBox *cbx_bus_loan_int;
+
+    QCheckBox *cbx_loan_prob;
+
     QLineEdit *le_dir_exp_rate;
     QLineEdit *le_thresh;
 
-    QSpinBox *sb_emp_rate;
     QSpinBox *sb_prop_con;
     QSpinBox *sb_dedns;
     QSpinBox *sb_inc_tax;

@@ -9,6 +9,10 @@
 #include <QListWidgetItem>
 #include <QPixmap>
 
+////////////////////////////////////////////////////////////////////////////////
+/// \brief ParameterWizard::ParameterWizard
+/// \param parent
+///
 ParameterWizard::ParameterWizard(QWidget *parent) : QWizard(parent)
 {
     setWindowTitle("MicroSim Parameter Setup");
@@ -130,6 +134,10 @@ QSpinBox *ParameterWizard::getSpinBox(int min, int max)
     return sb;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+/// \brief DefaultPage::DefaultPage
+/// \param w
+///
 DefaultPage::DefaultPage(ParameterWizard *w)
 {
     wiz = w;
@@ -288,6 +296,11 @@ bool DefaultPage::validatePage()
     return true;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+/// \brief ExtraPage::ExtraPage
+/// \param w
+///
+
 ExtraPage::ExtraPage(ParameterWizard *w)
 {
     wiz = w;
@@ -312,13 +325,27 @@ ExtraPage::ExtraPage(ParameterWizard *w)
 
     top_layout->setSpacing(3);
 
+    cbx_dir_exp_rate = createCheckBox();
+    cbx_thresh = createCheckBox();
+    cbx_prop_con = createCheckBox();
+    cbx_dedns = createCheckBox();
+    cbx_inc_tax = createCheckBox();
+    cbx_sales_tax = createCheckBox();
+    cbx_bcr = createCheckBox();
+    cbx_recoup = createCheckBox();
+    cbx_distrib = createCheckBox();
+    cbx_prop_inv = createCheckBox();
+    cbx_ubr = createCheckBox();
+    cbx_boe_loan_int = createCheckBox();
+    cbx_bus_loan_int = createCheckBox();
+    cbx_loan_prob = createCheckBox();
+
     le_dir_exp_rate = new QLineEdit();
     le_dir_exp_rate->setFixedWidth(48);
 
     le_thresh = new QLineEdit();
     le_thresh->setFixedWidth(48);
 
-    sb_emp_rate = wiz->getSpinBox(0, 100);
     sb_prop_con = wiz->getSpinBox(0, 100);
     sb_dedns = wiz->getSpinBox(0, 100);
     sb_inc_tax = wiz->getSpinBox(0, 100);
@@ -339,28 +366,71 @@ ExtraPage::ExtraPage(ParameterWizard *w)
     cb_loan_prob->addItem(tr("Usually"));
     cb_loan_prob->addItem(tr("Always"));
 
-    QFormLayout *bottom_layout = new QFormLayout;
-    bottom_layout->addRow(new QLabel(tr("<b>Government</b>")));
-    bottom_layout->addRow(new QLabel(tr("Periodic procurement expenditure")), le_dir_exp_rate);
-    bottom_layout->addRow(new QLabel(tr("Unemployment benefit (%)")), sb_ubr);
+    QGridLayout *bottom_layout = new QGridLayout;
 
-    bottom_layout->addRow(new QLabel(tr("<b>Workers</b>")));
-    bottom_layout->addRow(new QLabel(tr("Propensity to consume (%)")), sb_prop_con);
-    bottom_layout->addRow(new QLabel(tr("Income tax (%)")), sb_inc_tax);
-    bottom_layout->addRow(new QLabel(tr("Income threshold")), le_thresh);
+    bottom_layout->addWidget(new QLabel(tr("<b>Government</b>")), 0, 0, 1, 3);
 
-    bottom_layout->addRow(new QLabel(tr("<b>Businesses</b>")));
-    bottom_layout->addRow(new QLabel(tr("Pre-tax deductions (%)")), sb_dedns);
-    bottom_layout->addRow(new QLabel(tr("Sales tax (%)")), sb_sales_tax);
-    bottom_layout->addRow(new QLabel(tr("Profit distribution rate (%)")), sb_distrib);
-    bottom_layout->addRow(new QLabel(tr("Investment rate (%)")), sb_prop_inv);
-    bottom_layout->addRow(new QLabel(tr("Borrow if needed to pay wages")), cb_loan_prob);
-    bottom_layout->addRow(new QLabel(tr("Business creation rate (%)")), sb_bcr);
-    bottom_layout->addRow(new QLabel(tr("Time (periods) to recoup capex")), sb_recoup);
+    bottom_layout->addWidget(cbx_dir_exp_rate, 1, 0);
+    bottom_layout->addWidget(new QLabel(tr("Periodic procurement expenditure")), 1, 1);
+    bottom_layout->addWidget(le_dir_exp_rate, 1, 2);
 
-    bottom_layout->addRow(new QLabel(tr("<b>Banks</b>")));
-    bottom_layout->addRow(new QLabel(tr("BOE lending rate (%)")), sb_boe_loan_int);
-    bottom_layout->addRow(new QLabel(tr("Retail lending rate (%)")), sb_bus_loan_int);
+    bottom_layout->addWidget(cbx_ubr, 2, 0);
+    bottom_layout->addWidget(new QLabel(tr("Unemployment benefit (%)")), 2, 1);
+    bottom_layout->addWidget(sb_ubr, 2, 2);
+
+    bottom_layout->addWidget(new QLabel(tr("<b>Workers</b>")), 3, 0, 1, 3);
+
+    bottom_layout->addWidget(cbx_prop_con, 4, 0);
+    bottom_layout->addWidget(new QLabel(tr("Propensity to consume (%)")), 4, 1);
+    bottom_layout->addWidget(sb_prop_con, 4, 2);
+
+    bottom_layout->addWidget(cbx_inc_tax, 5, 0);
+    bottom_layout->addWidget(new QLabel(tr("Income tax (%)")), 5, 1);
+    bottom_layout->addWidget(sb_inc_tax, 5, 2);
+
+    bottom_layout->addWidget(cbx_thresh, 6, 0);
+    bottom_layout->addWidget(new QLabel(tr("Income threshold")), 6, 1);
+    bottom_layout->addWidget(le_thresh, 6, 2);
+
+    bottom_layout->addWidget(new QLabel(tr("<b>Businesses</b>")), 7, 0, 1, 3);
+
+    bottom_layout->addWidget(cbx_dedns, 8, 0);
+    bottom_layout->addWidget(new QLabel(tr("Pre-tax deductions (%)")), 8, 1);
+    bottom_layout->addWidget(sb_dedns, 8, 2);
+
+    bottom_layout->addWidget(cbx_sales_tax, 9, 0);
+    bottom_layout->addWidget(new QLabel(tr("Sales tax (%)")), 9, 1);
+    bottom_layout->addWidget(sb_sales_tax, 9, 2);
+
+    bottom_layout->addWidget(cbx_distrib, 10, 0);
+    bottom_layout->addWidget(new QLabel(tr("Profit distribution rate (%)")), 10, 1);
+    bottom_layout->addWidget(sb_distrib, 10, 2);
+
+    bottom_layout->addWidget(cbx_prop_inv, 11, 0);
+    bottom_layout->addWidget(new QLabel(tr("Investment rate (%)")), 11, 1);
+    bottom_layout->addWidget(sb_prop_inv, 11, 2);
+
+    bottom_layout->addWidget(cbx_loan_prob, 12, 0);
+    bottom_layout->addWidget(new QLabel(tr("Borrow if needed to pay wages")), 12, 1);
+    bottom_layout->addWidget(cb_loan_prob, 12, 2);
+
+    bottom_layout->addWidget(cbx_bcr, 13, 0);
+    bottom_layout->addWidget(new QLabel(tr("Business creation rate (%)")), 13, 1);
+    bottom_layout->addWidget(sb_bcr, 13, 2);
+
+    bottom_layout->addWidget(cbx_recoup, 14, 0);
+    bottom_layout->addWidget(new QLabel(tr("Time (periods) to recoup capex")), 14, 1);
+    bottom_layout->addWidget(sb_recoup, 14, 2);
+
+    bottom_layout->addWidget(new QLabel(tr("<b>Banks</b>")), 15, 0, 1, 3);
+
+    bottom_layout->addWidget(cbx_boe_loan_int, 16, 0);
+    bottom_layout->addWidget(new QLabel(tr("BOE lending rate (%)")), 16, 1);
+    bottom_layout->addWidget(sb_boe_loan_int, 16,2);
+
+    bottom_layout->addWidget(cbx_bus_loan_int, 17, 0);
+    bottom_layout->addWidget(new QLabel(tr("Retail lending rate (%)")), 17, 1);
+    bottom_layout->addWidget(sb_bus_loan_int, 17, 2);
 
     bottom_layout->setVerticalSpacing(3);
 
@@ -368,6 +438,19 @@ ExtraPage::ExtraPage(ParameterWizard *w)
     main_layout->addLayout(top_layout, 0, 0, 2, 2);
     main_layout->addLayout(bottom_layout, 2, 0, 12, 2);
     setLayout(main_layout);
+}
+
+QCheckBox *ExtraPage::createCheckBox()
+{
+    QCheckBox *cbx = new QCheckBox;
+    connect(cbx, &QCheckBox::stateChanged, this, &ExtraPage::showAssocCtrl);
+    return cbx;
+}
+
+void ExtraPage::showAssocCtrl(int)
+{
+    // Placeholder function in case we want to (e.g.) disable controls whose
+    // associated checkbox in unchecked...
 }
 
 void ExtraPage::setPageNumber(int page_num)
@@ -384,10 +467,15 @@ void ExtraPage::setPageNumber(int page_num)
 // cannot be found, read the default setting instead
 QString ExtraPage::readCondSetting(QString model, QString key)
 {
+    qDebug() << "\n\nExtraPage::readCondSetting(): model =" << model << ",  key =" << key;
     QSettings settings;
-    QString base1 = model + "/condition-" + QString::number(pnum) + "/";
-    QString base2 = model + "/default/";
-    return (settings.value(base1 + key, settings.value(base2 + key)).toString());
+    QString base1 = model + "/condition-" + QString::number(pnum) + "/" + key + "/value";
+    qDebug() << "ExtraPage::readCondSetting(): base1 =" << base1;
+    QString base2 = model + "/default/" + key;
+    qDebug() << "ExtraPage::readCondSetting(): base2 =" << base2;
+    QString res = settings.value(base1, settings.value(base2 + key)).toString();
+    qDebug() << "ExtraPage::readCondSetting(): returning" << res;
+    return res;
 }
 
 QString ExtraPage::getPropertyName(int prop)
@@ -408,32 +496,80 @@ QString ExtraPage::getPropertyName(int prop)
     return QString(""); // prevent compiler warning
 }
 
+bool ExtraPage::isChecked(QString model, QString attrib)
+{
+    QSettings settings;
+    return settings.value(model + "/condition-" + QString::number(pnum) + "/" + attrib + "/isset", false).toBool();
+}
+
 void ExtraPage::readSettings(QString model)
 {
     qDebug() << "ExtraPage::readSettings():  from model =" << model;
 
     QSettings settings;
-    QString base = model + "/condition-" + QString::number(pnum) +"/";
+    QString base = model + "/condition-" + QString::number(pnum) + "/";
 
     cb_property->setCurrentText(getPropertyName(settings.value(base + "property", 0).toInt()));
     cb_rel->setCurrentIndex(settings.value(base + "rel", 3).toInt());
     le_value->setText(settings.value(base + "value", 0).toString());
 
-    le_dir_exp_rate->setText(readCondSetting(model, "govt-procurement"));
-    le_thresh->setText(readCondSetting(model, "income-threshold"));
-    sb_emp_rate->setValue(readCondSetting(model, "employment-rate").toInt());
-    sb_prop_con->setValue(readCondSetting(model, "propensity-to-consume").toInt());
-    sb_dedns->setValue(readCondSetting(model, "pre-tax-dedns-rate").toInt());
-    sb_inc_tax->setValue(readCondSetting(model, "income-tax-rate").toInt());
-    sb_sales_tax->setValue(readCondSetting(model, "sales-tax-rate").toInt());
-    sb_bcr->setValue(readCondSetting(model, "firm-creation-prob").toInt());
-    sb_recoup->setValue(readCondSetting(model, "capex-recoup-periods").toInt());
-    sb_distrib->setValue(readCondSetting(model, "reserve-rate").toInt());
-    sb_prop_inv->setValue(readCondSetting(model, "prop-invest").toInt());
-    sb_ubr->setValue(readCondSetting(model, "unempl-benefit-rate").toInt());
-    sb_boe_loan_int->setValue(readCondSetting(model, "boe-interest").toInt());
-    sb_bus_loan_int->setValue(readCondSetting(model, "bus-interest").toInt());
-    cb_loan_prob->setCurrentIndex(readCondSetting(model, "loan-prob").toInt());
+    QString attrib;
+
+    attrib = "govt-procurement";
+    cbx_dir_exp_rate->setChecked(isChecked(model, attrib));
+    le_dir_exp_rate->setText(readCondSetting(model, attrib));
+
+    attrib = "income-threshold";
+    cbx_thresh->setChecked(isChecked(model, attrib));
+    le_thresh->setText(readCondSetting(model, attrib));
+
+    attrib = "propensity-to-consume";
+    cbx_prop_con->setChecked(isChecked(model, attrib));
+    sb_prop_con->setValue(readCondSetting(model, attrib).toInt());
+
+    attrib = "pre-tax-dedns-rate";
+    cbx_dedns->setChecked(isChecked(model, attrib));
+    sb_dedns->setValue(readCondSetting(model, attrib).toInt());
+
+    attrib = "income-tax-rate";
+    cbx_inc_tax->setChecked(isChecked(model, attrib));
+    sb_inc_tax->setValue(readCondSetting(model, attrib).toInt());
+
+    attrib = "sales-tax-rate";
+    cbx_sales_tax->setChecked(isChecked(model, attrib));
+    sb_sales_tax->setValue(readCondSetting(model, attrib).toInt());
+
+    attrib = "firm-creation-prob";
+    cbx_bcr->setChecked(isChecked(model, attrib));
+    sb_bcr->setValue(readCondSetting(model, attrib).toInt());
+
+    attrib = "capex-recoup-periods";
+    cbx_recoup->setChecked(isChecked(model, attrib));
+    sb_recoup->setValue(readCondSetting(model, attrib).toInt());
+
+    attrib = "reserve-rate";
+    cbx_distrib->setChecked(isChecked(model, attrib));
+    sb_distrib->setValue(readCondSetting(model, attrib).toInt());
+
+    attrib = "prop-invest";
+    cbx_prop_inv->setChecked(isChecked(model, attrib));
+    sb_prop_inv->setValue(readCondSetting(model, attrib).toInt());
+
+    attrib = "unempl-benefit-rate";
+    cbx_ubr->setChecked(isChecked(model, attrib));
+    sb_ubr->setValue(readCondSetting(model, attrib).toInt());
+
+    attrib = "boe-interest";
+    cbx_boe_loan_int->setChecked(isChecked(model, attrib));
+    sb_boe_loan_int->setValue(readCondSetting(model, attrib).toInt());
+
+    attrib = "bus-interest";
+    cbx_bus_loan_int->setChecked(isChecked(model, attrib));
+    sb_bus_loan_int->setValue(readCondSetting(model, attrib).toInt());
+
+    attrib = "loan-prob";
+    cbx_loan_prob->setChecked(isChecked(model, attrib));
+    cb_loan_prob->setCurrentIndex(readCondSetting(model, attrib).toInt());
 }
 
 bool ExtraPage::validatePage()
@@ -444,45 +580,83 @@ bool ExtraPage::validatePage()
     QString key = model + "/condition-" + QString::number(pnum) + "/";
 
     // TODO: We don't currently do any actual validation here.
-    // We just save the default settings assuming they're OK.
+    // We just save the settings assuming they're OK.
 
     QSettings settings;
     bool ok;
 
-    // We need to store an actual property (Model::Property enum) here
+    // We need to store an actual property (Model::Property enum) here, but we
+    // have to convert it to an int first
     QString selected_text = cb_property->currentText();
     Model::Property prop = wiz->property_map.value(selected_text);
     settings.setValue(key + "property", static_cast<int>(prop));
 
     settings.setValue(key + "rel", cb_rel->currentIndex());
 
-    // TODO: We really ought to do something if !ok, but for now we'll
-    // just treat it as zero. If we force it to be numeric (integral)
-    // we won't need to check it.
+    // TODO: force input value to be numeric and remove the OK check
     int val = le_value->text().toInt(&ok);
     if (!ok) {
         val = 0;
     }
     settings.setValue(key + "value", val);
 
-    settings.setValue(key + "govt-procurement", le_dir_exp_rate->text().toInt());
-    settings.setValue(key + "employment-rate", sb_emp_rate->value());
-    settings.setValue(key + "propensity-to-consume", sb_prop_con->value());
-    settings.setValue(key + "income-threshold", le_thresh->text().toInt());
-    settings.setValue(key + "pre-tax-dedns-rate", sb_dedns->value());
-    settings.setValue(key + "income-tax-rate", sb_inc_tax->value());
-    settings.setValue(key + "sales-tax-rate", sb_sales_tax->value());
-    settings.setValue(key + "firm-creation-prob", sb_bcr->value());
-    settings.setValue(key + "capex-recoup-periods", sb_recoup->value());
+    QString attrib;
 
-    settings.setValue(key + "reserve-rate", sb_distrib->value());
-    settings.setValue(key + "prop-invest", sb_prop_inv->value());
-    settings.setValue(key + "unempl-benefit-rate", sb_ubr->value());
+    attrib = "govt-procurement/";
+    settings.setValue(key + attrib + "isset", cbx_dir_exp_rate->isChecked());
+    settings.setValue(key + attrib + "value", le_dir_exp_rate->text().toInt());
 
-    settings.setValue(key + "boe-interest", sb_boe_loan_int->value());
-    settings.setValue(key + "bus-interest", sb_bus_loan_int->value());
+    attrib = "income-threshold/";
+    settings.setValue(key + attrib + "isset", cbx_thresh->isChecked());
+    settings.setValue(key + attrib + "value", le_thresh->text().toInt());
 
-    settings.setValue(key + "loan-prob", cb_loan_prob->currentIndex());
+    attrib = "propensity-to-consume/";
+    settings.setValue(key + attrib + "isset", cbx_prop_con->isChecked());
+    settings.setValue(key + attrib + "value", sb_prop_con->value());
+
+    attrib = "pre-tax-dedns-rate/";
+    settings.setValue(key + attrib + "isset", cbx_dedns->isChecked());
+    settings.setValue(key + attrib + "value", sb_dedns->value());
+
+    attrib = "income-tax-rate/";
+    settings.setValue(key + attrib + "isset", cbx_inc_tax->isChecked());
+    settings.setValue(key + attrib + "value", sb_inc_tax->value());
+
+    attrib = "sales-tax-rate/";
+    settings.setValue(key + attrib + "isset", cbx_sales_tax->isChecked());
+    settings.setValue(key + attrib + "value", sb_sales_tax->value());
+
+    attrib = "firm-creation-prob/";
+    settings.setValue(key + attrib + "isset", cbx_bcr->isChecked());
+    settings.setValue(key + attrib + "value", sb_bcr->value());
+
+    attrib = "capex-recoup-periods/";
+    settings.setValue(key + attrib + "isset", cbx_recoup->isChecked());
+    settings.setValue(key + attrib + "value", sb_recoup->value());
+
+    attrib = "reserve-rate/";
+    settings.setValue(key + attrib + "isset", cbx_distrib->isChecked());
+    settings.setValue(key + attrib + "value", sb_distrib->value());
+
+    attrib = "prop-invest/";
+    settings.setValue(key + attrib + "isset", cbx_prop_inv->isChecked());
+    settings.setValue(key + attrib + "value", sb_prop_inv->value());
+
+    attrib = "unempl-benefit-rate/";
+    settings.setValue(key + attrib + "isset", cbx_ubr->isChecked());
+    settings.setValue(key + attrib + "value", sb_ubr->value());
+
+    attrib = "boe-interest/";
+    settings.setValue(key + attrib + "isset", cbx_boe_loan_int->isChecked());
+    settings.setValue(key + attrib + "value", sb_boe_loan_int->value());
+
+    attrib = "bus-interest/";
+    settings.setValue(key + attrib + "isset", cbx_bus_loan_int->isChecked());
+    settings.setValue(key + attrib + "value", sb_bus_loan_int->value());
+
+    attrib = "loan-prob/";
+    settings.setValue(key + attrib + "isset", cbx_loan_prob->isChecked());
+    settings.setValue(key + attrib + "value", cb_loan_prob->currentIndex());
 
     return true;
 
