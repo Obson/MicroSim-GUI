@@ -329,11 +329,10 @@ protected:
 
     static QMap<ParamType,QString> parameter_keys;
 
-    // Default parameters
     Params *default_parameters;
 
-    //int loadDefaultParameter(QSettings &settings, ParamType p);
     int getParameterVal(ParamType type);
+    bool isParamSet(ParamType t, int n);
 
     void readParameters();
 

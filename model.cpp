@@ -410,22 +410,71 @@ void Model::readParameters()
 
         p->condition.val = settings.value("value").toInt();
 
-        p->procurement.val        = settings.value(parameter_keys[ParamType::procurement]).toInt();
-        p->emp_rate.val           = settings.value(parameter_keys[ParamType::emp_rate]).toInt();
-        p->prop_con.val           = settings.value(parameter_keys[ParamType::prop_con]).toInt();
-        p->inc_tax_rate.val       = settings.value(parameter_keys[ParamType::inc_tax_rate]).toInt();
-        p->inc_thresh.val         = settings.value(parameter_keys[ParamType::inc_thresh]).toInt();
-        p->sales_tax_rate.val     = settings.value(parameter_keys[ParamType::sales_tax_rate]).toInt();
-        p->firm_creation_prob.val = settings.value(parameter_keys[ParamType::firm_creation_prob]).toInt();
-        p->dedns.val              = settings.value(parameter_keys[ParamType::dedns]).toInt();
-        p->unemp_ben_rate.val     = settings.value(parameter_keys[ParamType::unemp_ben_rate]).toInt();
-        p->active_pop.val         = settings.value(parameter_keys[ParamType::active_pop]).toInt();
-        p->distrib.val            = settings.value(parameter_keys[ParamType::distrib]).toInt();
-        p->prop_inv.val           = settings.value(parameter_keys[ParamType::prop_inv]).toInt();
-        p->boe_int.val            = settings.value(parameter_keys[ParamType::boe_int]).toInt();
-        p->bus_int.val            = settings.value(parameter_keys[ParamType::bus_int]).toInt();
-        p->loan_prob.val          = settings.value(parameter_keys[ParamType::loan_prob]).toInt();
-        p->recoup.val             = settings.value(parameter_keys[ParamType::recoup]).toInt();
+        QString attrib;
+
+        attrib = parameter_keys[ParamType::procurement];
+        p->procurement.is_set     = settings.value(attrib + "/isset").toBool();
+        p->procurement.val        = settings.value(attrib + "/value").toInt();
+
+        attrib = parameter_keys[ParamType::emp_rate];
+        p->emp_rate.is_set        = settings.value(attrib + "/isset").toBool();
+        p->emp_rate.val           = settings.value(attrib + "/value").toInt();
+
+        attrib = parameter_keys[ParamType::prop_con];
+        p->prop_con.is_set        = settings.value(attrib + "/isset").toBool();
+        p->prop_con.val           = settings.value(attrib + "/value").toInt();
+
+        attrib = parameter_keys[ParamType::inc_tax_rate];
+        p->inc_tax_rate.is_set    = settings.value(attrib + "/isset").toBool();
+        p->inc_tax_rate.val       = settings.value(attrib + "/value").toInt();
+
+        attrib = parameter_keys[ParamType::inc_thresh];
+        p->inc_thresh.is_set      = settings.value(attrib + "/isset").toBool();
+        p->inc_thresh.val         = settings.value(attrib + "/value").toInt();
+
+        attrib = parameter_keys[ParamType::sales_tax_rate];
+        p->sales_tax_rate.is_set  = settings.value(attrib + "/isset").toBool();
+        p->sales_tax_rate.val     = settings.value(attrib + "/value").toInt();
+
+        attrib = parameter_keys[ParamType::firm_creation_prob];
+        p->firm_creation_prob.is_set = settings.value(attrib + "/isset").toBool();
+        p->firm_creation_prob.val = settings.value(attrib + "/value").toInt();
+
+        attrib = parameter_keys[ParamType::dedns];
+        p->dedns.is_set           = settings.value(attrib + "/isset").toBool();
+        p->dedns.val              = settings.value(attrib + "/value").toInt();
+
+        attrib = parameter_keys[ParamType::unemp_ben_rate];
+        p->unemp_ben_rate.is_set  = settings.value(attrib + "/isset").toBool();
+        p->unemp_ben_rate.val     = settings.value(attrib + "/value").toInt();
+
+        attrib = parameter_keys[ParamType::active_pop];
+        p->active_pop.is_set      = settings.value(attrib + "/isset").toBool();
+        p->active_pop.val         = settings.value(attrib + "/value").toInt();
+
+        attrib = parameter_keys[ParamType::distrib];
+        p->distrib.is_set         = settings.value(attrib + "/isset").toBool();
+        p->distrib.val            = settings.value(attrib + "/value").toInt();
+
+        attrib = parameter_keys[ParamType::prop_inv];
+        p->prop_inv.is_set        = settings.value(attrib + "/isset").toBool();
+        p->prop_inv.val           = settings.value(attrib + "/value").toInt();
+
+        attrib = parameter_keys[ParamType::boe_int];
+        p->boe_int.is_set         = settings.value(attrib + "/isset").toBool();
+        p->boe_int.val            = settings.value(attrib + "/value").toInt();
+
+        attrib = parameter_keys[ParamType::bus_int];
+        p->bus_int.is_set         = settings.value(attrib + "/isset").toBool();
+        p->bus_int.val            = settings.value(attrib + "/value").toInt();
+
+        attrib = parameter_keys[ParamType::loan_prob];
+        p->loan_prob.is_set       = settings.value(attrib + "/isset").toBool();
+        p->loan_prob.val          = settings.value(attrib + "/value").toInt();
+
+        attrib = parameter_keys[ParamType::recoup];
+        p->recoup.is_set          = settings.value(attrib + "/isset").toBool();
+        p->recoup.val             = settings.value(attrib + "/value").toInt();
 
         settings.endGroup();
 
@@ -1284,28 +1333,57 @@ int Model::getParameterVal(ParamType type)
         if (i == 0 || applies(parameter_sets[i]->condition))
         {
             // TODO: p doesn't have to be a Pair as we now only use the val component
-            p =    (type == ParamType::procurement) ? parameter_sets[i]->procurement
-                 : ((type == ParamType::emp_rate) ? parameter_sets[i]->emp_rate
-                 : ((type == ParamType::prop_con) ? parameter_sets[i]->prop_con
-                 : ((type == ParamType::inc_tax_rate) ? parameter_sets[i]->inc_tax_rate
-                 : ((type == ParamType::sales_tax_rate) ? parameter_sets[i]->sales_tax_rate
-                 : ((type == ParamType::firm_creation_prob) ? parameter_sets[i]->firm_creation_prob
-                 : ((type == ParamType::dedns) ? parameter_sets[i]->dedns
-                 : ((type == ParamType::unemp_ben_rate) ? parameter_sets[i]->unemp_ben_rate
-                 : ((type == ParamType::active_pop) ? parameter_sets[i]->active_pop
-                 : ((type == ParamType::distrib) ? parameter_sets[i]->distrib
-                 : ((type == ParamType::prop_inv) ? parameter_sets[i]->prop_inv
-                 : ((type == ParamType::boe_int) ? parameter_sets[i]->boe_int
-                 : ((type == ParamType::bus_int) ? parameter_sets[i]->bus_int
-                 : ((type == ParamType::loan_prob) ? parameter_sets[i]->loan_prob
-                 : ((type == ParamType::inc_thresh) ? parameter_sets[i]->inc_thresh
-                 : ((type == ParamType::recoup) ? parameter_sets[i]->recoup
-                 : parameter_sets[i]->invalid
-                 )))))))))))))));
+            if (isParamSet(type, i))
+            {
+                p =    (type == ParamType::procurement) ? parameter_sets[i]->procurement
+                     : ((type == ParamType::emp_rate) ? parameter_sets[i]->emp_rate
+                     : ((type == ParamType::prop_con) ? parameter_sets[i]->prop_con
+                     : ((type == ParamType::inc_tax_rate) ? parameter_sets[i]->inc_tax_rate
+                     : ((type == ParamType::sales_tax_rate) ? parameter_sets[i]->sales_tax_rate
+                     : ((type == ParamType::firm_creation_prob) ? parameter_sets[i]->firm_creation_prob
+                     : ((type == ParamType::dedns) ? parameter_sets[i]->dedns
+                     : ((type == ParamType::unemp_ben_rate) ? parameter_sets[i]->unemp_ben_rate
+                     : ((type == ParamType::active_pop) ? parameter_sets[i]->active_pop
+                     : ((type == ParamType::distrib) ? parameter_sets[i]->distrib
+                     : ((type == ParamType::prop_inv) ? parameter_sets[i]->prop_inv
+                     : ((type == ParamType::boe_int) ? parameter_sets[i]->boe_int
+                     : ((type == ParamType::bus_int) ? parameter_sets[i]->bus_int
+                     : ((type == ParamType::loan_prob) ? parameter_sets[i]->loan_prob
+                     : ((type == ParamType::inc_thresh) ? parameter_sets[i]->inc_thresh
+                     : ((type == ParamType::recoup) ? parameter_sets[i]->recoup
+                     : parameter_sets[i]->invalid
+                     )))))))))))))));
+            }
         }
     }
 
     return p.val;
+}
+
+bool Model::isParamSet(ParamType t, int n)
+{
+    if (n == 0) {
+        return true;
+    }
+
+    return  (t == ParamType::procurement) ? parameter_sets[n]->procurement.is_set
+         : ((t == ParamType::emp_rate) ? parameter_sets[n]->emp_rate.is_set
+         : ((t == ParamType::prop_con) ? parameter_sets[n]->prop_con.is_set
+         : ((t == ParamType::inc_tax_rate) ? parameter_sets[n]->inc_tax_rate.is_set
+         : ((t == ParamType::sales_tax_rate) ? parameter_sets[n]->sales_tax_rate.is_set
+         : ((t == ParamType::firm_creation_prob) ? parameter_sets[n]->firm_creation_prob.is_set
+         : ((t == ParamType::dedns) ? parameter_sets[n]->dedns.is_set
+         : ((t == ParamType::unemp_ben_rate) ? parameter_sets[n]->unemp_ben_rate.is_set
+         : ((t == ParamType::active_pop) ? parameter_sets[n]->active_pop.is_set
+         : ((t == ParamType::distrib) ? parameter_sets[n]->distrib.is_set
+         : ((t == ParamType::prop_inv) ? parameter_sets[n]->prop_inv.is_set
+         : ((t == ParamType::boe_int) ? parameter_sets[n]->boe_int.is_set
+         : ((t == ParamType::bus_int) ? parameter_sets[n]->bus_int.is_set
+         : ((t == ParamType::loan_prob) ? parameter_sets[n]->loan_prob.is_set
+         : ((t == ParamType::inc_thresh) ? parameter_sets[n]->inc_thresh.is_set
+         : ((t == ParamType::recoup) ? parameter_sets[n]->recoup.is_set
+         : parameter_sets[n]->invalid.is_set
+         )))))))))))))));
 }
 
 double Model::getProcurement()
