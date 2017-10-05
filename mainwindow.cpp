@@ -92,7 +92,7 @@ MainWindow::MainWindow()
     createDockWindows();
 
     setWindowTitle(tr("MicroSim"));
-    setWindowIcon(QIcon(":/microsim.icns"));
+    setWindowIcon(QIcon(":/new-icons.icns"));
     setUnifiedTitleAndToolBarOnMac(true);
     setMinimumSize(1280, 800);
     resize(1280, 800);
@@ -448,7 +448,7 @@ void MainWindow::about()
     QMessageBox::about(
                 this,
                 "About MicroSim",
-                "MicroSim version " + QString(VERSION)
+                "Obson MicroSim version " + QString(VERSION)
                 );
 }
 

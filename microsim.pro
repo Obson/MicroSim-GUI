@@ -65,4 +65,4 @@ DISTFILES += \
 RESOURCES += \
     microsim.qrc
 
-ICON = microsim.icns
+ICON = new-icons.icns

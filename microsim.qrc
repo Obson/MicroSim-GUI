@@ -4,5 +4,6 @@
         <file>icons.icns</file>
         <file>microsim.icns</file>
         <file>background2.png</file>
+        <file>new-icons.icns</file>
     </qresource>
 </RCC>

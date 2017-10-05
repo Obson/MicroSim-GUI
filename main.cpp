@@ -61,7 +61,18 @@ int main(int argc, char *argv[])
     // also left it in the .pro file, as instructed by Qt, as well as manually
     // adding a reference to it in the plist.info. Whether either or both of
     // these is/are actually necessary is unclear.
-    QApplication::setWindowIcon(QIcon(":/microsim.icns"));
+    //
+    // Later: This only works while the program is actually running. The icon
+    // that appears in the dock after the program has been closed is the
+    // default icon, so clearly there is something wrong with the configuration
+    // that will need to be sorted out.
+    //
+    // Still later: the key is to manually delete the generated app bundle,
+    // rerun qmake, and rebuild (see https://stackoverflow.com/questions/4739175/qt-c-on-mac-application-icon-doesnt-set).
+    // Even this isn't quite enough, actually -- the old icon needs to be
+    // removed from the dock (trashing it seems safest) so the new one can be
+    // added.
+    QApplication::setWindowIcon(QIcon(":/new-icons.icns"));
 
     QCoreApplication::setOrganizationName("Obson.net");
     QCoreApplication::setOrganizationDomain("Obson.net");
@@ -71,7 +82,7 @@ int main(int argc, char *argv[])
     QSettings settings;
     settings.setFallbacksEnabled(false);
     MainWindow mainwindow;
-    //mainwindow.setWindowIcon(QIcon(":/microsim.icns"));
+    //mainwindow.setWindowIcon(QIcon(":/new-icons.icns"));
     mainwindow.show();
 
     return a.exec();
