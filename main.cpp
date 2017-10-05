@@ -2,6 +2,7 @@
 #include <QApplication>
 #include <stdio.h>
 #include <stdlib.h>
+#include <QIcon>
 
 #ifdef QT_DEBUG
 void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
@@ -54,6 +55,14 @@ int main(int argc, char *argv[])
     qInstallMessageHandler(myMessageOutput);
     QApplication a(argc, argv);
 
+    // NOTE: Most of the info about this, including in Qt forums, seems to be
+    // out of date. The only scheme that seems to work is to put the icns file
+    // into resources and associate it with the application as here. I have
+    // also left it in the .pro file, as instructed by Qt, as well as manually
+    // adding a reference to it in the plist.info. Whether either or both of
+    // these is/are actually necessary is unclear.
+    QApplication::setWindowIcon(QIcon(":/microsim.icns"));
+
     QCoreApplication::setOrganizationName("Obson.net");
     QCoreApplication::setOrganizationDomain("Obson.net");
     QCoreApplication::setApplicationName("MicroSim");
@@ -62,6 +71,7 @@ int main(int argc, char *argv[])
     QSettings settings;
     settings.setFallbacksEnabled(false);
     MainWindow mainwindow;
+    //mainwindow.setWindowIcon(QIcon(":/microsim.icns"));
     mainwindow.show();
 
     return a.exec();

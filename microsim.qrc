@@ -1,5 +1,8 @@
 <RCC>
     <qresource prefix="/">
         <file>background.png</file>
+        <file>icons.icns</file>
+        <file>microsim.icns</file>
+        <file>background2.png</file>
     </qresource>
 </RCC>

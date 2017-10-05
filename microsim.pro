@@ -50,7 +50,8 @@ HEADERS += \
     model.h \
     optionsdialog.h \
     controlwidget.h \
-    removemodeldlg.h
+    removemodeldlg.h \
+    version.h
 
 FORMS += \
     newmodeldlg.ui \
@@ -63,3 +64,5 @@ DISTFILES += \
 
 RESOURCES += \
     microsim.qrc
+
+ICON = microsim.icns

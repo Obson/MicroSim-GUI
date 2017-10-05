@@ -16,7 +16,7 @@
 ParameterWizard::ParameterWizard(QWidget *parent) : QWizard(parent)
 {
     setWindowTitle("MicroSim Parameter Setup");
-    setPixmap(QWizard::BackgroundPixmap, QPixmap(":/background.png"));
+    setPixmap(QWizard::BackgroundPixmap, QPixmap(":/background2.png"));
 
     setButtonText(QWizard::CustomButton1, tr("&Add conditionals"));
     setOption(QWizard::HaveCustomButton1, true);
@@ -458,8 +458,6 @@ void ExtraPage::setPageNumber(int page_num)
     qDebug() << "ExtraPage::setPageNumber():  page_num =" << page_num;
     pnum = page_num;
     setTitle(tr("Conditional Parameters - Page ") + QString::number(page_num));
-
-
     readSettings(wiz->import_model.isEmpty() ? wiz->current_model : wiz->import_model);
 }
 
@@ -467,14 +465,10 @@ void ExtraPage::setPageNumber(int page_num)
 // cannot be found, read the default setting instead
 QString ExtraPage::readCondSetting(QString model, QString key)
 {
-    qDebug() << "\n\nExtraPage::readCondSetting(): model =" << model << ",  key =" << key;
     QSettings settings;
     QString base1 = model + "/condition-" + QString::number(pnum) + "/" + key + "/value";
-    qDebug() << "ExtraPage::readCondSetting(): base1 =" << base1;
     QString base2 = model + "/default/" + key;
-    qDebug() << "ExtraPage::readCondSetting(): base2 =" << base2;
     QString res = settings.value(base1, settings.value(base2 + key)).toString();
-    qDebug() << "ExtraPage::readCondSetting(): returning" << res;
     return res;
 }
 

@@ -19,6 +19,7 @@
 #include "account.h"
 #include "optionsdialog.h"
 #include "removemodeldlg.h"
+#include "version.h"
 
 MainWindow::MainWindow()
 {
@@ -91,6 +92,7 @@ MainWindow::MainWindow()
     createDockWindows();
 
     setWindowTitle(tr("MicroSim"));
+    setWindowIcon(QIcon(":/microsim.icns"));
     setUnifiedTitleAndToolBarOnMac(true);
     setMinimumSize(1280, 800);
     resize(1280, 800);
@@ -446,7 +448,7 @@ void MainWindow::about()
     QMessageBox::about(
                 this,
                 "About MicroSim",
-                "MicroSim version 0.1.5"
+                "MicroSim version " + QString(VERSION)
                 );
 }
 
