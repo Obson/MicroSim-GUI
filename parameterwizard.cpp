@@ -156,7 +156,7 @@ DefaultPage::DefaultPage(ParameterWizard *w)
     sb_bcr = wiz->getSpinBox(0, 100);
     sb_recoup = wiz->getSpinBox(1, 100);
     sb_distrib = wiz->getSpinBox(0, 100);
-    sb_prop_inv = wiz->getSpinBox(1, 100);
+    sb_prop_inv = wiz->getSpinBox(0, 100);
     sb_ubr = wiz->getSpinBox(0, 100);
 
     sb_boe_loan_int = wiz->getSpinBox(0,99);
@@ -351,9 +351,9 @@ ExtraPage::ExtraPage(ParameterWizard *w)
     sb_inc_tax = wiz->getSpinBox(0, 100);
     sb_sales_tax = wiz->getSpinBox(0, 100);
     sb_bcr = wiz->getSpinBox(0, 100);
-    sb_recoup = wiz->getSpinBox(1, 100);
+    sb_recoup = wiz->getSpinBox(0, 100);
     sb_distrib = wiz->getSpinBox(0, 100);
-    sb_prop_inv = wiz->getSpinBox(1, 100);
+    sb_prop_inv = wiz->getSpinBox(0, 100);
     sb_ubr = wiz->getSpinBox(0, 100);
 
     sb_boe_loan_int = wiz->getSpinBox(0,99);

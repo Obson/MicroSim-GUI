@@ -563,7 +563,7 @@ void MainWindow::showStats(QListWidgetItem *current, QListWidgetItem *prev)
     }
 
     QSettings settings;
-    int range = settings.value("iterations", 100).toInt();
+    int range = settings.value("iterations", 100).toInt() + 1;
 
     QListWidgetItem *it = current; // propertyList->currentItem();
     QString key = it->text();
