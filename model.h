@@ -264,7 +264,7 @@ private:
 protected:
 
     Model(QString model_name);
-    int scale(Property p);
+    double scale(Property p);
 
     double gini();
     double productivity();

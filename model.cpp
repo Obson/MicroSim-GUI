@@ -5,6 +5,8 @@
 #include <limits>
 #include <algorithm>
 
+#include <math.h>
+
 QList<Model*> Model::models;
 Model *Model::current = nullptr;
 
@@ -207,9 +209,9 @@ Model::Model(QString model_name)
     // TODO: Add conditional parameters
 }
 
-int Model::scale(Property p)
+double Model::scale(Property p)
 {
-    int val = getPropertyVal(p);
+    double val = getPropertyVal(p);
 
     switch(p)
     {
@@ -642,7 +644,7 @@ void Model::run(bool randomised)
             for (int i = 0; i < _num_properties/*static_cast<int>(Property::num_properties)*/; i++)
             {
                 Property prop = prop_list[i];
-                int val = scale(prop);
+                double val = scale(prop);
                 series[prop]->append(_period, val);
 
                 int j = static_cast<int> (prop);

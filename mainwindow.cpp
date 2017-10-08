@@ -475,7 +475,7 @@ void MainWindow::createStatusBar()
 
 void MainWindow::propertyChanged()
 {
-    qDebug() << "MainWindow::propertyChanged";
+    // qDebug() << "MainWindow::propertyChanged";
     // Allow the property to be changed even when there's no model selected.
     if (_current_model != nullptr)
     {
