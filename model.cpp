@@ -86,7 +86,7 @@ Model *Model::createModel(QString name)
     // nominal population size refers only to the active population).
     settings.setValue(parameter_keys[ParamType::active_pop],        60);
 
-    settings.setValue(parameter_keys[ParamType::distrib],          100);
+    settings.setValue(parameter_keys[ParamType::distrib],           50);
     settings.setValue(parameter_keys[ParamType::prop_inv],           2);
     settings.setValue(parameter_keys[ParamType::boe_int],            1);
     settings.setValue(parameter_keys[ParamType::bus_int],            3);
