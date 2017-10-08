@@ -91,8 +91,8 @@ MainWindow::MainWindow()
     createStatusBar();
     createDockWindows();
 
-    setWindowTitle(tr("MicroSim"));
-    setWindowIcon(QIcon(":/new-icons.icns"));
+    setWindowTitle(tr("Obson"));
+    setWindowIcon(QIcon(":/obson.icns"));
     setUnifiedTitleAndToolBarOnMac(true);
     setMinimumSize(1280, 800);
     resize(1280, 800);
@@ -180,7 +180,7 @@ void MainWindow::createMenus()
 {
     myMenuBar = new QMenuBar(0);
 
-    applicationMenu = myMenuBar->addMenu(tr("&MicroSim"));
+    applicationMenu = myMenuBar->addMenu(tr("&Obson"));
 
     fileMenu = myMenuBar->addMenu(tr("&File"));
     fileMenu->addAction(newAction);
@@ -447,8 +447,8 @@ void MainWindow::about()
 {
     QMessageBox::about(
                 this,
-                "About MicroSim",
-                "Obson MicroSim version " + QString(VERSION)
+                "About Obson",
+                "Obson version " + QString(VERSION)
                 );
 }
 

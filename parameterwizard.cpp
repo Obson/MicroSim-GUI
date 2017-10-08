@@ -16,7 +16,7 @@
 ParameterWizard::ParameterWizard(QWidget *parent) : QWizard(parent)
 {
     setWindowTitle("MicroSim Parameter Setup");
-    setPixmap(QWizard::BackgroundPixmap, QPixmap(":/background2.png"));
+    setPixmap(QWizard::BackgroundPixmap, QPixmap(":/background3.png"));
 
     setButtonText(QWizard::CustomButton1, tr("&Add conditionals"));
     setOption(QWizard::HaveCustomButton1, true);

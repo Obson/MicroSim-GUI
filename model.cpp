@@ -1100,7 +1100,7 @@ Worker *Model::hire(Firm *employer, double wage, int period)
         int pop = population();
         Q_ASSERT(pop != 0);
 
-        int avail = pop - workers.count();      // number potentially available
+        int avail = pop - getNumEmployed();     // number potentially available
         int access = (avail * 1000) / pop;      // accessibility per thousand
         int prob = employer->isGovernmentSupported() ? 0 : qrand() % 1000;
         if (prob >= access)

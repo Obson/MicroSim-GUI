@@ -5,5 +5,7 @@
         <file>microsim.icns</file>
         <file>background2.png</file>
         <file>new-icons.icns</file>
+        <file>background3.png</file>
+        <file>obson.icns</file>
     </qresource>
 </RCC>

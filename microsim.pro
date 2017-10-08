@@ -9,7 +9,7 @@ QT      += charts
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = MicroSim
+TARGET = Obson
 TEMPLATE = app
 
 CONFIG += c++11
@@ -65,4 +65,4 @@ DISTFILES += \
 RESOURCES += \
     microsim.qrc
 
-ICON = new-icons.icns
+ICON = obson.icns

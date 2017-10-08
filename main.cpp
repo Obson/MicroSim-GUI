@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
     // Even this isn't quite enough, actually -- the old icon needs to be
     // removed from the dock (trashing it seems safest) so the new one can be
     // added.
-    QApplication::setWindowIcon(QIcon(":/new-icons.icns"));
+    QApplication::setWindowIcon(QIcon(":/obson.icns"));
 
     QCoreApplication::setOrganizationName("Obson.net");
     QCoreApplication::setOrganizationDomain("Obson.net");
@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
     QSettings settings;
     settings.setFallbacksEnabled(false);
     MainWindow mainwindow;
-    //mainwindow.setWindowIcon(QIcon(":/new-icons.icns"));
+    //mainwindow.setWindowIcon(QIcon(":/obson.icns"));
     mainwindow.show();
 
     return a.exec();
