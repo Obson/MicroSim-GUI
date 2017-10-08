@@ -216,7 +216,7 @@ void DefaultPage::readSettings(QString model)
     sb_sales_tax->setValue(settings.value(model + "/default/sales-tax-rate", 0).toInt());
     sb_bcr->setValue(settings.value(model + "/default/firm-creation-prob", 0).toInt());
     sb_recoup->setValue(settings.value(model + "/default/capex-recoup-periods", 10).toInt());
-    sb_distrib->setValue(settings.value(model + "/default/reserve-rate", 100).toInt());
+    sb_distrib->setValue(settings.value(model + "/default/reserve-rate", 50).toInt());
     sb_prop_inv->setValue(settings.value(model + "/default/prop-invest", 2).toInt());
     sb_ubr->setValue(settings.value(model + "/default/unempl-benefit-rate", 60).toInt());
     sb_boe_loan_int->setValue(settings.value(model + "/default/boe-interest", 1).toInt());
