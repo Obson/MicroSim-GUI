@@ -248,7 +248,8 @@ private:
     int _population;
     int _startups;
     int _first_period;
-    int _scale;
+
+    double _scale;
 
     double _std_wage;
 

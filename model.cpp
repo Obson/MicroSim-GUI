@@ -331,7 +331,7 @@ void Model::readParameters()
     _iterations = settings.value("iterations", 100).toInt();
     _startups = settings.value("startups", 10).toInt();
     _first_period = settings.value("start-period", 1).toInt();
-    _scale = settings.value("nominal-population", 1000).toInt() / 1000;
+    _scale = settings.value("nominal-population", 1000).toDouble() / 1000;
     _std_wage = settings.value("unit-wage", 100).toInt();
     _population = 1000;
 
@@ -571,7 +571,7 @@ void Model::run(bool randomised)
         qsrand(42);
     }
 
-    for (_period = 1; _period <= _iterations + _first_period; _period++)
+    for (_period = 0; _period <= _iterations + _first_period; _period++)
     {
         // -------------------------------------------
         // Initialise objects ready for next iteration

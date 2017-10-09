@@ -59,7 +59,7 @@ void ControlWidget::on_btn_redraw_clicked()
     if (ok)
     {
         int _iters = ui->le_iters->text().toInt(&ok);
-        if (ok && _start_period > 0 && _iters >= 10)
+        if (ok && _start_period >= 0 && _iters >= 10)
         {
             updateStatus(tr("Loading..."));
 
