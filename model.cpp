@@ -971,8 +971,12 @@ double Model::getPropertyVal(Property p)
         return double(_num_fired);
 
     case Property::prod_bal:
-        _prod_bal = getProdBal();
-        return _prod_bal;
+        _amount_owed = getAmountOwed();
+        _prod_bal = getProdBal();               // ignoring loans
+        return _prod_bal - _amount_owed;        // but show minus loans
+                                                // see http://bilbo.economicoutlook.net/blog/?p=32396
+                                                // where domestic sector is taken
+                                                // to include banks
 
     case Property::wages:
         _wages = getWagesPaid();                // not cumulative
@@ -1005,7 +1009,7 @@ double Model::getPropertyVal(Property p)
         return _dom_bal;
 
     case Property::amount_owed:
-        _amount_owed = getAmountOwed();
+        //_amount_owed = getAmountOwed();
         return _amount_owed;
 
     case Property::bus_size:
