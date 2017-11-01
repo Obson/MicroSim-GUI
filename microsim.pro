@@ -40,7 +40,8 @@ SOURCES += \
     model.cpp \
     optionsdialog.cpp \
     controlwidget.cpp \
-    removemodeldlg.cpp
+    removemodeldlg.cpp \
+    saveprofiledialog.cpp
 
 HEADERS += \
     mainwindow.h \
@@ -51,13 +52,15 @@ HEADERS += \
     optionsdialog.h \
     controlwidget.h \
     removemodeldlg.h \
-    version.h
+    version.h \
+    saveprofiledialog.h
 
 FORMS += \
     newmodeldlg.ui \
     optionsdialog.ui \
     controlwidget.ui \
-    removemodeldlg.ui
+    removemodeldlg.ui \
+    saveprofiledialog.ui
 
 DISTFILES += \
     README.md

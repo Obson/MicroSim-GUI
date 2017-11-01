@@ -38,12 +38,17 @@ private slots:
 
     void on_btn_random_clicked();
 
+    void on_btn_profile_clicked();
+
+    void on_lineEdit_textChanged(const QString &arg1);
+
 signals:
     void newModelRequest();
     void setupModel();
     void redrawChart(bool rerun, bool randomised);
     void randomise();
     void closeDown();
+    void newProfile(QString name);
 
 private:
     Ui::ControlWidget *ui;

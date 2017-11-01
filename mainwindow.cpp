@@ -20,6 +20,7 @@
 #include "optionsdialog.h"
 #include "removemodeldlg.h"
 #include "version.h"
+#include "saveprofiledialog.h"
 
 MainWindow::MainWindow()
 {
@@ -85,6 +86,8 @@ MainWindow::MainWindow()
         //settings.setValue("sample-size", 10); // for moving averages -- adjust as necessary
     }
 
+    current_profile = settings.value("current-profile", "").toString();
+
     createChart();
     createActions();
     createMenus();
@@ -100,7 +103,7 @@ MainWindow::MainWindow()
     // The left margin is to prevent the control being right against the side
     // of the window. May not really be a good idea. The border and padding
     // definitely improve things though.
-    setStyleSheet("QListWidget{margin-left: 2px; border: 0px; padding:12px;}");
+    // setStyleSheet("QListWidget{margin-left: 2px; border: 0px; padding:12px;}");
 }
 
 MainWindow::~MainWindow()
@@ -133,6 +136,7 @@ void MainWindow::createChart()
     chart->legend()->setAlignment(Qt::AlignBottom);
     chartView = new QChartView(chart);
     chartView->setRenderHint(QPainter::Antialiasing);
+    chartView->setMinimumWidth(400);
 
     colours << Qt::red << Qt::blue << Qt::darkRed << Qt::darkGreen
             << Qt::darkBlue << Qt::darkMagenta << Qt::darkYellow
@@ -315,6 +319,16 @@ void MainWindow::closeEvent(QCloseEvent *event)
     }
 
     settings.endGroup();
+    if (profile_changed)
+    {
+        // Ask whether to save the new settings as the current profile
+        SaveProfileDialog dlg(this);
+        if (QDialog::Accepted == dlg.exec())
+        {
+            saveSettingsAsProfile(dlg.profileName());
+        }
+    }
+    settings.setValue("current-profile", current_profile);
     event->accept();
 }
 
@@ -348,6 +362,48 @@ void MainWindow::restoreState()
 }
 
 #include "model.h"
+
+void MainWindow::saveSettingsAsProfile(QString name)
+{
+    QSettings settings;
+
+    settings.beginGroup("Profiles");
+
+    if (settings.childGroups().contains(name))
+    {
+        qDebug() << "Updating profile" << name;
+    }
+    else
+    {
+        qDebug() << "Creating new profile" << name;
+        profileList->addItem(name);
+        selectProfile(name);
+    }
+
+    settings.beginGroup(name);
+
+    for (int i = 0; i < propertyList->count(); i++)
+    {
+        QListWidgetItem *item;
+        item = propertyList->item(i);
+        //item->data(Qt::UserRole).clear();
+        QString text = item->text();
+        bool selected = item->checkState();
+        settings.setValue(text, selected ? true : false);
+    }
+
+    settings.endGroup();
+    settings.endGroup();
+
+    settings.setValue("current-profile", name);
+    current_profile = name;
+}
+
+void MainWindow::createProfile(QString name)
+{
+    qDebug() << "Creating new profile: " << name;
+    saveSettingsAsProfile(name);
+}
 
 void MainWindow::createNewModel()
 {
@@ -477,18 +533,30 @@ void MainWindow::propertyChanged()
 {
     // qDebug() << "MainWindow::propertyChanged";
     // Allow the property to be changed even when there's no model selected.
-    if (_current_model != nullptr)
+    if (_current_model != nullptr && !reloading)
     {
         drawChart(false);   // no need to rerun
+        if (!current_profile.isEmpty()) {
+            profile_changed = true;
+        }
     }
+}
+
+void MainWindow::selectProfile(QString text)
+{
+    profileList->findItems(
+                text,
+                Qt::MatchFixedString | Qt::MatchCaseSensitive
+                ).first()->setSelected(true);
 }
 
 void MainWindow::createDockWindows()
 {
     // Create property list
     QDockWidget *dock = new QDockWidget(tr("Properties"), this);
-    dock->setAllowedAreas(Qt::RightDockWidgetArea);
+    //dock->setAllowedAreas(Qt::RightDockWidgetArea);
     propertyList = new QListWidget(dock);
+    propertyList->setFixedWidth(200);
 
     // Populate the property list
     QMap<QString,Model::Property>::iterator i;
@@ -510,8 +578,8 @@ void MainWindow::createDockWindows()
 
     // Create the model list
     dock = new QDockWidget(tr("Models"), this);
-    dock->setAllowedAreas(Qt::LeftDockWidgetArea);
     modelList = new QListWidget(dock);
+    modelList->setFixedWidth(200);
 
     // Populate the model list
     loadModelList();
@@ -521,13 +589,33 @@ void MainWindow::createDockWindows()
     dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
     addDockWidget(Qt::LeftDockWidgetArea, dock);
 
+    // Create the profile list
+    dock = new QDockWidget(tr("Profiles"), this);
+    profileList = new QListWidget(dock);
+    profileList->setFixedWidth(200);
+
+    // Populate the profile list
+    QSettings settings;
+    settings.beginGroup("Profiles");
+    profileList->addItems(settings.childGroups());
+    settings.endGroup();
+
+    // Select the item corresponding to the current profile
+    if (!current_profile.isEmpty()) {
+        selectProfile(current_profile);
+    }
+
+    // Add to dock
+    dock->setWidget(profileList);
+    dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
+    addDockWidget(Qt::LeftDockWidgetArea, dock);
+
     // Create the bottom area
     dock = new QDockWidget("Controls and Statistics", this);
     dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
     ctrl = new ControlWidget(this);
     ctrl->setFixedHeight(120);
     dock->setWidget(ctrl);
-    dock->setAllowedAreas(Qt::BottomDockWidgetArea);
     addDockWidget(Qt::BottomDockWidgetArea, dock);
 
     // Create the parameter wizard
@@ -538,6 +626,7 @@ void MainWindow::createDockWindows()
     // Connect signals for changing selection and double-click
     connect(modelList, &QListWidget::currentItemChanged, this, &MainWindow::changeModel);
     connect(modelList, &QListWidget::itemDoubleClicked, this, &MainWindow::editParameters);
+    connect(profileList, &QListWidget::currentItemChanged, this, &MainWindow::changeProfile);
 
     // Signals from bottom-area buttons
     connect(ctrl, &ControlWidget::setupModel, this, &MainWindow::editParameters);
@@ -545,6 +634,7 @@ void MainWindow::createDockWindows()
     connect(ctrl, &ControlWidget::redrawChart, this, &MainWindow::drawChart);
     connect(ctrl, &ControlWidget::randomise, this, &MainWindow::drawChartRandomised);
     connect(ctrl, &ControlWidget::newModelRequest, this, &MainWindow::createNewModel);
+    connect(ctrl, &ControlWidget::newProfile, this, &MainWindow::createProfile);
 
     // Signal to bottom-area
     connect(this, &MainWindow::drawingCompleted, ctrl, &ControlWidget::chartDrawn);
@@ -575,6 +665,11 @@ void MainWindow::showStats(QListWidgetItem *current, QListWidgetItem *prev)
     int mean = total / range;
 
     ctrl->setStats("<b>" + key + "</b>", min, max, mean);
+}
+
+int MainWindow::loadProfileList()
+{
+    return 0;
 }
 
 void MainWindow::createFirstModel()
@@ -721,10 +816,45 @@ void MainWindow::drawChart(bool rerun, bool randomised)    // uses _current_mode
     emit drawingCompleted();
 }
 
+void MainWindow::changeProfile(QListWidgetItem *item)
+{
+    /*
+    if (reloading) {
+        return;
+    }
+    */
+
+    reloading = true;
+
+    qDebug() << "Changing profile";
+    current_profile = item->text();
+    qDebug() << "New profile is" << current_profile;
+
+    // Load settings for this profile and redraw the chart
+    QSettings settings;
+    settings.beginGroup("Profiles");
+    settings.beginGroup(current_profile);
+
+    for (int i = 0; i < propertyList->count(); i++)
+    {
+        QListWidgetItem *item;
+        item = propertyList->item(i);
+        QString text = item->text();
+        bool checked = settings.value(text, false).toBool();
+        item->setCheckState(checked ? Qt::Checked : Qt::Unchecked);
+    }
+
+    settings.endGroup();
+    settings.endGroup();
+
+    reloading = false;
+
+    drawChart(true, false);
+}
+
 void MainWindow::changeModel(QListWidgetItem *item)
 {
-    if (reloading)
-    {
+    if (reloading) {
         return;
     }
 

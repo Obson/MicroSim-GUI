@@ -42,6 +42,7 @@ protected:
     Model *current_model();
 
     int loadModelList();
+    int loadProfileList();
 
     int getIters();         // number of iterations (periods)
     int getPopSize();       // max available population size
@@ -60,6 +61,8 @@ protected:
     void editParameters();
     void createFirstModel();
     void createNewModel();
+    void createProfile(QString name);
+    void saveSettingsAsProfile(QString name);
     void remove();
     void about();
     void aboutQt();
@@ -98,9 +101,12 @@ private:
     ParameterWizard *wiz;
     Model *_current_model;
 
+    QString current_profile;
+
     bool first_time_shown;
     bool first_time_loaded;
 
+    bool profile_changed = false;
     bool reloading = false;
 
     QMap<QString,Model::Property> property_map;
@@ -114,8 +120,10 @@ private:
     void drawChartRandomised();
 
     QColor nextColour(int n);
+    void selectProfile(QString text);
 
     void changeModel(QListWidgetItem*);
+    void changeProfile(QListWidgetItem*);
 
     QList<QColor> colours;
     QMap<Model::Property,QColor> propertyColours;
@@ -127,6 +135,7 @@ private:
     QChartView *chartView;
     QChart *chart;
     QListWidget *modelList;
+    QListWidget *profileList;
     QListWidget *propertyList;
 
     QtCharts::QLineSeries period;

@@ -141,3 +141,13 @@ void ControlWidget::on_btn_random_clicked()
     emit randomise();
     ui->btn_redraw->setEnabled(true);
 }
+
+void ControlWidget::on_btn_profile_clicked()
+{
+    emit newProfile(ui->lineEdit->text());
+}
+
+void ControlWidget::on_lineEdit_textChanged(const QString &arg1)
+{
+    ui->btn_profile->setEnabled(arg1.length() > 0);
+}
