@@ -46,7 +46,8 @@ void RemoveModelDlg::on_listWidget_itemSelectionChanged()
 void RemoveModelDlg::on_btnRemove_clicked()
 {
     QString name = ui->listWidget->currentItem()->text();
-    QMessageBox msgBox;
+    QMessageBox msgBox(this);
+    msgBox.setWindowModality(Qt::WindowModal);
     msgBox.setText("Removing model '" + name + "'.");
     msgBox.setInformativeText("Are you sure you want to remove this model?");
     msgBox.setIcon(QMessageBox::Question);

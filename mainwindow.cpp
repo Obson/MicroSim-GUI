@@ -21,11 +21,14 @@
 #include "removemodeldlg.h"
 #include "version.h"
 #include "saveprofiledialog.h"
+#include "statsdialog.h"
 
 MainWindow::MainWindow()
 {
     _current_model = nullptr;
     first_time_shown = true;
+
+    statsDialog = new StatsDialog(this);
 
     // Set up list of property names.
 
@@ -148,33 +151,33 @@ void MainWindow::createChart()
 void MainWindow::createActions()
 {
     // Save as CVS file
-    const QIcon csvIcon = QIcon::fromTheme("document-save", QIcon(":/csv.icns"));
+    const QIcon csvIcon = QIcon::fromTheme("document-save", QIcon(":/chart-2.icns"));
     saveCSVAction = new QAction(csvIcon, tr("&Save as CSV file..."), this);
     saveCSVAction->setStatusTip(tr("Save current chart as a CSV file"));
     saveCSVAction->setDisabled(!isModelSelected());
     connect(saveCSVAction, &QAction::triggered, this, &MainWindow::saveCSV);
 
     // Save profile
-    const QIcon profileIcon = QIcon::fromTheme("document-save", QIcon(":/chart.icns"));
+    const QIcon profileIcon = QIcon::fromTheme("document-save", QIcon(":/chart-1.icns"));
     saveProfileAction = new QAction(profileIcon, tr("&Save chart profile..."), this);
     saveProfileAction->setStatusTip(tr("Save chart settings as a profile"));
     connect(saveProfileAction, &QAction::triggered, this, &MainWindow::createProfile);
 
     // Edit model parameters
-    const QIcon setupIcon = QIcon::fromTheme("document-edit", QIcon(":/setup.icns"));
+    const QIcon setupIcon = QIcon::fromTheme("document-edit", QIcon(":/settings.icns"));
     changeAction = new QAction(setupIcon, tr("Edit &parameters..."));
     changeAction->setDisabled(!isModelSelected());
     changeAction->setStatusTip(tr("Modify the parameters for this model"));
     connect(changeAction, &QAction::triggered, this, &MainWindow::editParameters);
 
     // New model
-    const QIcon newIcon = QIcon::fromTheme("document-new", QIcon(":/world.icns"));
+    const QIcon newIcon = QIcon::fromTheme("document-new", QIcon(":/add-model.icns"));
     newAction = new QAction(newIcon, tr("&New model..."), this);
     newAction->setStatusTip(tr("Create a new model"));
     connect(newAction, &QAction::triggered, this, &MainWindow::createNewModel);
 
     // Remove models
-    const QIcon removeIcon = QIcon::fromTheme("document-delete", QIcon(":/trash.icns"));
+    const QIcon removeIcon = QIcon::fromTheme("document-delete", QIcon(":/delete-model.icns"));
     removeAction = new QAction(removeIcon, tr("&Remove models..."));
     removeAction->setStatusTip(tr("Remove a model or models"));
     connect(removeAction, &QAction::triggered, this, &MainWindow::remove);
@@ -194,27 +197,36 @@ void MainWindow::createActions()
     aboutAction->setStatusTip(tr("Show version information"));
     connect(aboutAction, &QAction::triggered, this, &MainWindow::about);
 
+    // About Qt
     aboutQtAction = new QAction(tr("A&bout Qt"), this);
     connect(aboutQtAction, &QAction::triggered, this, &MainWindow::aboutQt);
 
-    helpAction = new QAction(tr("Open documentation in browser"), this);
+    // Statistics
+    const QIcon statsIcon = QIcon::fromTheme("file-help", QIcon(":/help.icns"));
+    statsAction = new QAction(statsIcon, tr("Statistics"), this);
+    statsAction->setStatusTip(tr("Show statistics"));
+    connect(statsAction, &QAction::triggered, this, &MainWindow::showStatistics);
+
+    // Help (documentation)
+    const QIcon helpIcon = QIcon::fromTheme("file-help", QIcon(":/help-2.icns"));
+    helpAction = new QAction(helpIcon, tr("Open documentation in browser"), this);
     helpAction->setStatusTip(tr("View the Obson documentation in your browser"));
     connect(helpAction, &QAction::triggered, this, &MainWindow::showWiki);
 
     // Run normally
-    const QIcon runIcon = QIcon::fromTheme("file-run", QIcon(":/run.icns"));
+    const QIcon runIcon = QIcon::fromTheme("file-run", QIcon(":/run-2.icns"));
     runAction = new QAction(runIcon, tr("&Update"), this);
     runAction->setStatusTip(tr("Update chart"));
     connect(runAction, &QAction::triggered, this, &MainWindow::drawChartNormal);
 
     // Run randomised
-    const QIcon randomIcon = QIcon::fromTheme("file-random", QIcon(":/random.icns"));
+    const QIcon randomIcon = QIcon::fromTheme("file-random", QIcon(":/rerun.icns"));
     randomAction = new QAction(randomIcon, tr("&Randomise"), this);
     randomAction->setStatusTip(tr("Randomise chart"));
     connect(randomAction, &QAction::triggered, this, &MainWindow::drawChartRandomised);
 
     // Close
-    const QIcon closeIcon = QIcon::fromTheme("file-close", QIcon(":/close.icns"));
+    const QIcon closeIcon = QIcon::fromTheme("file-close", QIcon(":/exit.icns"));
     closeAction = new QAction(closeIcon, tr("&Quit..."), this);
     closeAction->setStatusTip(tr("Quit Obson"));
     connect(closeAction, &QAction::triggered, this, &MainWindow::close);
@@ -253,13 +265,15 @@ void MainWindow::createMenus()
     addToolBar(Qt::LeftToolBarArea, myToolBar);
 
     myToolBar->addAction(newAction);
-    myToolBar->addAction(changeAction);
     myToolBar->addAction(removeAction);
+    myToolBar->addAction(changeAction);
     myToolBar->addAction(notesAction);
     myToolBar->addAction(saveCSVAction);
     myToolBar->addAction(saveProfileAction);
     myToolBar->addAction(runAction);
     myToolBar->addAction(randomAction);
+    myToolBar->addAction(statsAction);
+    myToolBar->addAction(helpAction);
     myToolBar->addAction(closeAction);
 }
 
@@ -693,16 +707,6 @@ void MainWindow::createDockWindows()
     dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
     addDockWidget(Qt::LeftDockWidgetArea, dock);
 
-    // Create the bottom area
-    /*
-    dock = new QDockWidget("Controls and Statistics", this);
-    dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
-    ctrl = new ControlWidget(this);
-    ctrl->setProfileName(current_profile);
-    ctrl->setFixedHeight(120);
-    dock->setWidget(ctrl);
-    addDockWidget(Qt::BottomDockWidgetArea, dock);
-    */
     // Create the parameter wizard
     wiz = new ParameterWizard(this);
     wiz->setProperties(property_map);
@@ -712,17 +716,11 @@ void MainWindow::createDockWindows()
     connect(modelList, &QListWidget::currentItemChanged, this, &MainWindow::changeModel);
     connect(modelList, &QListWidget::itemDoubleClicked, this, &MainWindow::editParameters);
     connect(profileList, &QListWidget::currentItemChanged, this, &MainWindow::changeProfile);
+}
 
-    // Signals from bottom-area buttons
-    //connect(ctrl, &ControlWidget::setupModel, this, &MainWindow::editParameters);
-    //connect(ctrl, &ControlWidget::closeDown, this, &MainWindow::close);
-    //connect(ctrl, &ControlWidget::redrawChart, this, &MainWindow::drawChart);
-    //connect(ctrl, &ControlWidget::randomise, this, &MainWindow::drawChartRandomised);
-    //connect(ctrl, &ControlWidget::newModelRequest, this, &MainWindow::createNewModel);
-    //connect(ctrl, &ControlWidget::newProfile, this, &MainWindow::createProfile);
-
-    // Signal to bottom-area
-    //connect(this, &MainWindow::drawingCompleted, ctrl, &ControlWidget::chartDrawn);
+void MainWindow::showStatistics()
+{
+    statsDialog->show();
 }
 
 void MainWindow::showStats(QListWidgetItem *current, QListWidgetItem *prev)
@@ -851,7 +849,11 @@ void MainWindow::drawChart(bool rerun, bool randomised)    // uses _current_mode
     }
 
     chart->legend()->show();
-    chart->setTitle("<h2 style=\"text-align:center;\">" + _current_model->name() + "</h2><p style=\"text-align:center;\">" + current_profile + "</p>");
+    chart->setTitle("<h2 style=\"text-align:center;\">"
+                    + _current_model->name()
+                    + "</h2><p style=\"text-align:center;\">"
+                    + current_profile
+                    + "</p>");
 
     QLineSeries *anySeries = nullptr;
 
@@ -916,6 +918,7 @@ void MainWindow::changeProfile(QListWidgetItem *item)
 
     // Load settings for this profile and redraw the chart
     QSettings settings;
+    settings.setValue("current-profile", current_profile);
     settings.beginGroup("Profiles");
     settings.beginGroup(current_profile);
 

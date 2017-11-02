@@ -19,5 +19,16 @@
         <file>run.icns</file>
         <file>random.icns</file>
         <file>world.icns</file>
+        <file>delete-chart.icns</file>
+        <file>delete-model.icns</file>
+        <file>exit.icns</file>
+        <file>help.icns</file>
+        <file>add-model.icns</file>
+        <file>rerun.icns</file>
+        <file>chart-1.icns</file>
+        <file>chart-2.icns</file>
+        <file>settings.icns</file>
+        <file>help-2.icns</file>
+        <file>run-2.icns</file>
     </qresource>
 </RCC>

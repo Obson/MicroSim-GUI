@@ -12,7 +12,8 @@
 #include <QAction>
 
 #include "model.h"
-#include "controlwidget.h"
+//#include "controlwidget.h"
+#include "statsdialog.h"
 
 namespace Ui {
 class MainWindow;
@@ -71,6 +72,7 @@ protected:
     void errorMessage(QString);
     void setOptions();
     void showWiki();
+    void showStatistics();  // will replace showStats()
     void showStats(QListWidgetItem *current, QListWidgetItem *prev);
 
     void closeEvent(QCloseEvent *event);
@@ -95,6 +97,7 @@ protected:
     QAction *aboutQtAction;
     QAction *setOptionsAction;
     QAction *helpAction;
+    QAction *statsAction;
     QAction *runAction;
     QAction *randomAction;
     QAction *closeAction;
@@ -108,6 +111,8 @@ private:
     Model *_current_model;
 
     QString current_profile;
+
+    StatsDialog *statsDialog;
 
     bool first_time_shown;
     bool first_time_loaded;
