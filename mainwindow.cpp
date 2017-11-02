@@ -476,7 +476,7 @@ void MainWindow::createNewModel()
 
 void MainWindow::remove()
 {
-    RemoveModelDlg dlg;
+    RemoveModelDlg dlg(this);
     dlg.exec();
 
     reloading = true;
@@ -614,6 +614,7 @@ void MainWindow::createDockWindows()
     dock = new QDockWidget("Controls and Statistics", this);
     dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
     ctrl = new ControlWidget(this);
+    ctrl->setProfileName(current_profile);
     ctrl->setFixedHeight(120);
     dock->setWidget(ctrl);
     addDockWidget(Qt::BottomDockWidgetArea, dock);
@@ -818,17 +819,12 @@ void MainWindow::drawChart(bool rerun, bool randomised)    // uses _current_mode
 
 void MainWindow::changeProfile(QListWidgetItem *item)
 {
-    /*
-    if (reloading) {
-        return;
-    }
-    */
-
     reloading = true;
 
     qDebug() << "Changing profile";
     current_profile = item->text();
     qDebug() << "New profile is" << current_profile;
+    ctrl->setProfileName(current_profile);
 
     // Load settings for this profile and redraw the chart
     QSettings settings;

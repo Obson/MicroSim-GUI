@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Remove Models</string>
   </property>
   <widget class="QListWidget" name="listWidget">
    <property name="geometry">

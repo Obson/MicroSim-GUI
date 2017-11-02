@@ -103,6 +103,11 @@ void ControlWidget::setGini(double gini, double prod)
     ui->lab_prod->setText(QString::number(round(prod + 0.5)) + "%");
 }
 
+void ControlWidget::setProfileName(QString name)
+{
+    ui->lineEdit->setText(name);
+}
+
 void ControlWidget::setNotes(QString s)
 {
     ui->label_notes->setText(s);
