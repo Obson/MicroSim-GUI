@@ -59,9 +59,10 @@ protected:
 
     void saveCSV();
     void editParameters();
+    void editModelDescription();
     void createFirstModel();
     void createNewModel();
-    void createProfile(QString name);
+    void createProfile();
     void saveSettingsAsProfile(QString name);
     void remove();
     void about();
@@ -85,13 +86,18 @@ protected:
     QMenu *helpMenu;
 
     QAction *saveCSVAction;
+    QAction *saveProfileAction;
     QAction *changeAction;
     QAction *newAction;
     QAction *removeAction;
+    QAction *notesAction;
     QAction *aboutAction;
     QAction *aboutQtAction;
     QAction *setOptionsAction;
     QAction *helpAction;
+    QAction *runAction;
+    QAction *randomAction;
+    QAction *closeAction;
 
     bool isModelSelected();
 
@@ -118,6 +124,7 @@ private:
     void createDockWindows();
     void drawChart(bool rerun, bool randomised = true);
     void drawChartRandomised();
+    void drawChartNormal();
 
     QColor nextColour(int n);
     void selectProfile(QString text);
@@ -207,9 +214,6 @@ private:
     };
 
     QList<Params*> paramList;
-
-    ControlWidget *ctrl;
-
 };
 
 #endif // MAINWINDOW_H

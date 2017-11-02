@@ -19,7 +19,7 @@ public:
     void setNotes(QString);
     void updateStatus(QString);
     void setGini(double gini, double prod);
-    void setProfileName(QString name);
+    //void setProfileName(QString name);
 
 public slots:
     void statusChanged(QString status);
@@ -34,8 +34,6 @@ private slots:
     void on_btn_edit_model_clicked();
     void on_btnNewModel_clicked();
     void on_btn_random_clicked();
-    void on_btn_profile_clicked();
-    void on_lineEdit_textChanged(const QString &arg1);
 
 signals:
     void newModelRequest();

@@ -7,5 +7,17 @@
         <file>new-icons.icns</file>
         <file>background3.png</file>
         <file>obson.icns</file>
+        <file>setup.icns</file>
+        <file>trash.icns</file>
+        <file>edit.icns</file>
+        <file>profile.icns</file>
+        <file>profile-2.icns</file>
+        <file>close.icns</file>
+        <file>csv.icns</file>
+        <file>chart.icns</file>
+        <file>notes.icns</file>
+        <file>run.icns</file>
+        <file>random.icns</file>
+        <file>world.icns</file>
     </qresource>
 </RCC>
