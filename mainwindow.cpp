@@ -22,6 +22,7 @@
 #include "version.h"
 #include "saveprofiledialog.h"
 #include "statsdialog.h"
+#include "removeprofiledialog.h"
 
 MainWindow::MainWindow()
 {
@@ -163,6 +164,12 @@ void MainWindow::createActions()
     saveProfileAction->setStatusTip(tr("Save chart settings as a profile"));
     connect(saveProfileAction, &QAction::triggered, this, &MainWindow::createProfile);
 
+    // Remove profile
+    const QIcon removeProfileIcon = QIcon::fromTheme("document-save", QIcon(":/delete-chart.icns"));
+    removeProfileAction = new QAction(removeProfileIcon, tr("Remove chart profile..."), this);
+    removeProfileAction->setStatusTip(tr("Remove profile"));
+    connect(removeProfileAction, &QAction::triggered, this, &MainWindow::removeProfile /* Change this */);
+
     // Edit model parameters
     const QIcon setupIcon = QIcon::fromTheme("document-edit", QIcon(":/settings.icns"));
     changeAction = new QAction(setupIcon, tr("Edit &parameters..."));
@@ -270,6 +277,7 @@ void MainWindow::createMenus()
     myToolBar->addAction(notesAction);
     myToolBar->addAction(saveCSVAction);
     myToolBar->addAction(saveProfileAction);
+    myToolBar->addAction(removeProfileAction);
     myToolBar->addAction(runAction);
     myToolBar->addAction(randomAction);
     myToolBar->addAction(statsAction);
@@ -490,6 +498,27 @@ void MainWindow::createProfile()
     }
 }
 
+void MainWindow::removeProfile()
+{
+    RemoveProfileDialog dlg(this);
+    dlg.exec();
+
+    // Reload profile list
+    updatingProfileList = true;
+    profileList->clear();
+    QSettings settings;
+    settings.beginGroup("Profiles");
+    profileList->addItems(settings.childGroups());
+    settings.endGroup();
+
+    // Now we have to select the item corresponding to the current profile
+    QList<QListWidgetItem*> items = profileList->findItems(current_profile, Qt::MatchExactly);
+    if (items.count() == 1) {
+        profileList->setCurrentRow(profileList->row(items[0]), QItemSelectionModel::SelectCurrent);
+    }
+    updatingProfileList = false;
+}
+
 void MainWindow::createNewModel()
 {
     qDebug() << "MainWindow::createNewModel(): calling NewModelDlg";
@@ -687,7 +716,7 @@ void MainWindow::createDockWindows()
     addDockWidget(Qt::LeftDockWidgetArea, dock);
 
     // Create the profile list
-    dock = new QDockWidget(tr("Profiles"), this);
+    dock = new QDockWidget(tr("Chart Profiles"), this);
     profileList = new QListWidget(dock);
     profileList->setFixedWidth(200);
 
@@ -910,6 +939,10 @@ void MainWindow::drawChart(bool rerun, bool randomised)    // uses _current_mode
 
 void MainWindow::changeProfile(QListWidgetItem *item)
 {
+    if (updatingProfileList) {
+        return;
+    }
+
     reloading = true;
 
     qDebug() << "Changing profile";

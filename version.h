@@ -18,8 +18,11 @@
 // Removed control widget area and added toolbar. Still no way of removing a
 // profile. Must be done before going to next version.
 
-#define VERSION "0.1.12 (build 4)"
+// #define VERSION "0.1.12 (build 4)"
 // Improved toolbar and added stats panel (incomplete). Still no way of
 // removing a profile. Must be done before going to next version.
+
+#define VERSION "0.1.12 (build 5)"
+// Added profile removal
 
 #endif // VERSION_H

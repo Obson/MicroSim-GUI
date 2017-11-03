@@ -64,6 +64,7 @@ protected:
     void createFirstModel();
     void createNewModel();
     void createProfile();
+    void removeProfile();
     void saveSettingsAsProfile(QString name);
     void remove();
     void about();
@@ -89,6 +90,7 @@ protected:
 
     QAction *saveCSVAction;
     QAction *saveProfileAction;
+    QAction *removeProfileAction;
     QAction *changeAction;
     QAction *newAction;
     QAction *removeAction;
@@ -119,6 +121,7 @@ private:
 
     bool profile_changed = false;
     bool reloading = false;
+    bool updatingProfileList = false;
 
     QMap<QString,Model::Property> property_map;
 
