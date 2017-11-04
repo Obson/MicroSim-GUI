@@ -30,6 +30,7 @@ MainWindow::MainWindow()
     first_time_shown = true;
 
     statsDialog = new StatsDialog(this);
+    statsDialog->setWindowFlags(Qt::Tool);
 
     // Set up list of property names.
 
@@ -608,7 +609,6 @@ void MainWindow::editParameters()
     {
         Model *mod = current_model();
         mod->run();
-        //ctrl->setGini(mod->getGini(), mod->getProductivity());
     }
     propertyChanged();
 }
@@ -657,7 +657,7 @@ void MainWindow::createStatusBar()
 
 void MainWindow::propertyChanged()
 {
-    // qDebug() << "MainWindow::propertyChanged";
+    qDebug() << "MainWindow::propertyChanged";
     // Allow the property to be changed even when there's no model selected.
     if (_current_model != nullptr && !reloading)
     {
@@ -695,7 +695,7 @@ void MainWindow::createDockWindows()
         propertyList->addItem(item);
     }
     connect(propertyList, &QListWidget::itemChanged, this, &MainWindow::propertyChanged);
-    connect(propertyList, &QListWidget::currentItemChanged, this, &MainWindow::showStats);
+    connect(propertyList, &QListWidget::itemClicked/*currentItemChanged*/, this, &MainWindow::updateStatsDialog);
 
     // Add to dock
     dock->setWidget(propertyList);
@@ -749,34 +749,13 @@ void MainWindow::createDockWindows()
 
 void MainWindow::showStatistics()
 {
-    statsDialog->show();
-}
-
-void MainWindow::showStats(QListWidgetItem *current, QListWidgetItem *prev)
-{
-    // NOTE: This function seems to be triggered at the start even if the user
-    // hasn't selected an item. In which case prev has a zero value so it seems
-    // to be safe to use it to indicate this condition, and as no item has been
-    // selected we cannot show any stats. This isn't quite right as it prevents
-    // stats for the first selection being displayed if it's the top item in the
-    // list, but at least it doesn't display nonsense.
-    if (prev == nullptr) {
-        return;
+    if (!property_selected) {
+        QMessageBox msgBox;
+        msgBox.setText("Please select a property to display");
+        msgBox.exec();
+    } else {
+        statsDialog->show();
     }
-
-    QSettings settings;
-    int range = settings.value("iterations", 100).toInt() + 1;
-
-    QListWidgetItem *it = current; // propertyList->currentItem();
-    QString key = it->text();
-    Model::Property prop = property_map[key];
-    int ix = static_cast<int>(prop);
-    int min = _current_model->min_value(ix);
-    int max = _current_model->max_value(ix);
-    int total = _current_model->total(ix);
-    int mean = total / range;
-
-    //ctrl->setStats("<b>" + key + "</b>", min, max, mean);
 }
 
 int MainWindow::loadProfileList()
@@ -935,6 +914,31 @@ void MainWindow::drawChart(bool rerun, bool randomised)    // uses _current_mode
     }
 
     emit drawingCompleted();
+}
+
+void MainWindow::updateStatsDialog(QListWidgetItem *current)
+{
+    if (current == nullptr) {
+        return;
+    }
+
+    QSettings settings;
+    int range = settings.value("iterations", 100).toInt() + 1;
+
+    QListWidgetItem *it = current; //propertyList->currentItem();
+    QString key = it->text();
+    Model::Property prop = property_map[key];
+    int ix = static_cast<int>(prop);
+    int min = _current_model->min_value(ix);
+    int max = _current_model->max_value(ix);
+    int total = _current_model->total(ix);
+    int mean = total / range;
+
+    statsDialog->setLimits(key, min, max, mean);
+    statsDialog->setGini(_current_model->getGini());
+    statsDialog->setProductivity(_current_model->getProductivity());
+
+    property_selected = true;
 }
 
 void MainWindow::changeProfile(QListWidgetItem *item)

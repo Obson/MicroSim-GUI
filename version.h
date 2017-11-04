@@ -22,7 +22,10 @@
 // Improved toolbar and added stats panel (incomplete). Still no way of
 // removing a profile. Must be done before going to next version.
 
-#define VERSION "0.1.12 (build 5)"
+// #define VERSION "0.1.12 (build 5)"
 // Added profile removal
+
+#define VERSION "0.1.13"
+// Added statstics box
 
 #endif // VERSION_H

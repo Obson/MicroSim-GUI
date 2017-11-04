@@ -74,7 +74,8 @@ protected:
     void setOptions();
     void showWiki();
     void showStatistics();  // will replace showStats()
-    void showStats(QListWidgetItem *current, QListWidgetItem *prev);
+    //void showStats(QListWidgetItem *current, QListWidgetItem *prev);
+    void updateStatsDialog(QListWidgetItem *current/*, QListWidgetItem *previous*/);
 
     void closeEvent(QCloseEvent *event);
     void restoreState();
@@ -122,6 +123,7 @@ private:
     bool profile_changed = false;
     bool reloading = false;
     bool updatingProfileList = false;
+    bool property_selected = false;
 
     QMap<QString,Model::Property> property_map;
 
