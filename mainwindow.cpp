@@ -857,7 +857,10 @@ void MainWindow::drawChart(bool rerun, bool randomised)    // uses _current_mode
     if (rerun)
     {
         _current_model->run(randomised);
-        //ctrl->setGini(_current_model->getGini(), _current_model->getProductivity());
+        statsDialog->hide();
+        if (property_selected) {
+            updateStatsDialog(propertyList->currentItem());
+        }
     }
 
     chart->legend()->show();

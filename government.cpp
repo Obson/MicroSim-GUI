@@ -21,7 +21,7 @@ void Government::reset()
 Government::Government(Model *model) : Account(model)
 {
     // The 'true' argument tells the model that this is a (the) government-
-    // supported firm and tat it should have a preset (user-defined) number
+    // supported firm and that it should have a preset (user-defined) number
     //of employees.
     _gov_firm = model->createFirm(true);
 }

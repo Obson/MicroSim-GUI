@@ -31,7 +31,10 @@
 // #define VERSION "0.1.13 (build 2)"
 // Improved toolbar behaviour
 
-#define VERSION "0.1.13 (build 3)"
+// #define VERSION "0.1.13 (build 3)"
 // Improved docking
+
+#define VERSION "0.1.13 (build 4)"
+// Changes stats after redrawing model
 
 #endif // VERSION_H
