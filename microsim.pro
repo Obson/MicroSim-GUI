@@ -39,7 +39,6 @@ SOURCES += \
     bank.cpp \
     model.cpp \
     optionsdialog.cpp \
-    controlwidget.cpp \
     removemodeldlg.cpp \
     saveprofiledialog.cpp \
     statsdialog.cpp \
@@ -52,7 +51,6 @@ HEADERS += \
     account.h \
     model.h \
     optionsdialog.h \
-    controlwidget.h \
     removemodeldlg.h \
     version.h \
     saveprofiledialog.h \
@@ -62,7 +60,6 @@ HEADERS += \
 FORMS += \
     newmodeldlg.ui \
     optionsdialog.ui \
-    controlwidget.ui \
     removemodeldlg.ui \
     saveprofiledialog.ui \
     statsdialog.ui \
