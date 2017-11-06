@@ -28,7 +28,10 @@
 // #define VERSION "0.1.13"
 // Added statistics box
 
-#define VERSION "0.1.13 (build 2)"
+// #define VERSION "0.1.13 (build 2)"
 // Improved toolbar behaviour
+
+#define VERSION "0.1.13 (build 3)"
+// Improved docking
 
 #endif // VERSION_H

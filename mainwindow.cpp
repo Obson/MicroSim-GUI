@@ -102,7 +102,7 @@ MainWindow::MainWindow()
     setWindowTitle(tr("Obson"));
     setWindowIcon(QIcon(":/obson.icns"));
     setUnifiedTitleAndToolBarOnMac(true);
-    setMinimumSize(1280, 800);
+    setMinimumSize(1024, 768);
     resize(1280, 800);
 
     // The left margin is to prevent the control being right against the side
@@ -141,7 +141,7 @@ void MainWindow::createChart()
     chart->legend()->setAlignment(Qt::AlignBottom);
     chartView = new QChartView(chart);
     chartView->setRenderHint(QPainter::Antialiasing);
-    chartView->setMinimumWidth(400);
+    chartView->setMinimumWidth(1000);
 
     colours << Qt::red << Qt::blue << Qt::darkRed << Qt::darkGreen
             << Qt::darkBlue << Qt::darkMagenta << Qt::darkYellow
@@ -682,9 +682,9 @@ void MainWindow::createDockWindows()
 {
     // Create property list
     QDockWidget *dock = new QDockWidget(tr("Properties"), this);
-    //dock->setAllowedAreas(Qt::RightDockWidgetArea);
+    dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     propertyList = new QListWidget(dock);
-    propertyList->setFixedWidth(200);
+    //propertyList->setFixedWidth(220);
 
     // Populate the property list
     QMap<QString,Model::Property>::iterator i;
@@ -701,26 +701,28 @@ void MainWindow::createDockWindows()
 
     // Add to dock
     dock->setWidget(propertyList);
-    dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
-    addDockWidget(Qt::RightDockWidgetArea, dock);
+    //dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
+    addDockWidget(Qt::LeftDockWidgetArea, dock);
 
     // Create the model list
     dock = new QDockWidget(tr("Models"), this);
+    dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     modelList = new QListWidget(dock);
-    modelList->setFixedWidth(200);
+    //modelList->setFixedWidth(220);
 
     // Populate the model list
     loadModelList();
 
     // Add to dock
     dock->setWidget(modelList);
-    dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
+    //dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
     addDockWidget(Qt::LeftDockWidgetArea, dock);
 
     // Create the profile list
     dock = new QDockWidget(tr("Chart Profiles"), this);
+    dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     profileList = new QListWidget(dock);
-    profileList->setFixedWidth(200);
+    //profileList->setFixedWidth(220);
 
     // Populate the profile list
     QSettings settings;
@@ -735,7 +737,7 @@ void MainWindow::createDockWindows()
 
     // Add to dock
     dock->setWidget(profileList);
-    dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
+    //dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
     addDockWidget(Qt::LeftDockWidgetArea, dock);
 
     // Create the parameter wizard
