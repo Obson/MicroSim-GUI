@@ -153,45 +153,45 @@ void MainWindow::createChart()
 void MainWindow::createActions()
 {
     // Save as CVS file
-    const QIcon csvIcon = QIcon::fromTheme("document-save", QIcon(":/chart-2.icns"));
+    const QIcon csvIcon = QIcon(":/chart-2.icns");
     saveCSVAction = new QAction(csvIcon, tr("&Save as CSV file..."), this);
     saveCSVAction->setStatusTip(tr("Save current chart as a CSV file"));
     saveCSVAction->setDisabled(!isModelSelected());
     connect(saveCSVAction, &QAction::triggered, this, &MainWindow::saveCSV);
 
     // Save profile
-    const QIcon profileIcon = QIcon::fromTheme("document-save", QIcon(":/chart-1.icns"));
+    const QIcon profileIcon = QIcon(":/chart-1.icns");
     saveProfileAction = new QAction(profileIcon, tr("&Save chart profile..."), this);
     saveProfileAction->setStatusTip(tr("Save chart settings as a profile"));
     connect(saveProfileAction, &QAction::triggered, this, &MainWindow::createProfile);
 
     // Remove profile
-    const QIcon removeProfileIcon = QIcon::fromTheme("document-save", QIcon(":/delete-chart.icns"));
+    const QIcon removeProfileIcon = QIcon(":/delete-chart.icns");
     removeProfileAction = new QAction(removeProfileIcon, tr("Remove chart profile..."), this);
     removeProfileAction->setStatusTip(tr("Remove profile"));
     connect(removeProfileAction, &QAction::triggered, this, &MainWindow::removeProfile /* Change this */);
 
     // Edit model parameters
-    const QIcon setupIcon = QIcon::fromTheme("document-edit", QIcon(":/settings.icns"));
+    const QIcon setupIcon = QIcon(":/settings.icns");
     changeAction = new QAction(setupIcon, tr("Edit &parameters..."));
     changeAction->setDisabled(!isModelSelected());
     changeAction->setStatusTip(tr("Modify the parameters for this model"));
     connect(changeAction, &QAction::triggered, this, &MainWindow::editParameters);
 
     // New model
-    const QIcon newIcon = QIcon::fromTheme("document-new", QIcon(":/add-model.icns"));
+    const QIcon newIcon = QIcon(":/add-model.icns");
     newAction = new QAction(newIcon, tr("&New model..."), this);
     newAction->setStatusTip(tr("Create a new model"));
     connect(newAction, &QAction::triggered, this, &MainWindow::createNewModel);
 
     // Remove models
-    const QIcon removeIcon = QIcon::fromTheme("document-delete", QIcon(":/delete-model.icns"));
+    const QIcon removeIcon = QIcon(":/delete-model.icns");
     removeAction = new QAction(removeIcon, tr("&Remove models..."));
     removeAction->setStatusTip(tr("Remove a model or models"));
     connect(removeAction, &QAction::triggered, this, &MainWindow::remove);
 
     // Edit model description
-    const QIcon notesIcon = QIcon::fromTheme("document-edit", QIcon(":/notes.icns"));
+    const QIcon notesIcon = QIcon(":/notes.icns");
     notesAction = new QAction(notesIcon, tr("&Edit description..."));
     notesAction->setStatusTip(tr("Edit the description for this model"));
     connect(notesAction, &QAction::triggered, this, &MainWindow::editModelDescription);
@@ -210,31 +210,32 @@ void MainWindow::createActions()
     connect(aboutQtAction, &QAction::triggered, this, &MainWindow::aboutQt);
 
     // Statistics
-    const QIcon statsIcon = QIcon::fromTheme("file-help", QIcon(":/help.icns"));
+    const QIcon statsIcon = QIcon(":/help.icns");
     statsAction = new QAction(statsIcon, tr("Statistics"), this);
     statsAction->setStatusTip(tr("Show statistics"));
+    statsAction->setEnabled(false);
     connect(statsAction, &QAction::triggered, this, &MainWindow::showStatistics);
 
     // Help (documentation)
-    const QIcon helpIcon = QIcon::fromTheme("file-help", QIcon(":/help-2.icns"));
+    const QIcon helpIcon = QIcon(":/help-2.icns");
     helpAction = new QAction(helpIcon, tr("Open documentation in browser"), this);
     helpAction->setStatusTip(tr("View the Obson documentation in your browser"));
     connect(helpAction, &QAction::triggered, this, &MainWindow::showWiki);
 
     // Run normally
-    const QIcon runIcon = QIcon::fromTheme("file-run", QIcon(":/run-2.icns"));
+    const QIcon runIcon = QIcon(":/run-2.icns");
     runAction = new QAction(runIcon, tr("&Update"), this);
     runAction->setStatusTip(tr("Update chart"));
     connect(runAction, &QAction::triggered, this, &MainWindow::drawChartNormal);
 
     // Run randomised
-    const QIcon randomIcon = QIcon::fromTheme("file-random", QIcon(":/rerun.icns"));
+    const QIcon randomIcon = QIcon(":/rerun.icns");
     randomAction = new QAction(randomIcon, tr("&Randomise"), this);
     randomAction->setStatusTip(tr("Randomise chart"));
     connect(randomAction, &QAction::triggered, this, &MainWindow::drawChartRandomised);
 
     // Close
-    const QIcon closeIcon = QIcon::fromTheme("file-close", QIcon(":/exit.icns"));
+    const QIcon closeIcon = QIcon(":/exit.icns");
     closeAction = new QAction(closeIcon, tr("&Quit..."), this);
     closeAction->setStatusTip(tr("Quit Obson"));
     connect(closeAction, &QAction::triggered, this, &MainWindow::close);
@@ -663,6 +664,7 @@ void MainWindow::propertyChanged()
     {
         drawChart(false);   // no need to rerun
         if (!current_profile.isEmpty()) {
+            qDebug() << "MainWindow::propertyChanged(): setting profile_changed";
             profile_changed = true;
         }
     }
@@ -922,6 +924,8 @@ void MainWindow::updateStatsDialog(QListWidgetItem *current)
         return;
     }
 
+    statsAction->setEnabled(true);
+
     QSettings settings;
     int range = settings.value("iterations", 100).toInt() + 1;
 
@@ -949,9 +953,16 @@ void MainWindow::changeProfile(QListWidgetItem *item)
 
     reloading = true;
 
+    // Allow old profile to be saved if changed
+    if (profile_changed) {
+        createProfile();
+    }
+
     qDebug() << "Changing profile";
     current_profile = item->text();
     qDebug() << "New profile is" << current_profile;
+
+    profile_changed = false;    // i.e. _this_ profile hasn't been changed
 
     // Load settings for this profile and redraw the chart
     QSettings settings;

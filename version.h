@@ -25,7 +25,10 @@
 // #define VERSION "0.1.12 (build 5)"
 // Added profile removal
 
-#define VERSION "0.1.13"
-// Added statstics box
+// #define VERSION "0.1.13"
+// Added statistics box
+
+#define VERSION "0.1.13 (build 2)"
+// Improved toolbar behaviour
 
 #endif // VERSION_H
