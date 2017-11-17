@@ -88,7 +88,7 @@ void OptionsDialog::accept()
     msgBox.setWindowModality(Qt::WindowModal);
 
     iterations = ui->lineEdit->text().toInt(&ok1);
-    if (ok1 && iterations >= 10 && iterations <= 1000)
+    if (ok1 && iterations >= 10 && iterations <= 10000)
     {
         first = ui->lineEdit_5->text().toInt(&ok5);
         if (ok5 && first >= 0)
@@ -151,7 +151,7 @@ void OptionsDialog::accept()
     else
     {
         msgBox.setText(tr("You have not entered a valid number of iterations!"));
-        msgBox.setDetailedText(tr("The number of iterations must be in the range 10 to 1000."));
+        msgBox.setDetailedText(tr("The number of iterations must be in the range 10 to 9999."));
     }
 
     msgBox.setIcon(QMessageBox::Warning);

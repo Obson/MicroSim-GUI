@@ -15,15 +15,6 @@ StatsDialog::~StatsDialog()
     delete ui;
 }
 
-void StatsDialog::setGini(double gini)
-{
-    ui->labGini->setText(QString::number(round(gini * 100)) + "%");
-}
-
-void StatsDialog::setProductivity(double prod)
-{
-    ui->labProductivity->setText(QString::number(round(prod + 0.5)) + "%");
-}
 void StatsDialog::setLimits(QString property, double min, double max, double mean)
 {
     ui->labProperty->setText(property);

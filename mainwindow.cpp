@@ -6,6 +6,7 @@
 #include <QtCharts/QChart>
 #include <QDockWidget>
 #include <QValueAxis>
+#include <QLogValueAxis>
 #include <QCategoryAxis>
 #include <QColor>
 #include <QMenu>
@@ -47,6 +48,7 @@ MainWindow::MainWindow()
     property_map[tr("Deficit (absolute)")] = Model::Property::deficit;
     property_map[tr("Deficit as % GDP")] = Model::Property::deficit_pc;
     property_map[tr("National Debt")] = Model::Property::gov_bal;
+    property_map[tr("National Debt as % GDP")] = Model::Property::gov_bal_pc;
     property_map[tr("Number of businesses")] = Model::Property::num_firms;
     property_map[tr("Number employed")] = Model::Property::num_emps;
     property_map[tr("Number of govt employees")] = Model::Property::num_gov_emps;
@@ -56,14 +58,14 @@ MainWindow::MainWindow()
     property_map[tr("Percent active")] = Model::Property::pc_active;
     property_map[tr("Number of new hires")] = Model::Property::num_hired;
     property_map[tr("Number of new fires")] = Model::Property::num_fired;
-    property_map[tr("Business sector balance")] = Model::Property::prod_bal;
+    property_map[tr("Businesses balance")] = Model::Property::prod_bal;
     property_map[tr("Wages paid")] = Model::Property::wages;
     property_map[tr("Consumption")] = Model::Property::consumption;
     property_map[tr("Bonuses paid")] = Model::Property::bonuses;
     property_map[tr("Pre-tax deductions")] = Model::Property::dedns;
     property_map[tr("Income tax paid")] = Model::Property::inc_tax;
     property_map[tr("Sales tax paid")] = Model::Property::sales_tax;
-    property_map[tr("Domestic sector balance")] = Model::Property::dom_bal;
+    property_map[tr("Households balance")] = Model::Property::dom_bal;
     property_map[tr("Bank loans")] = Model::Property::amount_owed;
     property_map[tr("Average business size")] = Model::Property::bus_size;
     property_map[tr("100 reference line")] = Model::Property::hundred;
@@ -178,6 +180,12 @@ void MainWindow::createActions()
     changeAction->setStatusTip(tr("Modify the parameters for this model"));
     connect(changeAction, &QAction::triggered, this, &MainWindow::editParameters);
 
+    // Reassign colours
+    const QIcon coloursIcon = QIcon(":/chart.icns");
+    coloursAction = new QAction(coloursIcon, tr("Reset &colours"));
+    coloursAction->setStatusTip(tr("Reset chart colours"));
+    connect(coloursAction, &QAction::triggered, this, &MainWindow::reassignColours);
+
     // New model
     const QIcon newIcon = QIcon(":/add-model.icns");
     newAction = new QAction(newIcon, tr("&New model..."), this);
@@ -223,7 +231,7 @@ void MainWindow::createActions()
     connect(helpAction, &QAction::triggered, this, &MainWindow::showWiki);
 
     // Run normally
-    const QIcon runIcon = QIcon(":/run-2.icns");
+    const QIcon runIcon = QIcon(":/run.icns");
     runAction = new QAction(runIcon, tr("&Update"), this);
     runAction->setStatusTip(tr("Update chart"));
     connect(runAction, &QAction::triggered, this, &MainWindow::drawChartNormal);
@@ -263,6 +271,9 @@ void MainWindow::createMenus()
     editMenu->addAction(setOptionsAction);
     editMenu->addAction(notesAction);
 
+    viewMenu = myMenuBar->addMenu(tr("&View"));
+    viewMenu->addAction(coloursAction);
+
     helpMenu = myMenuBar->addMenu(tr("&Help"));
     applicationMenu->addAction(aboutAction);
     helpMenu->addAction(aboutQtAction);
@@ -282,6 +293,7 @@ void MainWindow::createMenus()
     myToolBar->addAction(removeProfileAction);
     myToolBar->addAction(runAction);
     myToolBar->addAction(randomAction);
+    myToolBar->addAction(coloursAction);
     myToolBar->addAction(statsAction);
     myToolBar->addAction(helpAction);
     myToolBar->addAction(closeAction);
@@ -290,6 +302,12 @@ void MainWindow::createMenus()
 Model *MainWindow::current_model()
 {
     return _current_model;
+}
+
+void MainWindow::reassignColours()
+{
+    propertyColours.clear();
+    drawChart(true, false);
 }
 
 void MainWindow::saveCSV()
@@ -652,8 +670,15 @@ void MainWindow::setOptions()
 
 void MainWindow::createStatusBar()
 {
-    QString message = tr("No model has been selected");
-    statusBar()->showMessage(message);
+    inequalityLabel = new QLabel;
+    productivityLabel = new QLabel;
+    infoLabel = new QLabel;
+
+    statusBar()->addPermanentWidget(inequalityLabel);
+    statusBar()->addPermanentWidget(productivityLabel);
+    statusBar()->addPermanentWidget(infoLabel);
+
+    infoLabel->setText(tr("No model has been selected"));
 }
 
 void MainWindow::propertyChanged()
@@ -831,8 +856,6 @@ void MainWindow::drawChartNormal()
 
 void MainWindow::drawChart(bool rerun, bool randomised)    // uses _current_model
 {
-    //ctrl->updateStatus("Loading");
-
     // We are going to remove the chart altogether and replace it with a new
     // one to make sure we get a clean slate. However if we don't remove the
     // objects owned by the old chart the program eventually crashes. So far,
@@ -920,6 +943,12 @@ void MainWindow::drawChart(bool rerun, bool randomised)    // uses _current_mode
         y_axis->setLabelFormat("%d");
     }
 
+    double gini = _current_model->getGini();
+    double prod = _current_model->getProductivity();
+
+    inequalityLabel->setText(tr("Inequality: ") + QString::number(round(gini * 100)) + "%");
+    productivityLabel->setText(tr("Productivity: ") + QString::number(round(prod + 0.5)) + "%");
+
     emit drawingCompleted();
 }
 
@@ -944,8 +973,6 @@ void MainWindow::updateStatsDialog(QListWidgetItem *current)
     int mean = total / range;
 
     statsDialog->setLimits(key, min, max, mean);
-    statsDialog->setGini(_current_model->getGini());
-    statsDialog->setProductivity(_current_model->getProductivity());
 
     property_selected = true;
 }
@@ -1014,15 +1041,14 @@ void MainWindow::changeModel(QListWidgetItem *item)
     int startups = scale * settings.value("startups", 0).toInt();
 
     QString model_name = item->text();
-    statusBar()->showMessage(  tr("  Total population: ") + QString::number(nominal_population)
+    infoLabel->setText(  tr("  Total population: ") + QString::number(nominal_population)
                              + tr("  Government employees: ") + settings.value("government-employees", 200).toString()
                              + tr("  Standard wage: ") + settings.value("unit-wage", 500).toString()
-                             + tr("  Number of businesses at start: ") + QString::number(startups)
+                             + tr("  Number of private businesses at start: ") + QString::number(startups)
                             );
 
     settings.setValue("current_model", model_name);
     settings.beginGroup(model_name);
-    //ctrl->setNotes(settings.value("notes", "No notes entered for this model").toString());
     settings.endGroup();
 
     drawChart(true, false);

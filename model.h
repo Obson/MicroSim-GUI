@@ -145,6 +145,7 @@ public:
         productivity,
         rel_productivity,
         unbudgeted,
+        gov_bal_pc,
         num_properties
     };
 

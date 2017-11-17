@@ -34,7 +34,17 @@
 // #define VERSION "0.1.13 (build 3)"
 // Improved docking
 
-#define VERSION "0.1.13 (build 4)"
+// #define VERSION "0.1.13 (build 4)"
 // Changes stats after redrawing model
+
+// #define VERSION "0.1.13 (build 5)"
+// Changes stats after redrawing model
+
+// #define VERSION "0.1.13 (build 6)"
+// Added National Debt as percent of GDP
+// Added Reset Colours action
+
+#define VERSION "0.1.14"
+// Inequality and productivity statistics moved to status bar.
 
 #endif // VERSION_H

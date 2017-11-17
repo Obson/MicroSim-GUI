@@ -10,6 +10,7 @@
 #include <QValueAxis>
 #include <QMenuBar>
 #include <QAction>
+#include <QLabel>
 
 #include "model.h"
 //#include "controlwidget.h"
@@ -66,6 +67,7 @@ protected:
     void createProfile();
     void removeProfile();
     void saveSettingsAsProfile(QString name);
+    void reassignColours();
     void remove();
     void about();
     void aboutQt();
@@ -87,12 +89,14 @@ protected:
     QMenu *applicationMenu;
     QMenu *fileMenu;
     QMenu *editMenu;
+    QMenu *viewMenu;
     QMenu *helpMenu;
 
     QAction *saveCSVAction;
     QAction *saveProfileAction;
     QAction *removeProfileAction;
     QAction *changeAction;
+    QAction *coloursAction;
     QAction *newAction;
     QAction *removeAction;
     QAction *notesAction;
@@ -178,6 +182,10 @@ private:
 
     QValueAxis *axisX = nullptr;
     QValueAxis *axisY = nullptr;
+
+    QLabel *productivityLabel;
+    QLabel *inequalityLabel;
+    QLabel *infoLabel;
 
     enum Opr
     {
