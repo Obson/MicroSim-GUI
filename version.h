@@ -44,7 +44,15 @@
 // Added National Debt as percent of GDP
 // Added Reset Colours action
 
-#define VERSION "0.1.14"
+// #define VERSION "0.1.14"
 // Inequality and productivity statistics moved to status bar.
+
+#define VERSION "0.1.14 (build 2)"
+// Corrected model setup wizard title.
+// Removed 'National Debt as %GDP' as it doesn't make sense. What is really
+// required is cumulative deficit as percent of cumulative consumption (GDP)
+// over given period. Current 'Deficit as percent GDP' is its instantaneous
+// ('marginal') value, and I'm not sure that a rollong value over an arbitrary
+// period would be of much more value.
 
 #endif // VERSION_H

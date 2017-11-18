@@ -193,7 +193,6 @@ Model::Model(QString model_name)
               << Property::productivity
               << Property::rel_productivity
               << Property::unbudgeted
-              << Property::gov_bal_pc
               << Property::num_properties;      // dummy (keep at end)
 
     // Set up an empty series for each property
@@ -221,7 +220,6 @@ double Model::scale(Property p)
     case Property::pc_unemps:
     case Property::pc_active:
     case Property::deficit_pc:
-    case Property::gov_bal_pc:
     case Property::hundred:
     case Property::zero:
     case Property::productivity:
@@ -916,9 +914,6 @@ double Model::getPropertyVal(Property p)
     case Property::gov_exp_plus:
         return _exp + _bens;
 
-    case Property::unbudgeted:
-        return gov()->getUnbudgetedExp();
-
     case Property::gov_recpts:
         _rcpts = gov()->getReceipts();
         return _rcpts;
@@ -1042,8 +1037,8 @@ double Model::getPropertyVal(Property p)
                 : (_productivity * _pop_size) / _num_emps;
         return _rel_productivity;
 
-    case Property::gov_bal_pc:
-        return _consumption == 0 ? _consumption : (_gov_bal * 100) / _consumption;
+    case Property::unbudgeted:
+        return gov()->getUnbudgetedExp();
 
     case Property::num_properties:
         Q_ASSERT(false);

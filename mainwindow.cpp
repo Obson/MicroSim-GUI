@@ -48,7 +48,6 @@ MainWindow::MainWindow()
     property_map[tr("Deficit (absolute)")] = Model::Property::deficit;
     property_map[tr("Deficit as % GDP")] = Model::Property::deficit_pc;
     property_map[tr("National Debt")] = Model::Property::gov_bal;
-    property_map[tr("National Debt as % GDP")] = Model::Property::gov_bal_pc;
     property_map[tr("Number of businesses")] = Model::Property::num_firms;
     property_map[tr("Number employed")] = Model::Property::num_emps;
     property_map[tr("Number of govt employees")] = Model::Property::num_gov_emps;
