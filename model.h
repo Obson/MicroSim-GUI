@@ -145,6 +145,9 @@ public:
         productivity,
         rel_productivity,
         unbudgeted,
+        investment,
+        gdp,
+        profit,
         num_properties
     };
 
@@ -179,6 +182,7 @@ public:
 
     double getProdBal();
     double getWagesPaid();
+    double getInvestment();
     double getPurchasesMade();
     double getSalesReceipts();
     double getBonusesPaid();
@@ -260,7 +264,7 @@ private:
     double  _exp, _bens, _rcpts, _gov_bal, _prod_bal, _wages, _consumption,
             _bonuses, _dedns, _inc_tax, _sales_tax, _dom_bal, _loan_prob,
             _amount_owed, _deficit, _pc_active, _bus_size, _proc_exp,
-            _productivity, _rel_productivity;
+            _productivity, _rel_productivity, _investment, _gdp, _profit;
 
 protected:
 

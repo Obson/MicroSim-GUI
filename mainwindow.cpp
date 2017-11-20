@@ -72,6 +72,9 @@ MainWindow::MainWindow()
     property_map[tr("Productivity")] = Model::Property::productivity;
     property_map[tr("Productivity (relative)")] = Model::Property::rel_productivity;
     property_map[tr("Govt direct support")] = Model::Property::unbudgeted;
+    property_map[tr("Investment")] = Model::Property::investment;
+    property_map[tr("GDP")] = Model::Property::gdp;
+    property_map[tr("Profit")] = Model::Property::profit;
     property_map[tr("Zero reference line")] = Model::Property::zero;
 
     // If non-zero, points to currently selected listwidget item
@@ -83,8 +86,8 @@ MainWindow::MainWindow()
 
     if (!settings.contains("iterations"))
     {
-        settings.setValue("iterations", 99);
-        settings.setValue("start-period", 1);
+        settings.setValue("iterations", 100);
+        settings.setValue("start-period", 0);
         settings.setValue("startups", 10);
         settings.setValue("nominal-population", 1000);
         settings.setValue("unit-wage", 100);

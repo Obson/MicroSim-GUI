@@ -47,12 +47,19 @@
 // #define VERSION "0.1.14"
 // Inequality and productivity statistics moved to status bar.
 
-#define VERSION "0.1.14 (build 2)"
+// #define VERSION "0.1.14 (build 2)"
 // Corrected model setup wizard title.
 // Removed 'National Debt as %GDP' as it doesn't make sense. What is really
 // required is cumulative deficit as percent of cumulative consumption (GDP)
 // over given period. Current 'Deficit as percent GDP' is its instantaneous
 // ('marginal') value, and I'm not sure that a rollong value over an arbitrary
 // period would be of much more value.
+
+#define VERSION "0.1.15"
+// Added investment, GDP and profit properties
+// Added after reading Wray, Modern Money Theory, particuarly last chapter.
+// The three properties are all defined as identities and do nor add any extra
+// information -- except perhaps for investment, which was an internal variable
+// used by firms in deciding how to dispose of excess funds.
 
 #endif // VERSION_H

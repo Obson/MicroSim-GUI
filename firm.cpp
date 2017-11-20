@@ -37,6 +37,7 @@ void Firm::init()
     num_hired = 0;
     num_fired = 0;
     bonuses_paid = 0;
+    investment= 0;
 }
 
 bool Firm::isGovernmentSupported()
@@ -97,6 +98,8 @@ void Firm::epilogue(int period)
         // either, so there's nothing to do here.
         return;
     }
+
+    investment = 0;
 
     if (balance > wages_paid)
     {
@@ -163,10 +166,12 @@ void Firm::epilogue(int period)
                     // However as this is happening in the epilogue phase they will
                     // simply remain in their balances until next triggered, at
                     // which point they will also have to purchase capital
-                    // equipment. The medium-term result will be a geral in flation.
+                    // equipment. The medium-term result will be a general
+                    // inflation.
                     Firm *supplier = model()->selectRandomFirm(this);
                     supplier->credit(excess, this);
                     balance -= excess;
+                    investment = excess;
 
                     // We assume we want to recoup the investment over ten periods
                     // (this must be parameterised), so we need to raise an
@@ -223,6 +228,11 @@ double Firm::getProductivity()
 double Firm::getWagesPaid()
 {
     return wages_paid;
+}
+
+double Firm::getInvestment()
+{
+    return investment;
 }
 
 double Firm::getBonusesPaid()

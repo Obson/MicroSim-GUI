@@ -193,6 +193,9 @@ Model::Model(QString model_name)
               << Property::productivity
               << Property::rel_productivity
               << Property::unbudgeted
+              << Property::investment
+              << Property::gdp
+              << Property::profit
               << Property::num_properties;      // dummy (keep at end)
 
     // Set up an empty series for each property
@@ -252,6 +255,9 @@ double Model::scale(Property p)
     case Property::amount_owed:
     case Property::bus_size:
     case Property::procurement:
+    case Property::investment:
+    case Property::gdp:
+    case Property::profit:
         return val * _scale;
     }
 }
@@ -1040,6 +1046,18 @@ double Model::getPropertyVal(Property p)
     case Property::unbudgeted:
         return gov()->getUnbudgetedExp();
 
+    case Property::investment:
+        _investment = getInvestment();
+        return _investment;
+
+    case Property::gdp:
+        _gdp = _consumption + _investment + _exp + _bens;
+        return _gdp;
+
+    case Property::profit:
+        _profit = _gdp - _wages - _inc_tax - _sales_tax;
+        return _profit;
+
     case Property::num_properties:
         Q_ASSERT(false);
         return 0;                       // prevent compiler warning
@@ -1217,6 +1235,17 @@ double Model::getWagesPaid()
     for (int i = 0; i < firms.count(); i++)
     {
         tot += firms[i]->getWagesPaid();
+    }
+
+    return tot;
+}
+
+double Model::getInvestment()
+{
+    double tot = 0.0;
+    for (int i = 0; i < firms.count(); i++)
+    {
+        tot += firms[i]->getInvestment();
     }
 
     return tot;
