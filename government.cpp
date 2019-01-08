@@ -122,6 +122,7 @@ void Government::trigger(int period)
 //
 bool Government::transferSafely(Account *recipient, double amount, Account *, bool procurement)
 {
+    // ***
     // We adopt the convention that receipts from the government are not
     // taxable. This is probably a rather murky area, given that the
     // mechanisms by which government injects money into the economy are
@@ -130,8 +131,12 @@ bool Government::transferSafely(Account *recipient, double amount, Account *, bo
     // and the 'armed forces' the mechanism is probably more direct.
     // Anyway, to go into this would be a distraction so we'll simply
     // treat it as untaxable payment for services.
-    recipient->credit(amount, this, procurement);
-    balance -= amount;
+    // ***
+
+    if (recipient != nullptr) {
+        recipient->credit(amount, this, procurement);
+        balance -= amount;
+    }
 
     // The government can always transfer any amount
     return true;

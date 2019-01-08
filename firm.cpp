@@ -1,24 +1,30 @@
 
-// The 'government-owned' firm is the only firm that is created initially and
-// serves as a target for government spending. Other firms come into existence
-// depending on economic conditions.
+// *** FUNDAMENTALS ***
 //
-// Suppose a firm (or all firms taken together) produce goods and services to the
-// value of n CUs (currency units). If all their stock is sold (the best case
-// scenario) they will receive payments of n CUs. This is the most they can pay
-// their employees without drawing on credit and is therefore the most they can
-// pay out in wages (without drawing on credit). However, their employees will
-// have to return some of this money to the government in taxes and will not
-// therefore be able to buy all the stock. This means there will be less money
-// available to pay out in wages next time, and even less stock will be produced.
-// Eventually the company will have to get rid of its employees and go out of
-// business.
+// The notional 'government-owned' firm is the only firm that is created
+// initially and serves as a target for government spending. Other firms come
+// into existence depending on economic conditions. The government-owned firm is
+// the civil service, the military and public services or other enterprises that
+// are entirely funded by the government.
 //
-// The only way this can be avoided is by the injection of new money. Mechanisms
-// are: constantly increasing credit from the bank, payment of benefits to the
-// unemployed (so that in effect the unemployed will be financing employment!)
-// and direct purchases from the firms by the government (using new money).
+// Suppose a private firm (or all private firms taken together) produce goods
+// and services to the value of n CUs (currency units). If all their stock is
+// sold (the best case scenario) they will receive payments of n CUs and this is
+// the most they can pay their employees in wages without drawing on credit.
+// However, their employees will have to return some of this money to the
+// government in taxes and will not therefore be able to buy all the stock. This
+// means there will be less money available to pay out in wages next time, and
+// even less stock will be produced. Eventually the company will have to get rid
+// of its employees and go out of business.
 //
+// This is avoided is by the injection of new money through the following
+// mechanisms: increasing credit from the banks, payment of benefits to the
+// unemployed by the government using new money (which means that in part the
+// government finances employment via the unemployed) direct purchases from
+// private firms by the government (using new money), and purchases by employees
+// of the notional government-owned firm. Note that all these mechanisms rely in
+// different ways on the ceation of new money by the governmwent.
+// ***
 
 #include "account.h"
 #include <cassert>
@@ -67,7 +73,10 @@ void Firm::trigger(int period)
             if (interest > 0 && interest <= balance)
             {
                 //qDebug() << "Firm::trigger(): paying loan interest of" << interest;
-                transferSafely(model()->bank(), interest, this);
+                if (!transferSafely(model()->bank(), interest, this))
+                {
+                        qDebug() << "Firm::trigger(): failed to transfer interest to bank";
+                }
             }
             else if (interest == 0 && owed_to_bank > 0)
             {
@@ -91,11 +100,15 @@ void Firm::trigger(int period)
 void Firm::epilogue(int period)
 {
     if (_state_supported) {
-        // State-supported businesses are set up will a full quota of
+
+        // ***
+        // State-supported businesses are set up with a full quota of
         // employees and do not receive funds from sales so have no need to
         // (and cannot) recruit. As funds are supplied by government for
-        // payment of wages only (including expenses) bonuses cannot be paid
+        // payment of wages (and expenses) only, bonuses cannot be paid
         // either, so there's nothing to do here.
+        // ***
+
         return;
     }
 
@@ -103,14 +116,14 @@ void Firm::epilogue(int period)
 
     if (balance > wages_paid)
     {
-        // We must keep in hand at least the amount needed to pay wages
+        // We must keep in hand at least the amount needed to pay future wages
         double available = balance - wages_paid;   // now includes deductions
 
         double investible = available * model()->getPropInv();
         double bonuses = (available - investible) * model()->getDistributionRate();
 
-        // We distribute the funds before hiring new workers to ensure they
-        // only get distributed to existing workers.
+        // We distribute the funds as bonuses before hiring new workers to
+        // ensure they only get distributed to existing workers.
         int emps = model()->getNumEmployedBy(this);
         double amt_paid = 0;
         if (emps > 0)
@@ -130,17 +143,18 @@ void Firm::epilogue(int period)
         bonuses_paid += amt_paid;
 
         // How many more employees can we afford?
+
         double std_wage = model()->getStdWage();
-        double current_wage_rate = productivity * std_wage;
-        int num_to_hire = investible /
-                (current_wage_rate * (1 + model()->getPreTaxDedns()));
+        double current_wage_rate = productivity * std_wage; // Note that productivity is initialised to 1.0 in Account
+        int num_to_hire = investible / (current_wage_rate * (1 + model()->getPreTaxDedns()));
+
+        // Hire new workers
 
         if (num_to_hire > 0)
         {
-            double invested = model()->hireSome(this, current_wage_rate, period,
-                                             num_to_hire);
-            double excess = investible - invested;
+            double invested = model()->hireSome(this, current_wage_rate, period, num_to_hire);
 
+            // ***
             // If we are unable to hire all the workers we want we will
             // have reserved funds that do not get spent. Even if we do there
             // may well be a non-zero residue, although this would normally get
@@ -148,43 +162,68 @@ void Firm::epilogue(int period)
             // because there are no unemployed workers left to recruit, the
             // business sector balance will increase without limit and the
             // deficit will eventually stabilise at a positive non-zero value.
-            //    To avoid this we must dispose of the surplus funds. We can
+            //
+            // To avoid this we must dispose of the surplus funds. We can
             // either (a) let the money build up until we can declare a
             // dividend (how is this specified?), (b) poach employees by
-            // offering increased wages, or (c) invest in capital
-            // equipment. For the time being we adopt option (c) only.
+            // offering increased wages (inflation), or (c) invest in capital
+            // equipment (productivity). For the time being we adopt option (c)
+            // only.
+            // ***
+
+            double excess = investible - invested;
 
             if (excess > 0)
             {
+                // How many did we just hire?
                 int new_emps = model()->getNumEmployedBy(this);
 
                 if (emps > 0 || new_emps > 0)
                 {
-                    // purchase capital equipment to the value of 'excess'. Note
-                    // that this operation distributes the excess funds around the
+                    // Purchase capital equipment
+
+                    // ***
+                    // This operation distributes the excess funds around the
                     // other firms, which will be equally unable to use them.
                     // However as this is happening in the epilogue phase they will
                     // simply remain in their balances until next triggered, at
                     // which point they will also have to purchase capital
                     // equipment. The medium-term result will be a general
                     // inflation.
+                    // ***
+
                     Firm *supplier = model()->selectRandomFirm(this);
-                    supplier->credit(excess, this);
-                    balance -= excess;
-                    investment = excess;
 
-                    // We assume we want to recoup the investment over ten periods
-                    // (this must be parameterised), so we need to raise an
-                    // additional (excess / 10) per period. This can be shared
-                    // out over the new number of employees giving an additional
-                    //     excess / (10 * (emps + new_emps))
-                    // per employee. The new wage rate will then be
-                    //     current_wage_rate + (excess / (10 * (emps + new_emps))
-                    // so productivity will be
-                    //     {current_wage_rate + (excess / (10 * (emps + new_emps))} / std_wage
-                    // I think!
+                    // ***
+                    // We must allow for the possibility that there are no firms
+                    // from which to select a supplier. This will be the case if
+                    // parameters were set up with fewer than two startups, and
+                    // selectRandomFirm(this) will then have returned nullptr.
+                    // ***
 
-                    productivity = (current_wage_rate + (double(excess) / (model()->getCapexRecoupTime() * (emps + new_emps)))) / std_wage;
+                    if (supplier != nullptr)
+                    {
+                        supplier->credit(excess, this);
+                        balance -= excess;
+                        investment = excess;
+
+                        // Update productivity
+
+                        // ***
+                        // We assume we want to recoup the investment over ten periods
+                        // (this must be parameterised), so we need to raise an
+                        // additional (excess / 10) per period. This can be shared
+                        // out over the new number of employees giving an additional
+                        //     excess / (10 * (emps + new_emps))
+                        // per employee. The new wage rate will then be
+                        //     current_wage_rate + (excess / (10 * (emps + new_emps))
+                        // so productivity will be
+                        //     {current_wage_rate + (excess / (10 * (emps + new_emps))} / std_wage
+                        // I think!
+                        // ***
+
+                        productivity = (current_wage_rate + (double(excess) / (model()->getCapexRecoupTime() * (emps + new_emps)))) / std_wage;
+                    }
                 }
             }
         }

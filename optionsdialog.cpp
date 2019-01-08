@@ -94,10 +94,10 @@ void OptionsDialog::accept()
         if (ok5 && first >= 0)
         {
             startups = ui->lineEdit_2->text().toInt(&ok2);
-            if (ok2 && startups > 0 && startups <= 100)
+            if (ok2 && startups > 1 && startups <= 100)
             {
                 nom_pop = ui->lineEdit_3->text().toInt(&ok3);
-                if (ok3 && nom_pop >= 1000 && nom_pop <= 1000)
+                if (ok3 && nom_pop >= 1000 && nom_pop <= 100000)
                 {
                     unit_wage = ui->lineEdit_4->text().toInt(&ok4);
                     if (ok4 && unit_wage >= 100 && unit_wage < 1000)

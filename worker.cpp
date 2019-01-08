@@ -59,9 +59,10 @@ void Worker::trigger(int period)
             purch = ((balance - thresh) * prop_con) + thresh;
         }
 
-        if (purch > 0 && transferSafely(model()->selectRandomFirm(), purch, this))
-        {
-            purchases += purch;
+        if (purch > 0) {
+            if (transferSafely(model()->selectRandomFirm(), purch, this)) {
+                purchases += purch;
+            }
         }
     }
 }
@@ -76,8 +77,11 @@ double Worker::agreedWage()
     return agreed_wage;
 }
 
+// TODO: This doesn't appear to be called anywhere! However agreed_wage is
+// accessible to Model, which sets it directly. Consider restructuring.
 void Worker::setAgreedWage(double wage)
 {
+    qDebug() << "Worker::setAgreedWage() called";
     agreed_wage = wage;
 }
 

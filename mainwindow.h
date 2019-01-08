@@ -1,6 +1,9 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+
+#include <string.h>
+
 #include <QMainWindow>
 #include "parameterwizard.h"
 #include <QList>

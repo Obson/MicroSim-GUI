@@ -208,8 +208,6 @@ Model::Model(QString model_name)
 
     qDebug() << "Model::Model():" << model_name << "reading default parameters";
     readParameters();
-
-    // TODO: Add conditional parameters
 }
 
 double Model::scale(Property p)
@@ -733,15 +731,27 @@ Firm *Model::createFirm(bool state_supported)
     return firm;
 }
 
+// Returns a random non-government firm or nullptr if there are none
 Firm *Model::selectRandomFirm(Firm *exclude)
 {
+    // ***
     // Any firm apart from the government firm. This is a bit of a trick. We
     // make sure that the main (and currently, only) government-supported firm
     // is created first so it will always be firms[0]. This enables us to
     // select a random firm but excluding the government firm from the
-    // selection.
+    // selection. Special acion is required if there are fewer than 2 firms.
+    // ***
+
     Firm *res;
-    while ((res = firms[(qrand() % (firms.size() - 1)) + 1]) == exclude);
+
+    int n = firms.size();
+    if (n < 3) {
+        res = nullptr;
+    } else if (n == 3) {
+        return (exclude == firms[1] ? firms[2] : firms[1]);
+    } else {
+        while ((res = firms[(qrand() % (firms.size() - 1)) + 1]) == exclude);
+    }
     return res;
 }
 
@@ -1051,7 +1061,8 @@ double Model::getPropertyVal(Property p)
         return _investment;
 
     case Property::gdp:
-        _gdp = _consumption + _investment + _exp + _bens;
+        //_gdp = _consumption + _investment + _exp + _bens;
+        _gdp = _consumption - _investment;  // https://en.wikipedia.org/wiki/Gross_domestic_product
         return _gdp;
 
     case Property::profit:

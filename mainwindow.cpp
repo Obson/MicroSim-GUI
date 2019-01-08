@@ -256,7 +256,7 @@ void MainWindow::createActions()
 
 void MainWindow::createMenus()
 {
-    myMenuBar = new QMenuBar(0);
+    myMenuBar = new QMenuBar(nullptr);
 
     applicationMenu = myMenuBar->addMenu(tr("&Obson"));
 
@@ -858,11 +858,14 @@ void MainWindow::drawChartNormal()
 
 void MainWindow::drawChart(bool rerun, bool randomised)    // uses _current_model
 {
+    // ***
     // We are going to remove the chart altogether and replace it with a new
     // one to make sure we get a clean slate. However if we don't remove the
     // objects owned by the old chart the program eventually crashes. So far,
     // the following lines seem to fix that problem. This may all be overkill,
     // but I haven't found an alternative way of keeping the axes up to data.
+    // ***
+
     QList<QAbstractSeries*> current_series = chart->series();
     for (int i = 0; i < current_series.count(); i++) {
         chart->removeSeries(current_series[i]);
@@ -1046,7 +1049,7 @@ void MainWindow::changeModel(QListWidgetItem *item)
     infoLabel->setText(  tr("  Total population: ") + QString::number(nominal_population)
                              + tr("  Government employees: ") + settings.value("government-employees", 200).toString()
                              + tr("  Standard wage: ") + settings.value("unit-wage", 500).toString()
-                             + tr("  Number of private businesses at start: ") + QString::number(startups)
+                             + tr("  Private businesses at start: ") + QString::number(startups)
                             );
 
     settings.setValue("current_model", model_name);

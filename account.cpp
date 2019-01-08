@@ -42,13 +42,14 @@ bool Account::isGovernment()
 }
 
 // Use transferSafely() in preference to credit() as credit() doesn't upate our
-// balance
+// balance. recipient will be nullptr if trying to transger to a non-existent
+// startup.
 bool Account::transferSafely(Account *recipient, double amount, Account *creditor)
 {
-    if (amount > balance)
+    if (amount > balance || recipient == nullptr)
     {
         // TODO: This needs to go into a log somewhere
-        qDebug() << "Account::transferTo(): done (insufficient funds)";
+        qDebug() << "Account::transferSafely(): done (insufficient funds or no recipient)";
         return false;
     }
     else
