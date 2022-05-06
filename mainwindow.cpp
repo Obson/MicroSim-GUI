@@ -317,6 +317,12 @@ Behaviour *MainWindow::currentBehaviour()
     return _currentBehaviour;
 }
 
+// NEXT: COMPLETE THIS FUNCTION -- IMPORTANT!
+Domain *MainWindow::getDomain(QString)
+{
+
+}
+
 void MainWindow::reassignColours()
 {
     propertyColours.clear();
@@ -469,7 +475,7 @@ void MainWindow::restoreState()
         QList<QListWidgetItem*> items = behaviourList->findItems(s, Qt::MatchExactly);
         if (items.count() == 1) {
             items[0]->setSelected(true);
-            changeModel(items[0]);
+            changeBehaviour(items[0]);
         }
     }
 }
@@ -633,6 +639,8 @@ void MainWindow::createDomain()
                     dlg.getCurrency(),
                     dlg.getCurrencyAbbrev()
                     );
+
+        domains.append(newDomain);
     }
 }
 
@@ -750,32 +758,28 @@ void MainWindow::createDockWindows()
         propertyList->addItem(item);
     }
     connect(propertyList, &QListWidget::itemChanged, this, &MainWindow::propertyChanged);
-    connect(propertyList, &QListWidget::itemClicked/*currentItemChanged*/, this, &MainWindow::updateStatsDialog);
+    connect(propertyList, &QListWidget::itemClicked, this, &MainWindow::updateStatsDialog);
 
     // Add to dock
     dock->setWidget(propertyList);
-    //dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
     addDockWidget(Qt::LeftDockWidgetArea, dock);
 
-    // Create the model list
+    // Create the behaviour list
     dock = new QDockWidget(tr("Behaviours"), this);
     dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     behaviourList = new QListWidget(dock);
-    //modelList->setFixedWidth(220);
 
-    // Populate the model list
+    // Populate the behaviour list
     loadBehaviourList();
 
     // Add to dock
     dock->setWidget(behaviourList);
-    //dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
     addDockWidget(Qt::LeftDockWidgetArea, dock);
 
     // Create the profile list
     dock = new QDockWidget(tr("Chart Profiles"), this);
     dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     profileList = new QListWidget(dock);
-    //profileList->setFixedWidth(220);
 
     // Populate the profile list
     QSettings settings;
@@ -793,16 +797,31 @@ void MainWindow::createDockWindows()
     //dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
     addDockWidget(Qt::LeftDockWidgetArea, dock);
 
+    // Create domain list
+    dock = new QDockWidget(tr("Domain"), this);
+    dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    domainList = new QListWidget(dock);
+
+    // Populate the domain list
+    settings.beginGroup("Domains");
+    domainList->addItems(settings.childGroups());
+    settings.endGroup();
+    dock->setWidget(domainList);
+    addDockWidget(Qt::LeftDockWidgetArea, dock);
+
     // Create the parameter wizard
     wiz = new ParameterWizard(this);
     wiz->setProperties(propertyMap);
     wiz->setModal(true);
 
     // Connect signals for changing selection and double-click
-    connect(behaviourList, &QListWidget::currentItemChanged, this, &MainWindow::changeModel);
+    connect(behaviourList, &QListWidget::currentItemChanged, this, &MainWindow::changeBehaviour);
     connect(behaviourList, &QListWidget::itemDoubleClicked, this, &MainWindow::editParameters);
     connect(profileList, &QListWidget::currentItemChanged, this, &MainWindow::changeProfile);
+    connect(domainList, &QListWidget::currentItemChanged, this, &MainWindow::changeDomain);
 }
+
+
 
 void MainWindow::showStatistics()
 {
@@ -1115,7 +1134,67 @@ void MainWindow::changeProfile(QListWidgetItem *item)
     drawChart(true, false);
 }
 
-void MainWindow::changeModel(QListWidgetItem *item)
+// NEXT: COMPLETE THIS FUNCTION (changeDomain())
+void MainWindow::changeDomain(QListWidgetItem *item)
+{
+    qDebug() << "MainWindow::changeDomain(): changing to"
+             << item->text();
+
+    /*
+     * We need to use most of the functionality of the changeBehaviour function
+     * but without reference to the QListWidgetItem corresponding to the list
+     * of behaviours. since the latter will eventually be removed we may as
+     * well just copy the relevant code into changeDomain.
+     */
+
+    // Get the behaviour associated with the required domain and set it as current.
+    _currentBehaviour = getDomain(item->text())->getBehaviour();
+
+    qDebug() << "MainWindow::changeDomain(): _currentBehaviour set";
+
+    // Check that it worked -- this can be removed after testing
+    if (_currentBehaviour == nullptr) {
+        errorMessage("Cannot find the requested behaviour (" + item->text() + ")");    // exits
+    }
+
+    // Not sure why we need to do this -- investigate...
+    changeAction->setDisabled(false);
+    saveCSVAction->setDisabled(false);
+
+    qDebug() << "MainWindow::changeDomain(): opening Settings";
+
+    QSettings settings;
+
+    // Get settings to display the status bar. This should really be done globally, not here...
+    double nominal_population = settings.value("nominal-population", 1000).toDouble();
+    double scale = nominal_population / 1000;
+    int startups = scale * settings.value("startups", 0).toInt();
+
+    qDebug() << "MainWindow::changeDomain(): setting status bar";
+
+    infoLabel->setText(  tr("  Total population: ") + QString::number(nominal_population)
+                             + tr("  Government employees: ") + settings.value("government-employees", 200).toString()
+                             + tr("  Standard wage: ") + settings.value("unit-wage", 500).toString()
+                             + tr("  Private businesses at start: ") + QString::number(startups)
+                            );
+
+    qDebug() << "MainWindow::changeDomain(): status bar set";
+
+    QString behaviourName = _currentBehaviour->name();
+
+    qDebug() << "MainWindow::changeDomain(): behaviourName =" << behaviourName;
+
+
+    settings.setValue("current_model", behaviourName);
+    settings.beginGroup(behaviourName);
+    settings.endGroup();
+
+    qDebug() << "MainWindow::changeDomain(): redrawing chart";
+
+    drawChart(true, false);
+}
+
+void MainWindow::changeBehaviour(QListWidgetItem *item)
 {
     if (reloading) {
         return;
@@ -1127,7 +1206,7 @@ void MainWindow::changeModel(QListWidgetItem *item)
     _currentBehaviour = Behaviour::getBehaviour(item->text());
 
     if (_currentBehaviour == nullptr) {
-        errorMessage("Cannot find the requested model");    // exits
+        errorMessage("Cannot find the requested behaviour (" + item->text() + ")");    // exits
     }
 
     QSettings settings;
@@ -1136,15 +1215,15 @@ void MainWindow::changeModel(QListWidgetItem *item)
     double scale = nominal_population / 1000;
     int startups = scale * settings.value("startups", 0).toInt();
 
-    QString model_name = item->text();
+    QString behaviourName = item->text();
     infoLabel->setText(  tr("  Total population: ") + QString::number(nominal_population)
                              + tr("  Government employees: ") + settings.value("government-employees", 200).toString()
                              + tr("  Standard wage: ") + settings.value("unit-wage", 500).toString()
                              + tr("  Private businesses at start: ") + QString::number(startups)
                             );
 
-    settings.setValue("current_model", model_name);
-    settings.beginGroup(model_name);
+    settings.setValue("current_model", behaviourName);
+    settings.beginGroup(behaviourName);
     settings.endGroup();
 
     drawChart(true, false);

@@ -75,8 +75,6 @@ public:
     // case it will need to include a mechanism for converting currencies.
     // This may complicate things a lot and can be deferred for now.
 
-    // QList<Domain*> domains; This should be maintained by MainWindow
-    // QList<Government*> domains;
 
     Government *gov();  // the Government created and owned by the domain
     Bank *bank();       // the central bank (generally owned by the Government)

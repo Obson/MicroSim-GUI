@@ -47,6 +47,7 @@ signals:
 protected:
 
     Behaviour *currentBehaviour();
+    Domain *getDomain(QString);
 
     int loadBehaviourList();
     int loadProfileList();
@@ -127,6 +128,8 @@ private:
     ParameterWizard *wiz;
     Behaviour *_currentBehaviour;
 
+    QList<Domain*> domains;
+
     QString currentProfile;
 
     StatsDialog *statsDialog;
@@ -153,8 +156,9 @@ private:
     QColor nextColour(int n);
     void selectProfile(QString text);
 
-    void changeModel(QListWidgetItem*);
+    void changeBehaviour(QListWidgetItem*);
     void changeProfile(QListWidgetItem*);
+    void changeDomain(QListWidgetItem*);
 
     QList<QColor> colours;
     QMap<Behaviour::Property,QColor> propertyColours;
@@ -168,6 +172,7 @@ private:
     QListWidget *behaviourList;
     QListWidget *profileList;
     QListWidget *propertyList;
+    QListWidget *domainList;
 
     QtCharts::QLineSeries period;
     QtCharts::QLineSeries gov_exp;
@@ -242,7 +247,6 @@ private:
     };
 
     QList<Params*> paramList;
-    QList<Domain*> domainList;
 };
 
 #endif // MAINWINDOW_H
