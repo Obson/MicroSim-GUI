@@ -1,5 +1,5 @@
-#ifndef MODEL_H
-#define MODEL_H
+#ifndef BEHAVIOUR_H
+#define BEHAVIOUR_H
 
 #include <iostream>
 #include <map>
@@ -10,6 +10,7 @@
 #include <QMap>
 
 class Account;
+class Domain;
 class Government;
 class Worker;
 class Firm;
@@ -37,26 +38,26 @@ enum class ParamType {
     loan_prob,
 };
 
-class Model : public QObject
+class Behaviour : public QObject
 {
     Q_OBJECT
 
 public:
 
-    static Model *createModel(QString name);
+    static Behaviour *createBehaviour(QString name);
 
-    static int loadAllModels();
+    static int loadAllBehaviours();
 
-    // The list of all models. When a new model is created it is automatically
+    // List of all Behaviours. When a new Behaviour is created it is automatically
     // added to this list.
-    static QList<Model*> models;
+    static QList<Behaviour*> behaviours;
 
-    // Get the model having the given name, returning a pointer to it, and set
-    // it as current. Requires loadAllModels() to have been called (which loads
-    // all the models into QList<Model*> models).
-    static Model *model(QString name);
+    // Get the Behaviour having the given name, returning a pointer to it, and
+    // set it as current. Requires loadAllBehaviours() to have been called
+    // (which loads all the Behaviours into QList<Behaviour*> behaviours).
+    static Behaviour *getBehaviour(QString name);
 
-    static Model *current;
+    static Behaviour *currentBehaviour;
 
     QString name();
 
@@ -66,8 +67,19 @@ public:
     int getIters();         // number of iterations (periods)
     int getStartPeriod();
 
-    Government *gov();
-    Bank *bank();
+    // NEXT: Allow multi-domain behaviours
+    // We need to allow any number of Government instances (each owned by a
+    // different Domain), with each account directly or indirectly registered
+    // with the domain in which it pays its taxes. Later, we may allow an
+    // individual account to be associated with more than one domain, in which
+    // case it will need to include a mechanism for converting currencies.
+    // This may complicate things a lot and can be deferred for now.
+
+    // QList<Domain*> domains; This should be maintained by MainWindow
+    // QList<Government*> domains;
+
+    Government *gov();  // the Government created and owned by the domain
+    Bank *bank();       // the central bank (generally owned by the Government)
 
     int period();
 
@@ -155,7 +167,7 @@ public:
     QList<Property> prop_list;          // to simplify iterations
 
     // This gives us a set of pointers to line series, ordered by the Properties
-    // they are associated with. E.g., when iterating the series for bens_paid
+    // they are associated with. E.g., when iterating, the series for bens_paid
     // will be encountered before the series for gov_recpts. Order is
     // significant as it allows us to store values and use them in later
     // composite properties (e,g, deficit).
@@ -172,7 +184,7 @@ public:
     double getPropertyVal(Property p);
 
     // These are the functions that actually interrogate the components of the
-    // model to evaluate its propertis
+    // model to evaluate its properties
     int getNumEmployedBy(Firm *firm);
     int getNumEmployed();
     int getNumUnemployed();                 // were employed but now unemployed
@@ -189,7 +201,7 @@ public:
     double getDednsPaid();
     double getIncTaxPaid();
     double getSalesTaxPaid();
-    double getWorkersBal(Model::Status status);
+    double getWorkersBal(Behaviour::Status status);
     double getAmountOwed();
     double getProcurementExpenditure();
 
@@ -268,7 +280,7 @@ private:
 
 protected:
 
-    Model(QString model_name);
+    Behaviour(QString behaviourName);
     double scale(Property p);
 
     double gini();
@@ -343,4 +355,4 @@ protected:
 
 };
 
-#endif // MODEL_H
+#endif // BEHAVIOUR_H

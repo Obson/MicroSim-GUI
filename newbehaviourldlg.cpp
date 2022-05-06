@@ -1,4 +1,4 @@
-#include "newmodeldlg.h"
+#include "newbehaviourldlg.h"
 #include "ui_newmodeldlg.h"
 #include <QIntValidator>
 #include <QDialogButtonBox>
@@ -7,7 +7,7 @@
 #include <QSettings>
 #include <QDebug>
 
-NewModelDlg::NewModelDlg(QWidget *parent) :
+NewBehaviourlDlg::NewBehaviourlDlg(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::NewModelDlg)
 {
@@ -28,22 +28,22 @@ NewModelDlg::NewModelDlg(QWidget *parent) :
     ui->comboBox->setCurrentIndex(0);
 }
 
-NewModelDlg::~NewModelDlg()
+NewBehaviourlDlg::~NewBehaviourlDlg()
 {
     delete ui;
 }
 
-QString NewModelDlg::getName()
+QString NewBehaviourlDlg::getName()
 {
-    return model_name;
+    return behaviourName;
 }
 
-QString NewModelDlg::getNotes()
+QString NewBehaviourlDlg::getNotes()
 {
     return notes;
 }
 
-QString NewModelDlg::importFrom()
+QString NewBehaviourlDlg::importFrom()
 {
     if (ui->comboBox->currentIndex() == 0)
     {
@@ -55,7 +55,7 @@ QString NewModelDlg::importFrom()
     }
 }
 
-void NewModelDlg::setPreexisting()
+void NewBehaviourlDlg::setPreexisting()
 {
     preexisting = true;
     ui->leName->setReadOnly(true);
@@ -69,10 +69,10 @@ void NewModelDlg::setPreexisting()
     setWindowTitle("Edit Model Description");
 }
 
-void NewModelDlg::accept()
+void NewBehaviourlDlg::accept()
 {
-    model_name = ui->leName->text().simplified();
-    notes      = ui->teNotes->toPlainText().simplified();
+    behaviourName   = ui->leName->text().simplified();
+    notes           = ui->teNotes->toPlainText().simplified();
 
     QSettings settings;
 
@@ -80,7 +80,7 @@ void NewModelDlg::accept()
     {
         // Can only change notes -- name is fixed
         // Write the notes to settings
-        settings.setValue(model_name + "/notes", notes);
+        settings.setValue(behaviourName + "/notes", notes);
 
         // Close the dialog
         QDialog::accept();
@@ -88,25 +88,27 @@ void NewModelDlg::accept()
     }
     else
     {
-        QString upper = model_name.toUpper();
-        if (model_name.size() > 0 && upper != "GENERAL" && upper != "STATE")
+        // TODO: use a textChanged signal to monitor behaviour name as it is
+        // typed and only enable the OK button when valid...
+        QString upper = behaviourName.toUpper();
+        if (behaviourName.size() > 0 && upper != "GENERAL" && upper != "STATE")
         {
             // Check that the model name isn't a duplicate
             QStringList models;
             int size = settings.beginReadArray("Models");
 
-            qDebug() << "NewModelDlg::accept():" << size << "models found";
+            qDebug() << "NewBehaviourDlg::accept():" << size << "behaviours found";
 
             for (int i = 0; i < size; ++i)
             {
                 settings.setArrayIndex(i);
                 QString used_name = settings.value("name").toString();
 
-                if (used_name == model_name)
+                if (used_name == behaviourName)
                 {
                     // duplicate name entered
                     QMessageBox msgBox;
-                    msgBox.setText(tr("Please enter a valid model name"));
+                    msgBox.setText(tr("Please enter a valid behaviour name"));
                     msgBox.setInformativeText(tr("This name has already been used!"));
                     msgBox.setIcon(QMessageBox::Warning);
                     msgBox.setWindowTitle(tr("Error"));
@@ -118,7 +120,7 @@ void NewModelDlg::accept()
             settings.endArray();
 
             // Append the new name to the list of models
-            models.append(model_name);
+            models.append(behaviourName);
 
             // Rewrite the settings array with the new name, if any, appended. If
             // we have changed the name the old name will be omitted as we have
@@ -132,7 +134,7 @@ void NewModelDlg::accept()
             settings.endArray();
 
             // Write the notes to settings
-            settings.setValue(model_name + "/notes", notes);
+            settings.setValue(behaviourName + "/notes", notes);
 
             // Close the dialog
             QDialog::accept();
@@ -144,9 +146,12 @@ void NewModelDlg::accept()
             msgBox.setWindowModality(Qt::WindowModal);
             msgBox.setIcon(QMessageBox::Warning);
             msgBox.setWindowTitle(tr("Error"));
-            msgBox.setText(tr("You have not entered a valid model name!"));
-            // TODO: remove the reserved words (general and state) from model names by prefixing them with 'u-' or something
-            msgBox.setDetailedText(tr("Model names must be unique and must contain "
+            msgBox.setText(tr("You have not entered a valid behaviour name!"));
+
+            // TODO: remove the reserved words (general and state) from model
+            // names by prefixing them with 'u-' or something
+
+            msgBox.setDetailedText(tr("Behaviour names must be unique and must contain "
                                       "at least one non-space character. 'General' "
                                       "and 'state' are not allowed as model names."));
             msgBox.exec();

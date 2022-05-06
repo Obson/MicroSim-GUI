@@ -15,7 +15,7 @@
 #include <QAction>
 #include <QLabel>
 
-#include "model.h"
+#include "behaviour.h"
 //#include "controlwidget.h"
 #include "statsdialog.h"
 
@@ -32,9 +32,11 @@ class MainWindow : public QMainWindow
 
 public:
     MainWindow();
-    ~MainWindow();
+    ~MainWindow() override;
 
     void show();
+
+    static int magnitude(double);
 
 signals:
     void modelChanged(QString);
@@ -44,9 +46,9 @@ signals:
 
 protected:
 
-    Model *current_model();
+    Behaviour *currentBehaviour();
 
-    int loadModelList();
+    int loadBehaviourList();
     int loadProfileList();
 
     int getIters();         // number of iterations (periods)
@@ -65,8 +67,9 @@ protected:
     void saveCSV();
     void editParameters();
     void editModelDescription();
-    void createFirstModel();
-    void createNewModel();
+    void createDefaultBehaviour();
+    void createNewBehaviour();
+    void createDomain();
     void createProfile();
     void removeProfile();
     void saveSettingsAsProfile(QString name);
@@ -75,14 +78,17 @@ protected:
     void about();
     void aboutQt();
     void nyi();
-    void errorMessage(QString);
+
+    // errorMessage terminates the program
+    void errorMessage [[noreturn]] (QString);
+
     void setOptions();
     void showWiki();
     void showStatistics();  // will replace showStats()
     //void showStats(QListWidgetItem *current, QListWidgetItem *prev);
     void updateStatsDialog(QListWidgetItem *current/*, QListWidgetItem *previous*/);
 
-    void closeEvent(QCloseEvent *event);
+    void closeEvent(QCloseEvent *event) override;
     void restoreState();
 
     void propertyChanged();
@@ -101,6 +107,7 @@ protected:
     QAction *changeAction;
     QAction *coloursAction;
     QAction *newAction;
+    QAction *domainAction;
     QAction *removeAction;
     QAction *notesAction;
     QAction *aboutAction;
@@ -112,15 +119,15 @@ protected:
     QAction *randomAction;
     QAction *closeAction;
 
-    bool isModelSelected();
+    bool isBehaviourSelected();
 
 private:
 
     Ui::MainWindow *ui;
     ParameterWizard *wiz;
-    Model *_current_model;
+    Behaviour *_currentBehaviour;
 
-    QString current_profile;
+    QString currentProfile;
 
     StatsDialog *statsDialog;
 
@@ -132,7 +139,7 @@ private:
     bool updatingProfileList = false;
     bool property_selected = false;
 
-    QMap<QString,Model::Property> property_map;
+    QMap<QString,Behaviour::Property> propertyMap;
 
     void createChart();
     void createActions();
@@ -150,15 +157,15 @@ private:
     void changeProfile(QListWidgetItem*);
 
     QList<QColor> colours;
-    QMap<Model::Property,QColor> propertyColours;
+    QMap<Behaviour::Property,QColor> propertyColours;
 
-    QListWidgetItem *selectedModelItem;
+    QListWidgetItem *selectedBehaviourItem;
 
     QMenu *mainMenu;
 
     QChartView *chartView;
     QChart *chart;
-    QListWidget *modelList;
+    QListWidget *behaviourList;
     QListWidget *profileList;
     QListWidget *propertyList;
 
@@ -203,7 +210,7 @@ private:
 
     struct Condition
     {
-        Model::Property property = Model::Property::zero;
+        Behaviour::Property property = Behaviour::Property::zero;
         Opr opr;
         int val;            // possibly extend to allow expressions later
     };
@@ -235,6 +242,7 @@ private:
     };
 
     QList<Params*> paramList;
+    QList<Domain*> domainList;
 };
 
 #endif // MAINWINDOW_H

@@ -30,7 +30,7 @@
 #include <cassert>
 #include <QDebug>
 
-Firm::Firm(Model *model, bool state_supported) : Account(model)
+Firm::Firm(Behaviour *model, bool state_supported) : Account(model)
 {
     _state_supported = state_supported;
 }
@@ -73,7 +73,7 @@ void Firm::trigger(int period)
             if (interest > 0 && interest <= balance)
             {
                 //qDebug() << "Firm::trigger(): paying loan interest of" << interest;
-                if (!transferSafely(model()->bank(), interest, this))
+                if (!transferSafely(behaviour()->bank(), interest, this))
                 {
                         qDebug() << "Firm::trigger(): failed to transfer interest to bank";
                 }
@@ -86,7 +86,7 @@ void Firm::trigger(int period)
         }
 
         // Important: wages_paid is not cumulative!
-        wages_paid = model()->payWages(this, period);
+        wages_paid = behaviour()->payWages(this, period);
         balance -= wages_paid;
     }
 }
@@ -119,16 +119,16 @@ void Firm::epilogue(int period)
         // We must keep in hand at least the amount needed to pay future wages
         double available = balance - wages_paid;   // now includes deductions
 
-        double investible = available * model()->getPropInv();
-        double bonuses = (available - investible) * model()->getDistributionRate();
+        double investible = available * behaviour()->getPropInv();
+        double bonuses = (available - investible) * behaviour()->getDistributionRate();
 
         // We distribute the funds as bonuses before hiring new workers to
         // ensure they only get distributed to existing workers.
-        int emps = model()->getNumEmployedBy(this);
+        int emps = behaviour()->getNumEmployedBy(this);
         double amt_paid = 0;
         if (emps > 0)
         {
-            amt_paid = model()->payWorkers(bonuses/emps, this, Model::for_bonus);
+            amt_paid = behaviour()->payWorkers(bonuses/emps, this, Behaviour::for_bonus);
         }
 
         // Adjust calculation if not all the bonus funds were used
@@ -144,15 +144,15 @@ void Firm::epilogue(int period)
 
         // How many more employees can we afford?
 
-        double std_wage = model()->getStdWage();
+        double std_wage = behaviour()->getStdWage();
         double current_wage_rate = productivity * std_wage; // Note that productivity is initialised to 1.0 in Account
-        int num_to_hire = investible / (current_wage_rate * (1 + model()->getPreTaxDedns()));
+        int num_to_hire = investible / (current_wage_rate * (1 + behaviour()->getPreTaxDedns()));
 
         // Hire new workers
 
         if (num_to_hire > 0)
         {
-            double invested = model()->hireSome(this, current_wage_rate, period, num_to_hire);
+            double invested = behaviour()->hireSome(this, current_wage_rate, period, num_to_hire);
 
             // ***
             // If we are unable to hire all the workers we want we will
@@ -176,7 +176,7 @@ void Firm::epilogue(int period)
             if (excess > 0)
             {
                 // How many did we just hire?
-                int new_emps = model()->getNumEmployedBy(this);
+                int new_emps = behaviour()->getNumEmployedBy(this);
 
                 if (emps > 0 || new_emps > 0)
                 {
@@ -192,7 +192,7 @@ void Firm::epilogue(int period)
                     // inflation.
                     // ***
 
-                    Firm *supplier = model()->selectRandomFirm(this);
+                    Firm *supplier = behaviour()->selectRandomFirm(this);
 
                     // ***
                     // We must allow for the possibility that there are no firms
@@ -222,7 +222,7 @@ void Firm::epilogue(int period)
                         // I think!
                         // ***
 
-                        productivity = (current_wage_rate + (double(excess) / (model()->getCapexRecoupTime() * (emps + new_emps)))) / std_wage;
+                        productivity = (current_wage_rate + (double(excess) / (behaviour()->getCapexRecoupTime() * (emps + new_emps)))) / std_wage;
                     }
                 }
             }
@@ -248,11 +248,11 @@ void Firm::credit(double amount, Account *creditor, bool force)
         // not buyer, is responsible for paying sales tax and that payments
         // to a Firm are always for purchases and therefore subject to
         // sales tax.
-        double r = model()->getSalesTaxRate();
+        double r = behaviour()->getSalesTaxRate();
         if (r > 0)
         {
             double t = (amount * r) / (r + 1.0);
-            if (transferSafely(model()->gov(), t, this)) {
+            if (transferSafely(behaviour()->gov(), t, this)) {
                 sales_tax_paid += t;
             }
         }
@@ -291,7 +291,7 @@ double Firm::getSalesReceipts()
 
 size_t Firm::getNumEmployees()
 {
-    return model()->getNumEmployedBy(this);
+    return behaviour()->getNumEmployedBy(this);
 }
 
 int Firm::getNumHired()

@@ -1,7 +1,7 @@
 #include "account.h"
 #include <QDebug>
 
-Worker::Worker(Model *model) : Account(model)
+Worker::Worker(Behaviour *model) : Account(model)
 {
     employer = nullptr;
     period_hired = -1;
@@ -50,8 +50,8 @@ void Worker::trigger(int period)
         last_triggered = period;
 
         double purch;
-        double thresh = model()->getIncomeThreshold();
-        double prop_con = model()->getPropCon();
+        double thresh = behaviour()->getIncomeThreshold();
+        double prop_con = behaviour()->getPropCon();
 
         if (balance <= thresh) {
             purch = balance;
@@ -60,7 +60,7 @@ void Worker::trigger(int period)
         }
 
         if (purch > 0) {
-            if (transferSafely(model()->selectRandomFirm(), purch, this)) {
+            if (transferSafely(behaviour()->selectRandomFirm(), purch, this)) {
                 purchases += purch;
             }
         }
@@ -77,8 +77,6 @@ double Worker::agreedWage()
     return agreed_wage;
 }
 
-// TODO: This doesn't appear to be called anywhere! However agreed_wage is
-// accessible to Model, which sets it directly. Consider restructuring.
 void Worker::setAgreedWage(double wage)
 {
     qDebug() << "Worker::setAgreedWage() called";
@@ -105,11 +103,11 @@ void Worker::credit(double amount, Account *creditor, bool)
         // receiving the payment in our capacity as Worker then it's probably
         // benefits or bonus. If not employed at all it must be bonus and we are
         // flagged for deletion. Surprising but perfectly possible.
-        double tax = amount * model()->getIncTaxRate();
+        double tax = amount * behaviour()->getIncTaxRate();
 
         //qDebug() << "Worker::credit(): transferring tax" << tax << "to gov";
 
-        if (transferSafely(model()->gov(), tax, this))
+        if (transferSafely(behaviour()->gov(), tax, this))
         {
             wages += amount;
             inc_tax += tax;
@@ -122,7 +120,7 @@ void Worker::credit(double amount, Account *creditor, bool)
             Q_ASSERT(false);
         }
     }
-    else if (creditor == model()->gov())
+    else if (creditor == behaviour()->gov())
     {
         // qDebug() << "Worker::credit(): benefits assumed";
         benefits += amount;

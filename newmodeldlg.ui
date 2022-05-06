@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>New Model</string>
+   <string>New Behaviour Definition</string>
   </property>
   <widget class="QDialogButtonBox" name="buttonBox">
    <property name="enabled">
@@ -63,7 +63,7 @@
        <number>50</number>
       </property>
       <property name="placeholderText">
-       <string> Name of the model</string>
+       <string> Name of the behaviour profile</string>
       </property>
      </widget>
     </item>
@@ -80,7 +80,7 @@
     <item>
      <widget class="QLabel" name="label">
       <property name="text">
-       <string>Import parameters from:</string>
+       <string>Import profile from:</string>
       </property>
      </widget>
     </item>

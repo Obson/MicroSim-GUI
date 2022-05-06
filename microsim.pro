@@ -13,6 +13,7 @@ TARGET = Obson
 TEMPLATE = app
 
 CONFIG += c++11
+# CONFIG -= app_bundle
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked as deprecated (the exact warnings
@@ -26,18 +27,24 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
+# This next line may not be necessary (see comment under 1st answer in
+# https://stackoverflow.com/questions/52385658/no-such-sysroot-directory-while-building-qt-project)
+QMAKE_MAC_SDK = macosx10.14
+
 
 SOURCES += \
+    behaviour.cpp \
+    domain.cpp \
+    createdomaindlg.cpp \
         main.cpp \
     mainwindow.cpp \
+    newbehaviourldlg.cpp \
     parameterwizard.cpp \
-    newmodeldlg.cpp \
     account.cpp \
     worker.cpp \
     firm.cpp \
     government.cpp \
     bank.cpp \
-    model.cpp \
     optionsdialog.cpp \
     removemodeldlg.cpp \
     saveprofiledialog.cpp \
@@ -45,11 +52,13 @@ SOURCES += \
     removeprofiledialog.cpp
 
 HEADERS += \
+    behaviour.h \
+    domain.h \
+    createdomaindlg.h \
     mainwindow.h \
+    newbehaviourldlg.h \
     parameterwizard.h \
-    newmodeldlg.h \
     account.h \
-    model.h \
     optionsdialog.h \
     removemodeldlg.h \
     version.h \
@@ -58,6 +67,7 @@ HEADERS += \
     removeprofiledialog.h
 
 FORMS += \
+    createdomaindlg.ui \
     newmodeldlg.ui \
     optionsdialog.ui \
     removemodeldlg.ui \

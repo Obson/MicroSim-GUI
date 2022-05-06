@@ -68,7 +68,8 @@ int main(int argc, char *argv[])
     // that will need to be sorted out.
     //
     // Still later: the key is to manually delete the generated app bundle,
-    // rerun qmake, and rebuild (see https://stackoverflow.com/questions/4739175/qt-c-on-mac-application-icon-doesnt-set).
+    // rerun qmake, and rebuild (see
+    // https://stackoverflow.com/questions/4739175/qt-c-on-mac-application-icon-doesnt-set).
     // Even this isn't quite enough, actually -- the old icon needs to be
     // removed from the dock (trashing it seems safest) so the new one can be
     // added.

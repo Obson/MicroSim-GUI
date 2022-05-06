@@ -12,7 +12,7 @@
 #include <QComboBox>
 #include <QCheckBox>
 
-#include "model.h"
+#include "behaviour.h"
 
 class ExtraPage;
 
@@ -28,7 +28,7 @@ public:
 
     void setCurrentModel(QString model_name);
     void importFrom(QString model_name);
-    void setProperties(QMap<QString,Model::Property> map);
+    void setProperties(QMap<QString,Behaviour::Property> map);
 
     void done(int result);
     int nextId() const;
@@ -41,15 +41,13 @@ private:
 
 protected:
     QSettings settings;
-    QStringList prop_names;
+    QStringList propertyNames;
     QStringList rels;
-    //QList<Model::Property> properties;
 
-    QMap<QString,Model::Property> property_map;
+    QMap<QString,Behaviour::Property> propertyMap;
 
-    QStringList models;         // list of defined model names
-    QString current_model;
-    QString import_model;       // model to import settings from or empty
+    QString currentBehaviour;
+    QString importBehaviour;    // Behaviour to import settings from or empty
 
     int pid;                    // This is the CURRENT page id -- i.e. the id of
                                 // the page currently being processed. Qt's
@@ -57,7 +55,7 @@ protected:
                                 // pages, which isn't much help if we want to
                                 // validate the page we are just leaving!
 
-    int next_id = -1;           // We set this to the id of a new page just before
+    int nextPageNumber = -1;        // We set this to the id of a new page just before
                                 // calling next. It's then picked up by our
                                 // reimplemented nextid() to ensure that that's
                                 // the page we go to. Iy must then be immediately
@@ -108,16 +106,16 @@ class ExtraPage : public QWizardPage
 public:
     ExtraPage(ParameterWizard *w);
     void setPageNumber(int page_num);
-    bool validatePage();
-    bool isChecked(QString model, QString attrib);
-    void readSettings(QString model);
+    bool validatePage() override;
+    bool isChecked(QString behaviourName, QString attrib);
+    void readSettings(QString behaviourName);
     QString getPropertyName(int prop);
 
     void showAssocCtrl(int);
     QCheckBox *createCheckBox();
 
 private:
-    QString readCondSetting(QString model, QString key);
+    QString readCondSetting(QString behaviourName, QString key);
 
     ParameterWizard *wiz;
 

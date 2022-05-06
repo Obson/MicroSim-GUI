@@ -1,4 +1,5 @@
 #include "account.h"
+#include "behaviour.h"
 #include <QDebug>
 
 int Account::_id = 0;
@@ -7,17 +8,17 @@ int Account::nextId() {
     return _id++;
 }
 
-Account::Account(Model *model)
+Account::Account(Behaviour *behaviour)
 {
-    _model = model;
+    _behaviour = behaviour;
     id = nextId();
     //balance = 0;
     //owed_to_bank = 0;
 }
 
-Model *Account::model()
+Behaviour *Account::behaviour()
 {
-    return _model;
+    return _behaviour;
 }
 
 double Account::getBalance()
@@ -42,7 +43,7 @@ bool Account::isGovernment()
 }
 
 // Use transferSafely() in preference to credit() as credit() doesn't upate our
-// balance. recipient will be nullptr if trying to transger to a non-existent
+// balance. recipient will be nullptr if trying to transfer to a non-existent
 // startup.
 bool Account::transferSafely(Account *recipient, double amount, Account *creditor)
 {
@@ -68,7 +69,7 @@ void Account::credit(double amount, Account*, bool)
 void Account::loan(double amount, double rate, Account *creditor)
 {
     balance += amount;
-    if (creditor == model()->bank())
+    if (creditor == behaviour()->bank())
     {
         // TODO: Note that if interest rate changes on subsequent loans, the
         // new rate will replace the old rate for the whole amount. This is not

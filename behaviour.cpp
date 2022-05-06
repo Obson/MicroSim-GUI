@@ -1,4 +1,4 @@
-#include "model.h"
+#include "behaviour.h"
 #include <QtGlobal>
 #include "account.h"
 #include <QDebug>
@@ -7,10 +7,10 @@
 
 #include <math.h>
 
-QList<Model*> Model::models;
-Model *Model::current = nullptr;
+QList<Behaviour*> Behaviour::behaviours;
+Behaviour *Behaviour::currentBehaviour = nullptr;
 
-QMap<ParamType,QString> Model::parameter_keys
+QMap<ParamType,QString> Behaviour::parameter_keys
 {
     {ParamType::procurement, "govt-procurement"},
     {ParamType::emp_rate, "employment-rate"},
@@ -30,36 +30,35 @@ QMap<ParamType,QString> Model::parameter_keys
     {ParamType::recoup, "capex-recoup-periods"},
 };
 
-int Model::loadAllModels()
+int Behaviour::loadAllBehaviours()
 {
-    qDebug() << "Model::loadAllModels()";
+    qDebug() << "Behaviour::loadAllBehaviours()";
 
-    // Read the model names from settings and create a new model for each one,
-    // returning the number of models loaded.
+    // Read the behaviour (model) names from settings and create a new
+    // behaviour for each one, returning the number of behaviours loaded.
     QSettings settings;
     int count = settings.beginReadArray("Models");
     for (int i = 0; i < count; ++i)
     {
         settings.setArrayIndex(i);
-        Model *m = new Model(settings.value("name").toString());
-        models.append(m);       // should this be a QMap so we can quickly find
-                                // a model by name?
+        // TODO: Change this to a QMap so we can quickly find a behaviour by name?
+        behaviours.append(new Behaviour(settings.value("name").toString()));
     }
     settings.endArray();
 
-    qDebug() << "Model::loadAllModels():" << count << "models loaded";
+    qDebug() << "Behaviour::loadAllModels():" << count << "models loaded";
     return count;
 }
 
-// This function creates a model with the given arguments but doesn't set it
-// as current. (Perhaps it should?)
-Model *Model::createModel(QString name)
+// This function creates a Behaviour with the given name and default
+// parameters (but doesn't set it as current -- perhaps it should).
+Behaviour *Behaviour::createBehaviour(QString name)
 {
-    qDebug() << "Model::createModel(): name =" << name;
-    qDebug() << "Model::createModel(): setting default parameters for model" << name;
+    qDebug() << "Behaviour::createBehaviour(): name =" << name;
+    qDebug() << "Behaviour::createBehaviour(): setting default parameters for model" << name;
 
     // Store default parameters:
-    // Note that global parameters (model-wide) are not listed in ParamType
+    // Note that global parameters (Behaviour-wide) are not listed in ParamType
     // because they have no conditional values and so cannot be looked up in
     // the general parameter retrieval function getParameterVal(). They are
     // therefore dealt with as special cases without the convenience of being
@@ -67,8 +66,7 @@ Model *Model::createModel(QString name)
     QSettings settings;
     settings.beginGroup(name);
 
-    // Add all model-specific parameters with default values here,,,
-
+    // Add all Behaviour-specific parameters with default values here,,,
     settings.beginGroup("/default");
     settings.setValue(parameter_keys[ParamType::procurement],        0);
     settings.setValue(parameter_keys[ParamType::emp_rate],          95);
@@ -98,39 +96,42 @@ Model *Model::createModel(QString name)
     settings.endGroup();
     settings.endGroup();
 
-    // Create a model using the default parameters
-    qDebug() << "Model::createModel(): creating model" << name;
-    Model *model = new Model(name);
+    // Create a Behaviour using the default parameters
+    qDebug() << "Behaviour::createBehaviour(): creating Behaviour"
+             << name;
+    Behaviour *behaviour = new Behaviour(name);
 
     // Add it to the global (static) list of models
-    qDebug() << "Model::createModel(): adding model" << name << "to list";
-    models.append(model);
+    qDebug() << "Behaviour::createBehaviour(): adding Behaviour"
+             << name
+             << "to list";
+    behaviours.append(behaviour);
 
-    // Return a pointer to the new model
-    return model;
+    // Return a pointer to the new Behaviour
+    return behaviour;
 }
 
-Model *Model::model(QString name)
+Behaviour *Behaviour::getBehaviour(QString name)
 {
-    for (int i = 0; i < models.count(); i++)
+    for (int i = 0; i < behaviours.count(); i++)
     {
-        if (models[i]->name() == name)
+        if (behaviours[i]->name() == name)
         {
-            qDebug() << "Model::model(): found model with name" << name;
-            current = models[i];
-            return current;
+            qDebug() << "Behaviour::model(): found model with name" << name;
+            currentBehaviour = behaviours[i];
+            return currentBehaviour;
         }
     }
 
-    qDebug() << "Model::model(): cannot find model with name" << name;
+    qDebug() << "Behaviour::model(): cannot find model with name" << name;
     return nullptr;         // no model found with that name
 }
 
-Model::Model(QString model_name)
+Behaviour::Behaviour(QString behaviourName)
 {
-    qDebug() << "Model::Model(): name =" << model_name;
+    qDebug() << "Behaviour::Behaviour(" << behaviourName << ")";
 
-    _name = model_name;
+    _name = behaviourName;
 
     // _notes and _iterations must be retrieved from settings. Possibly best not
     // to do this until they are needed as this constructor is called while
@@ -143,13 +144,22 @@ Model::Model(QString model_name)
     // Same applies here...
     // Params *params = new Params();
 
+    // TODO: Disassociate Model (now called 'behaviour' in the GUI) from a
+    // specific Government. Instead, behaviours should defined independently
+    // and associated with Domains as required. Any given behaviour can be
+    // associated with any number of Domains. This will complicate deletions of
+    // behaviours as they cannot be deleted if they are assigned.
+
     // Create the Government. This will automatically set up a single firm
     // representing nationalised industries, civil service, and any other
     // government owned business. Note that the Government itself (created
     // here) is not a business and taxation is not a payment for goods or
     // services. To access the Government-owned firm, use
     // Government::gov_firm().
-    qDebug() << "Model::Model():" << model_name << "creating Government";
+    qDebug() << "Behaviour::Behaviour(" << behaviourName << "): creating Government";
+
+    // TODO: *** Government and central Bank now belong to Domain, but leave
+    // them here as well until new setup is in place. ***
     _gov = new Government(this);
     _bank = new Bank(this);
 
@@ -199,18 +209,18 @@ Model::Model(QString model_name)
               << Property::num_properties;      // dummy (keep at end)
 
     // Set up an empty series for each property
-    qDebug() << "Model::Model():" << model_name << "setting up results series";
+    qDebug() << "Behaviour::Behaviour():" << behaviourName << "setting up results series";
 
     for (int i = 0; i < static_cast<int>(Property::num_properties); i++)
     {
         series[prop_list[i]] = new QLineSeries;
     }
 
-    qDebug() << "Model::Model():" << model_name << "reading default parameters";
+    qDebug() << "Behaviour::Behaviour():" << behaviourName << "reading default parameters";
     readParameters();
 }
 
-double Model::scale(Property p)
+double Behaviour::scale(Property p)
 {
     double val = getPropertyVal(p);
 
@@ -260,7 +270,7 @@ double Model::scale(Property p)
     }
 }
 
-double Model::gini()
+double Behaviour::gini()
 {
     int pop = workers.count();
 
@@ -290,27 +300,27 @@ double Model::gini()
         double diff = ((cum_tot * (i + 1)) / pop) - n[i];
         if (diff < 0) {
             diff = -diff;
-            qDebug() << "Model::gini(): negative diff (" << diff << ") at interval" << i;
+            qDebug() << "Behaviour::gini(): negative diff (" << diff << ") at interval" << i;
         }
         a += diff;                          // area A
     }
 
-    qDebug() << "Model::gini():  cum_tot =" << cum_tot << ",  pop =" << pop << ",  a =" << a << ",  a_tot =" << a_tot;
+    qDebug() << "Behaviour::gini():  cum_tot =" << cum_tot << ",  pop =" << pop << ",  a =" << a << ",  a_tot =" << a_tot;
     _gini = a / a_tot;
     return _gini;
 }
 
-double Model::getGini()
+double Behaviour::getGini()
 {
     return _gini;
 }
 
-double Model::getProductivity()
+double Behaviour::getProductivity()
 {
     return productivity();
 }
 
-double Model::productivity()
+double Behaviour::productivity()
 {
     double tot = 0.0;
     int count = firms.count();
@@ -323,13 +333,13 @@ double Model::productivity()
     return res;
 }
 
-void Model::readParameters()
+void Behaviour::readParameters()
 {
     // Get parameters from settings.
 
     QSettings settings;
 
-    qDebug() << "Model::readParameters(): file is" << settings.fileName();
+    qDebug() << "Behaviour::readParameters(): file is" << settings.fileName();
 
     // Global settings
     _iterations = settings.value("iterations", 100).toInt();
@@ -379,7 +389,7 @@ void Model::readParameters()
     parameter_sets.append(p);
 
     num_parameter_sets = settings.value("pages", 1).toInt();
-    qDebug() << "Model::readParameters():  model" << _name << "has" << num_parameter_sets << "pages";
+    qDebug() << "Behaviour::readParameters():  model" << _name << "has" << num_parameter_sets << "pages";
     for (int page = 1; page < num_parameter_sets; page++)
     {
         p = new Params;         // conditional parameter set
@@ -488,10 +498,10 @@ void Model::readParameters()
     }
 
 
-    qDebug() << "Model::readParameters(): completed OK";
+    qDebug() << "Behaviour::readParameters(): completed OK";
 }
 
-Model::Property Model::getProperty(int n)
+Behaviour::Property Behaviour::getProperty(int n)
 {
     Property p;
     foreach(p, prop_list)
@@ -505,22 +515,22 @@ Model::Property Model::getProperty(int n)
     return Property::zero;  // prevent compiler warning
 }
 
-QString Model::name()
+QString Behaviour::name()
 {
     return _name;
 }
 
-int Model::getIters()
+int Behaviour::getIters()
 {
     return _iterations;
 }
 
-int Model::getStartPeriod()
+int Behaviour::getStartPeriod()
 {
     return _first_period;
 }
 
-void Model::restart()
+void Behaviour::restart()
 {
     readParameters();
 
@@ -561,17 +571,27 @@ void Model::restart()
     }
 }
 
-void Model::run(bool randomised)
+// -----------------------------------------
+// TODO: *** Remove all this function to MainWindow (?)
+// Behaviour::run() is the main driver function
+//
+// TODO: Investigate using different cycles for salaries and payments
+// -----------------------------------------
+
+void Behaviour::run(bool randomised)
 {
-    qDebug() << "Model::run(): randomised =" << randomised << "  _name =" << _name;
+    qDebug() << "Behaviour::run(): randomised =" << randomised << "  _name =" << _name;
 
     restart();
 
-    // Seed the pseudo-random number generator. We need reproducibility so we
-    // always seed with the same number. This makes inter-model comparisons
-    // more valid
+    // ***
+    // Seed the pseudo-random number generator.
+    // We need reproducibility so we always seed with the same number.
+    // This makes inter-model comparisons more valid.
+    // ***
+
     if (!randomised) {
-        qDebug() << "Model::run(): using fixed seed (42)";
+        qDebug() << "Behaviour::run(): using fixed seed (42)";
         qsrand(42);
     }
 
@@ -685,41 +705,43 @@ void Model::run(bool randomised)
         }
     }
 
-    qDebug() << "Model::run(): _name =" << _name << "  gini =" << gini();
+    qDebug() << "Behaviour::run(): _name =" << _name << "  gini =" << gini();
 }
 
 
-int Model::period()
+int Behaviour::period()
 {
     return _period;
 }
 
-int Model::min_value(int ix)
+int Behaviour::min_value(int ix)
 {
+    qDebug() << "Behaviour::min_value(" << ix << ") returning" << min_val[ix];
     return min_val[ix];
 }
 
-int Model::max_value(int ix)
+int Behaviour::max_value(int ix)
 {
+    qDebug() << "Behaviour::max_value(" << ix << ") returning" << max_val[ix];
     return max_val[ix];
 }
 
-int Model::total(int ix)
+int Behaviour::total(int ix)
 {
     return sum[ix];
 }
 
-Government *Model::gov()
+Government *Behaviour::gov()
 {
     return _gov;
 }
 
-Bank *Model::bank()
+Bank *Behaviour::bank()
 {
     return _bank;
 }
 
-Firm *Model::createFirm(bool state_supported)
+Firm *Behaviour::createFirm(bool state_supported)
 {
     Firm *firm = new Firm(this, state_supported);
     if (state_supported)
@@ -732,7 +754,7 @@ Firm *Model::createFirm(bool state_supported)
 }
 
 // Returns a random non-government firm or nullptr if there are none
-Firm *Model::selectRandomFirm(Firm *exclude)
+Firm *Behaviour::selectRandomFirm(Firm *exclude)
 {
     // ***
     // Any firm apart from the government firm. This is a bit of a trick. We
@@ -755,7 +777,7 @@ Firm *Model::selectRandomFirm(Firm *exclude)
     return res;
 }
 
-int Model::getWageBill(Firm *employer, bool include_dedns)
+int Behaviour::getWageBill(Firm *employer, bool include_dedns)
 {
     int tot = 0;
 
@@ -764,7 +786,7 @@ int Model::getWageBill(Firm *employer, bool include_dedns)
         Worker *w = workers[i];
         if (w->employer == employer)
         {
-            tot += w->agreedWage();
+            tot += w->agreed_wage;
         }
     }
 
@@ -776,7 +798,7 @@ int Model::getWageBill(Firm *employer, bool include_dedns)
     return tot;
 }
 
-int Model::payWages(Firm *payer, int period)
+int Behaviour::payWages(Firm *payer, int period)
 {
     double amt_paid = 0;
     num_just_fired = 0;
@@ -791,7 +813,7 @@ int Model::payWages(Firm *payer, int period)
         Worker *w = workers[i];
         if (w->isEmployedBy(payer))
         {
-            int wage_due = w->agreedWage();         // TODO: Change to getStdWage() (?)
+            int wage_due = w->agreed_wage;
             double dedns = dedns_rate * wage_due;
             double funds_available = payer->getBalance();
 
@@ -858,7 +880,7 @@ int Model::payWages(Firm *payer, int period)
     return amt_paid;                // so caller can update balance
 }
 
-double Model::payWorkers(double amount, Account *source, Reason reason)
+double Behaviour::payWorkers(double amount, Account *source, Reason reason)
 {
     double amt_paid = 0;
     int num_workers = workers.count();
@@ -908,7 +930,7 @@ double Model::payWorkers(double amount, Account *source, Reason reason)
 // as the first character) are held in the most appropriate form, and access
 // functions (e.g. period(), getWagesPaid(), etc) also return the correct type.
 
-double Model::getPropertyVal(Property p)
+double Behaviour::getPropertyVal(Property p)
 {
     switch(p)
     {
@@ -1046,11 +1068,15 @@ double Model::getPropertyVal(Property p)
         return _productivity;
 
     case Property::rel_productivity:
-        // Strictly speaking, if _num_emps is zero and _productivity is
-        // non-zero, then _rel_productivity is infinite. However we will
-        // show it as one (100%) in this case.
-        _rel_productivity = _num_emps == 0 ? 1.0
-                : (_productivity * _pop_size) / _num_emps;
+        if (_num_emps == 0)
+        {
+            Q_ASSERT(_rel_productivity != 0.0);
+            _rel_productivity = 1.0;  // default
+        }
+        else
+        {
+           _rel_productivity = (_productivity * _pop_size) / _num_emps;
+        }
         return _rel_productivity;
 
     case Property::unbudgeted:
@@ -1075,12 +1101,12 @@ double Model::getPropertyVal(Property p)
     }
 }
 
-int Model::population()
+int Behaviour::population()
 {
     return _population;
 }
 
-int Model::getNumEmployed()
+int Behaviour::getNumEmployed()
 {
     int n = 0;
     for (int i = 0; i < workers.count(); i++)
@@ -1094,7 +1120,7 @@ int Model::getNumEmployed()
     return n;
 }
 
-int Model::getNumEmployedBy(Firm *firm)
+int Behaviour::getNumEmployedBy(Firm *firm)
 {
     int n = 0;
     for (int i = 0; i < workers.count(); i++)
@@ -1108,7 +1134,7 @@ int Model::getNumEmployedBy(Firm *firm)
     return n;
 }
 
-int Model::getNumUnemployed()
+int Behaviour::getNumUnemployed()
 {
     int n = 0;
     for (int i = 0; i < workers.count(); i++)
@@ -1122,12 +1148,12 @@ int Model::getNumUnemployed()
     return n;
 }
 
-double Model::getProcurementExpenditure()
+double Behaviour::getProcurementExpenditure()
 {
     return gov()->getProcExp();
 }
 
-Worker *Model::hire(Firm *employer, double wage, int period)
+Worker *Behaviour::hire(Firm *employer, double wage, int period)
 {
     // Calculate friction
     if (period > 0)
@@ -1167,7 +1193,7 @@ Worker *Model::hire(Firm *employer, double wage, int period)
         }
         else
         {
-            qDebug() << "Model::hire(): 100% employed, cannot hire any more!";
+            qDebug() << "Behaviour::hire(): 100% employed, cannot hire any more!";
             return nullptr;
         }
     }
@@ -1181,7 +1207,7 @@ Worker *Model::hire(Firm *employer, double wage, int period)
     return w;
 }
 
-double Model::hireSome(Firm *employer, double wage, int period, int number_to_hire)
+double Behaviour::hireSome(Firm *employer, double wage, int period, int number_to_hire)
 {
     int count;
     double wages_due;
@@ -1194,14 +1220,14 @@ double Model::hireSome(Firm *employer, double wage, int period, int number_to_hi
         }
         else
         {
-            wages_due += w->agreedWage();
+            wages_due += w->agreed_wage;
         }
     }
 
     return wages_due;
 }
 
-void Model::fire(Worker *w, int period)
+void Behaviour::fire(Worker *w, int period)
 {
     w->employer = nullptr;
     w->period_fired = period;
@@ -1214,22 +1240,22 @@ void Model::fire(Worker *w, int period)
 // also want to know how many workers were fired. For the total number of
 // workers fired this period use getNumFired() instead.
 
-int Model::getNumJustFired()
+int Behaviour::getNumJustFired()
 {
     return num_just_fired;
 }
 
-int Model::getNumHired()
+int Behaviour::getNumHired()
 {
     return num_hired;
 }
 
-int Model::getNumFired()
+int Behaviour::getNumFired()
 {
     return num_fired;
 }
 
-double Model::getProdBal()
+double Behaviour::getProdBal()
 {
     double bal = 0;
     for (int i = 0; i < firms.count(); i++)
@@ -1240,7 +1266,7 @@ double Model::getProdBal()
     return bal;
 }
 
-double Model::getWagesPaid()
+double Behaviour::getWagesPaid()
 {
     double tot = 0.0;
     for (int i = 0; i < firms.count(); i++)
@@ -1251,7 +1277,7 @@ double Model::getWagesPaid()
     return tot;
 }
 
-double Model::getInvestment()
+double Behaviour::getInvestment()
 {
     double tot = 0.0;
     for (int i = 0; i < firms.count(); i++)
@@ -1266,7 +1292,7 @@ double Model::getInvestment()
 // evaluate, but we use two different functions in case they should ever differ
 // in future. This is the one we use for consumption as it looks at it from the
 // consumers' end.
-double Model::getPurchasesMade()
+double Behaviour::getPurchasesMade()
 {
     double tot = 0;
     for (int i = 0; i < workers.count(); i++)
@@ -1277,7 +1303,7 @@ double Model::getPurchasesMade()
     return tot;
 }
 
-double Model::getSalesReceipts()
+double Behaviour::getSalesReceipts()
 {
     double tot = 0;
     for (int i = 0; i < firms.count(); i++)
@@ -1288,7 +1314,7 @@ double Model::getSalesReceipts()
     return tot;
 }
 
-double Model::getBonusesPaid()
+double Behaviour::getBonusesPaid()
 {
     double tot = 0;
     for (int i = 0; i < firms.count(); i++)
@@ -1299,12 +1325,12 @@ double Model::getBonusesPaid()
     return tot;
 }
 
-double Model::getDednsPaid()
+double Behaviour::getDednsPaid()
 {
     return _dedns;
 }
 
-double Model::getIncTaxPaid()
+double Behaviour::getIncTaxPaid()
 {
     double tot = 0;
     for (int i = 0; i < workers.count(); i++)
@@ -1315,7 +1341,7 @@ double Model::getIncTaxPaid()
     return tot;
 }
 
-double Model::getSalesTaxPaid()
+double Behaviour::getSalesTaxPaid()
 {
     double tot = 0;
     for (int i = 0; i < firms.count(); i++)
@@ -1326,7 +1352,7 @@ double Model::getSalesTaxPaid()
     return tot;
 }
 
-double Model::getWorkersBal(Model::Status status)
+double Behaviour::getWorkersBal(Behaviour::Status status)
 {
     double tot = 0.0;
     for (int i = 0; i < workers.count(); i++)
@@ -1357,7 +1383,7 @@ double Model::getWorkersBal(Model::Status status)
 // TODO: At present only businesses can get loans, but this should be extended
 // to workers in due course. We also need to allow banks to get loans from the
 // central bank -- i.e. from the government.
-double Model::getAmountOwed()
+double Behaviour::getAmountOwed()
 {
     double tot = 0;
     for (int i = 0; i < firms.count(); i++)
@@ -1371,7 +1397,7 @@ double Model::getAmountOwed()
 // These functions retrieve model parameters
 // ----------------------------------------------------------------------------
 
-int Model::getParameterVal(ParamType type)
+int Behaviour::getParameterVal(ParamType type)
 {
     Pair p;
     for (int i = 0; i < num_parameter_sets; i++)
@@ -1406,7 +1432,7 @@ int Model::getParameterVal(ParamType type)
     return p.val;
 }
 
-bool Model::isParamSet(ParamType t, int n)
+bool Behaviour::isParamSet(ParamType t, int n)
 {
     if (n == 0) {
         return true;
@@ -1432,89 +1458,91 @@ bool Model::isParamSet(ParamType t, int n)
          )))))))))))))));
 }
 
-double Model::getProcurement()
+double Behaviour::getProcurement()
 {
     return double(getParameterVal(ParamType::procurement));
 }
 
-double Model::getTargetEmpRate()
+double Behaviour::getTargetEmpRate()
 {
     return double(getParameterVal(ParamType::emp_rate)) / 100;
 }
 
-double Model::getStdWage()
+double Behaviour::getStdWage()
 {
     return _std_wage;
 }
 
-double Model::getPropCon()
+double Behaviour::getPropCon()
 {
     return double(getParameterVal(ParamType::prop_con)) / 100;
 }
 
-double Model::getIncomeThreshold()
+double Behaviour::getIncomeThreshold()
 {
     return double(getParameterVal(ParamType::inc_thresh));
 }
 
-double Model::getIncTaxRate()
+double Behaviour::getIncTaxRate()
 {
     return double(getParameterVal(ParamType::inc_tax_rate)) / 100;
 }
 
-double Model::getSalesTaxRate()
+double Behaviour::getSalesTaxRate()
 {
     return double(getParameterVal(ParamType::sales_tax_rate)) / 100;
 }
 
-double Model::getPreTaxDedns()
+double Behaviour::getPreTaxDedns()
 {
     return double(getParameterVal(ParamType::dedns)) / 100;
 }
 
-double Model::getCapexRecoupTime()
+double Behaviour::getCapexRecoupTime()
 {
     return double(getParameterVal(ParamType::recoup));
 }
 
-double Model::getFCP()
+double Behaviour::getFCP()
 {
     return double(getParameterVal(ParamType::firm_creation_prob)) / 100;
 }
 
-double Model::getUBR()
+double Behaviour::getUBR()
 {
     return double(getParameterVal(ParamType::unemp_ben_rate)) / 100;
 }
 
-double Model::getDistributionRate()
+double Behaviour::getDistributionRate()
 {
     return double(getParameterVal(ParamType::distrib)) / 100;
 }
 
-double Model::getPropInv()
+double Behaviour::getPropInv()
 {
     return double(getParameterVal(ParamType::prop_inv)) / 100;
 }
 
-double Model::getBoeRate()
+double Behaviour::getBoeRate()
 {
     return double(getParameterVal(ParamType::boe_int)) / 100;
 }
 
-double Model::getBusRate()
+double Behaviour::getBusRate()
 {
     return double(getParameterVal(ParamType::bus_int)) / 100;
 }
 
-double Model::getLoanProb()
+double Behaviour::getLoanProb()
 {
     return double(getParameterVal(ParamType::loan_prob)) / 100;
 }
 
 /* Discontinued, but the formula might be useful some time
-int Model::getGovExpRate(int target_pop)
+int Behaviour::getGovExpRate(int target_pop)
 {
+    // TODO: Consider re-instating this...
+
     // We calculate govt. expenditure using the formula:
     // population * target employment rate * average wage * tax rate.
     // Tax rate here is the 'effective tax rate' taking into account all taxes.
@@ -1527,7 +1555,7 @@ int Model::getGovExpRate(int target_pop)
 }
 */
 
-int Model::getActivePop()
+int Behaviour::getActivePop()
 {
     return getParameterVal(ParamType::active_pop);
 }
@@ -1536,18 +1564,20 @@ int Model::getActivePop()
 // Condition processing
 // ----------------------------------------------------------------------------
 
-bool Model::applies(Condition condition)
+bool Behaviour::applies(Condition condition)
 {
     // Property::zero is always zero and can be used as a marker for the end of
     // the enum (Better to use num_properties). In a condition we also use it
-    // to indicate that the associated
-    // parameters are to be applied unconditionally (unless overridden by a
-    // subsequent condition). In practice we currently access defaults
-    // (unconditionals) separately from conditionals so we don't actually have
-    // to eveluate the condition.
-    if (condition.property == Property::zero) {
+    // to indicate that the associated parameters are to be applied
+    // unconditionally (unless overridden by a subsequent condition). In
+    // practice we currently access defaults (unconditionals) separately from
+    // conditionals so we don't actually have to eveluate the condition.
+    if (condition.property == Property::zero)
+    {
         return true;
-    } else {
+    }
+    else
+    {
         int lhs = getPropertyVal(condition.property);
         Opr opr = condition.opr;
         int rhs = condition.val;
@@ -1555,7 +1585,7 @@ bool Model::applies(Condition condition)
     }
 }
 
-bool Model::compare(int lhs, int rhs, Opr opr)
+bool Behaviour::compare(int lhs, int rhs, Opr opr)
 {
     switch (opr) {
         case Opr::eq:

@@ -62,8 +62,10 @@
 // information -- except perhaps for investment, which was an internal variable
 // used by firms in deciding how to dispose of excess funds.
 
-#define VERSION "0.1.16"
+// #define VERSION "0.1.16"
 // Now allows minimum two startups per thousand, instead of ten per thousand
 
+#define VERSION "0.2.00"
+// Project resurrected late March 2022
 
 #endif // VERSION_H

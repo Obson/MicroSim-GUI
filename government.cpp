@@ -15,10 +15,10 @@ void Government::reset()
 {
     init();
     balance = 0;
-    _gov_firm = model()->createFirm(true);
+    _gov_firm = behaviour()->createFirm(true);
 }
 
-Government::Government(Model *model) : Account(model)
+Government::Government(Behaviour *model) : Account(model)
 {
     // The 'true' argument tells the model that this is a (the) government-
     // supported firm and that it should have a preset (user-defined) number
@@ -80,15 +80,17 @@ Firm *Government::gov_firm()
 
 void Government::trigger(int period)
 {
-    /* This code originally allowed for government-supported industries to
-     * receive a grant that was designed to cover the expected number of
-     * employees. This has now been superseded and government-supported
-     * industries are now allocated a user-defined number of employees and can
-     * claim the necessary funds to pay them as and when required. However, it
-     * makes sense to retain the grant mechanism in case it is needed in
-     * future. Change and uncomment as required...
-     *
-    // Government grants (incl support of gov-owned businesses)
+    // ***
+    // This code originally allowed for government-supported industries to
+    // receive a grant that was designed to cover the expected number of
+    // employees. This has now been superseded and government-supported
+    // industries are now allocated a user-defined number of employees and can
+    // claim the necessary funds to pay them as and when required. However, it
+    // makes sense to retain the grant mechanism in case it is needed in
+    // future. Change and uncomment as required...
+    // ***
+
+    /* Government grants (incl support of gov-owned businesses)
     QSettings settings;
     int amt = settings.value("government-employees").toInt() * model()->getStdWage();
     _gov_firm->grant(amt);
@@ -101,17 +103,17 @@ void Government::trigger(int period)
         last_triggered = period;
 
         // Direct purchases (procurement), adjusts balance automatically
-        double amt = model()->getProcurement();
-        transferSafely(model()->selectRandomFirm(), amt, this, true);
+        double amt = behaviour()->getProcurement();
+        transferSafely(behaviour()->selectRandomFirm(), amt, this, true);
         proc += amt;
         exp += amt;     // include in expenditure not as a separate item as
                         // less confusing
 
         // Benefits payments to all unemployed workers (doesn't adjust balance,
         // so we must do this on return)
-        ben += model()->payWorkers(model()->getStdWage() * model()->getUBR(),
+        ben += behaviour()->payWorkers(behaviour()->getStdWage() * behaviour()->getUBR(),
                                this,                // source
-                               Model::for_benefits  // reason
+                               Behaviour::for_benefits  // reason
                                );
         balance -= ben;
     }

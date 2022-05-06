@@ -1,8 +1,9 @@
 #ifndef ACCOUNT_H
 #define ACCOUNT_H
 
+#include "behaviour.h"
+
 #include <QObject>
-#include <model.h>
 #include <iostream>
 #include <list>
 #include <QList>
@@ -13,8 +14,7 @@
 class Statistics;
 class Firm;
 class Government;
-
-class Model;
+class Domain;
 
 class Account : public QObject
 {
@@ -26,9 +26,11 @@ class Account : public QObject
     Q_OBJECT
 
 public:
-    Account(Model *model);
 
-    Model *model();             // returns model that 'owns' this account
+    // NOTE: *** Account is no longer owned by a Behaviour but vice versa ***
+    Account(Behaviour *behaviour);
+
+    Behaviour *behaviour();             // returns model that 'owns' this account
 
     virtual double getBalance();
     virtual double getAmountOwed();
@@ -54,7 +56,7 @@ public:
 
 protected:
 
-    Model *_model;
+    Behaviour *_behaviour;
 
     // We can't have an instance of Government as a member of Account because
     // Government is derived from Account
@@ -81,6 +83,23 @@ private:
     int id;
     static int _id;
 
+    // FOREIGN TRADE
+    // -------------
+    // Added 2 May 2022
+    //
+    // Every acount must belong to a 'domain', which is in effect the
+    // government that issues its currency. A government's domain is itself if
+    // it is sovereign. Different domains will use different currencies and
+    // imports and exports will involve an exchange rate. However, rather than
+    // maintaining rates between every pair of currencies we will simply
+    // maintain rates relative to a notional underlying currency (NUC). This
+    // makes some assumptions about the way the money markets work that may not
+    // be true for certain transactions where the actors may have made special
+    // arrangements.
+
+    // NEXT: Fix Model so it isn't limited to one Government instance
+    Domain *domain;
+
 signals:
 
 public slots:
@@ -93,7 +112,7 @@ class Worker: public Account
 
     friend class Government;
     friend class Firm;
-    friend class Model;
+    friend class Behaviour;
 
 private:
 
@@ -126,7 +145,7 @@ protected:
 
 public:
 
-    Worker(Model *model);
+    Worker(Behaviour *behaviour);
 
     Firm *getEmployer();
 
@@ -135,8 +154,8 @@ public:
     bool isNewHire(int period);
 
     // Overrides
-    void credit(double amount, Account *creditor = nullptr, bool force = false);
-    void trigger(int period);
+    void credit(double amount, Account *creditor = nullptr, bool force = false) override;
+    void trigger(int period) override;
 
     void epilogue(int period);
 
@@ -156,7 +175,7 @@ class Firm: public Account
     Q_OBJECT
 
     friend class Government;
-    friend class Model;
+    friend class Behaviour;
 
 private:
 
@@ -205,15 +224,13 @@ public:
     // alternative approach would be to start off with equal (or evenly
     // distributed) wages and see what develops over time.
 
-    Firm(Model *model, bool state_supported = false);
+    Firm(Behaviour *behaviour, bool state_supported = false);
 
-    bool isGovernmentSupported();
+    bool isGovernmentSupported() override;
+    void trigger(int period) override;
+    void credit(double amount, Account *creditor = nullptr, bool force = false) override;
 
-    void trigger(int period);
     void epilogue(int period);
-
-    // Overrides base mmethod to give additional functionality
-    void credit(double amount, Account *creditor = nullptr, bool force = false);
 
     double getWagesPaid();
     double getBonusesPaid();
@@ -229,16 +246,12 @@ public:
     double getProductivity();
 };
 
-// There is just one instance of the Government class in each model, as we are
-// currently assuming a closed economy wth a single currency. Foreign trade
-// would require firms that were registered to a different Government -- This
-// should be added later.
-
+// There is just one instance of the Government class in each domain
 class Government: public Account
 {
     Q_OBJECT
 
-    friend class Model;
+    friend class Behaviour;
 
 private:
 
@@ -263,7 +276,7 @@ protected:
 
 public:
 
-    Government(Model *model);
+    Government(Behaviour *model);
 
     bool isGovernment();
 
@@ -287,10 +300,10 @@ class Bank: public Account
 {
     Q_OBJECT
 
-    friend class Model;
+    friend class Behaviour;
 
 public:
-    Bank(Model *model);
+    Bank(Behaviour *behaviour);
 
     void lend(double amount, double rate, Account *recipient);
     void trigger(int period);

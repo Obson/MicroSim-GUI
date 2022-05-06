@@ -1,5 +1,5 @@
-#ifndef NEWMODELDLG_H
-#define NEWMODELDLG_H
+#ifndef NEWBEHAVIOURLDLG_H
+#define NEWBEHAVIOURLDLG_H
 
 #include <QDialog>
 
@@ -7,13 +7,13 @@ namespace Ui {
 class NewModelDlg;
 }
 
-class NewModelDlg : public QDialog
+class NewBehaviourlDlg : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit NewModelDlg(QWidget *parent = 0);
-    ~NewModelDlg();
+    explicit NewBehaviourlDlg(QWidget *parent = nullptr);
+    ~NewBehaviourlDlg() override;
 
     QString getName();
     QString getNotes();
@@ -26,12 +26,12 @@ private:
     Ui::NewModelDlg *ui;
 
     QString current_name;                   // when updating
-    QString model_name;
+    QString behaviourName;
     QString notes;
 
     bool preexisting = false;
 
-    void accept();
+    void accept() override;
 };
 
-#endif // NEWMODELDLG_H
+#endif // NEWBEHAVIOURLDLG_H

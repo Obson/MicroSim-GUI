@@ -42,7 +42,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>You can save the current chart settings as a new profile or as an existing profile. Click Cancel to continue without saving the chart settings.</string>
+    <string>You can save the current chart settings as a new profile or as an existing profile. Click Cancel to continue without saving the changes.</string>
    </property>
    <property name="alignment">
     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>

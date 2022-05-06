@@ -15,7 +15,7 @@
 ///
 ParameterWizard::ParameterWizard(QWidget *parent) : QWizard(parent)
 {
-    setWindowTitle("Model Setup");
+    setWindowTitle("Behaviour Definition");
     setPixmap(QWizard::BackgroundPixmap, QPixmap(":/background3.png"));
 
     setButtonText(QWizard::CustomButton1, tr("&Add conditionals"));
@@ -24,7 +24,7 @@ ParameterWizard::ParameterWizard(QWidget *parent) : QWizard(parent)
     setOption(QWizard::CancelButtonOnLeft, true);
     //setOption(QWizard::HaveFinishButtonOnEarlyPages, true);
 
-    import_model.clear();
+    importBehaviour.clear();
 
     setMinimumHeight(660);
 
@@ -38,24 +38,24 @@ ParameterWizard::ParameterWizard(QWidget *parent) : QWizard(parent)
     connect(this, &QWizard::customButtonClicked, this, &ParameterWizard::createNewPage);
 }
 
-void ParameterWizard::setProperties(QMap<QString,Model::Property> map)
+void ParameterWizard::setProperties(QMap<QString,Behaviour::Property> map)
 {
     // NOTE: This includes the preudo-series 'Zero reference line' and
     // 'Hundred reference line'. These serve no useful purpose here and
     // should be removed. Care needed if translating to make sure the
     // same translation is used here as in MainWindow. Any other redundant
     // series (names) should also be removed here.
-    property_map = map;
+    propertyMap = map;
 
-    prop_names.append(map.keys());
-    prop_names.removeOne(tr("Zero reference line"));
-    prop_names.removeOne(tr("100 reference line"));
+    propertyNames.append(map.keys());
+    propertyNames.removeOne(tr("Zero reference line"));
+    propertyNames.removeOne(tr("100 reference line"));
 
 }
 
 void ParameterWizard::importFrom(QString model_name)
 {
-    import_model = model_name;
+    importBehaviour = model_name;
 }
 
 void ParameterWizard::setCurrentModel(QString model_name)
@@ -75,7 +75,7 @@ void ParameterWizard::setCurrentModel(QString model_name)
     }
 
     // Then add a default page for the new model
-    current_model = model_name;
+    currentBehaviour = model_name;
     qDebug() << "ParameterWizard::modelChanged(): adding default page";
     setPage(default_page, new DefaultPage(this));
     qDebug() << "ParameterWizard::modelChanged(): restarting";
@@ -86,7 +86,7 @@ void ParameterWizard::setCurrentModel(QString model_name)
     qDebug() << "ParameterWizard::setCurrentModel():  existing pages =" << num_pages;
     for (int i = 0; i < num_pages - 1; i++) {
         ExtraPage *page = createNewPage();
-        page->readSettings(current_model);
+        page->readSettings(currentBehaviour);
     }
 }
 
@@ -96,7 +96,7 @@ void ParameterWizard::done(int result)
     if (result == QDialog::Accepted) {
         currentPage()->validatePage();
         QSettings settings;
-        settings.setValue(current_model + "/pages", this->pageIds().count());
+        settings.setValue(currentBehaviour + "/pages", this->pageIds().count());
     }
     QDialog::done(result);
 }
@@ -104,7 +104,7 @@ void ParameterWizard::done(int result)
 int ParameterWizard::nextId() const
 {
     // This is a 'read-once' value
-    return next_id == -1 ? QWizard::nextId() : next_id;
+    return nextPageNumber == -1 ? QWizard::nextId() : nextPageNumber;
 }
 
 void ParameterWizard::currentIdChanged(int id)
@@ -116,13 +116,13 @@ void ParameterWizard::currentIdChanged(int id)
 ExtraPage *ParameterWizard::createNewPage()
 {
     ExtraPage *page = new ExtraPage(this);
-    int id = addPage(page);
-    qDebug() << "ParameterWizard::createNewPage():  new page id =" << id;
-    page->setPageNumber(id);
+    int pageNum = addPage(page);
+    qDebug() << "ParameterWizard::createNewPage():  new page id =" << pageNum;
+    page->setPageNumber(pageNum);
     page->setFinalPage(true);
-    next_id = id;
+    nextPageNumber = pageNum;
     next();
-    next_id = -1;
+    nextPageNumber = -1;
     return page;
 }
 
@@ -134,10 +134,6 @@ QSpinBox *ParameterWizard::getSpinBox(int min, int max)
     return sb;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-/// \brief DefaultPage::DefaultPage
-/// \param w
-///
 DefaultPage::DefaultPage(ParameterWizard *w)
 {
     wiz = w;
@@ -192,12 +188,14 @@ DefaultPage::DefaultPage(ParameterWizard *w)
     layout->addRow(new QLabel(tr("Time (periods) to recoup capex")), sb_recoup);
 
     layout->addRow(new QLabel(tr("<b>Banks</b>")));
-    layout->addRow(new QLabel(tr("BOE lending rate (%)")), sb_boe_loan_int);
-    layout->addRow(new QLabel(tr("Retail lending rate (%)")), sb_bus_loan_int);
+    layout->addRow(new QLabel(tr("Central Bank lending rate (%)")), sb_boe_loan_int);
+    layout->addRow(new QLabel(tr("Retail Banks lending rate (%)")), sb_bus_loan_int);
 
+    layout->addRow(new QLabel(tr("<b> </b>")));
+    layout->addRow(new QLabel(tr("<b>Prevent changes</b>")));
     layout->addRow(xb_locked);
 
-    layout->setVerticalSpacing(3);
+    layout->setVerticalSpacing(4);
 
     setLayout(layout);
 }
@@ -256,17 +254,17 @@ void DefaultPage::toggleLock()
 // This function should not be called unless wiz->current_model has been set.
 void DefaultPage::initializePage()
 {
-    QString model = wiz->current_model;
-    qDebug() << "DefaultPage::initialize(): current_model =" << model;
-    setTitle(tr("Default Parameters For ") + model);
-    readSettings(wiz->import_model.isEmpty() ? model : wiz->import_model);
+    QString model = wiz->currentBehaviour;
+    qDebug() << "DefaultPage::initialize(): currentBehaviourl =" << model;
+    setTitle(tr("Default Profile For ") + model);
+    readSettings(wiz->importBehaviour.isEmpty() ? model : wiz->importBehaviour);
 }
 
 bool DefaultPage::validatePage()
 {
     qDebug() << "DefaultPage::validatePage()";
 
-    QString model = wiz->current_model;
+    QString model = wiz->currentBehaviour;
 
     // TODO: We don't currently do any actual validation here.
     // We just save the default settings assuming they're OK.
@@ -308,7 +306,7 @@ ExtraPage::ExtraPage(ParameterWizard *w)
     qDebug() << "ExtraPage::ExtraPage():  called";
 
     cb_property = new QComboBox;
-    cb_property->addItems(wiz->prop_names);
+    cb_property->addItems(wiz->propertyNames);
 
     cb_rel = new QComboBox;
     cb_rel->addItems(wiz->rels);
@@ -425,7 +423,7 @@ ExtraPage::ExtraPage(ParameterWizard *w)
     bottom_layout->addWidget(new QLabel(tr("<b>Banks</b>")), 15, 0, 1, 3);
 
     bottom_layout->addWidget(cbx_boe_loan_int, 16, 0);
-    bottom_layout->addWidget(new QLabel(tr("BOE lending rate (%)")), 16, 1);
+    bottom_layout->addWidget(new QLabel(tr("Central Bank lending rate (%)")), 16, 1);
     bottom_layout->addWidget(sb_boe_loan_int, 16,2);
 
     bottom_layout->addWidget(cbx_bus_loan_int, 17, 0);
@@ -458,16 +456,16 @@ void ExtraPage::setPageNumber(int page_num)
     qDebug() << "ExtraPage::setPageNumber():  page_num =" << page_num;
     pnum = page_num;
     setTitle(tr("Conditional Parameters - Page ") + QString::number(page_num));
-    readSettings(wiz->import_model.isEmpty() ? wiz->current_model : wiz->import_model);
+    readSettings(wiz->importBehaviour.isEmpty() ? wiz->currentBehaviour : wiz->importBehaviour);
 }
 
 // Attempts to read setting from the settings for the current page. if it
 // cannot be found, read the default setting instead
-QString ExtraPage::readCondSetting(QString model, QString key)
+QString ExtraPage::readCondSetting(QString behaviourName, QString key)
 {
     QSettings settings;
-    QString base1 = model + "/condition-" + QString::number(pnum) + "/" + key + "/value";
-    QString base2 = model + "/default/" + key;
+    QString base1 = behaviourName + "/condition-" + QString::number(pnum) + "/" + key + "/value";
+    QString base2 = behaviourName + "/default/" + key;
     QString res = settings.value(base1, settings.value(base2 + key)).toString();
     return res;
 }
@@ -475,10 +473,10 @@ QString ExtraPage::readCondSetting(QString model, QString key)
 QString ExtraPage::getPropertyName(int prop)
 {
     // Convert the int to a property
-    Model::Property p = static_cast<Model::Property>(prop);
+    Behaviour::Property p = static_cast<Behaviour::Property>(prop);
 
     // and look it up in the property map
-    QMapIterator<QString, Model::Property> it(wiz->property_map);
+    QMapIterator<QString, Behaviour::Property> it(wiz->propertyMap);
     while (it.hasNext())
     {
         it.next();
@@ -490,18 +488,18 @@ QString ExtraPage::getPropertyName(int prop)
     return QString(""); // prevent compiler warning
 }
 
-bool ExtraPage::isChecked(QString model, QString attrib)
+bool ExtraPage::isChecked(QString behaviourName, QString attrib)
 {
     QSettings settings;
-    return settings.value(model + "/condition-" + QString::number(pnum) + "/" + attrib + "/isset", false).toBool();
+    return settings.value(behaviourName + "/condition-" + QString::number(pnum) + "/" + attrib + "/isset", false).toBool();
 }
 
-void ExtraPage::readSettings(QString model)
+void ExtraPage::readSettings(QString behaviourName)
 {
-    qDebug() << "ExtraPage::readSettings():  from model =" << model;
+    qDebug() << "ExtraPage::readSettings():  from model =" << behaviourName;
 
     QSettings settings;
-    QString base = model + "/condition-" + QString::number(pnum) + "/";
+    QString base = behaviourName + "/condition-" + QString::number(pnum) + "/";
 
     cb_property->setCurrentText(getPropertyName(settings.value(base + "property", 0).toInt()));
     cb_rel->setCurrentIndex(settings.value(base + "rel", 3).toInt());
@@ -510,67 +508,67 @@ void ExtraPage::readSettings(QString model)
     QString attrib;
 
     attrib = "govt-procurement";
-    cbx_dir_exp_rate->setChecked(isChecked(model, attrib));
-    le_dir_exp_rate->setText(readCondSetting(model, attrib));
+    cbx_dir_exp_rate->setChecked(isChecked(behaviourName, attrib));
+    le_dir_exp_rate->setText(readCondSetting(behaviourName, attrib));
 
     attrib = "income-threshold";
-    cbx_thresh->setChecked(isChecked(model, attrib));
-    le_thresh->setText(readCondSetting(model, attrib));
+    cbx_thresh->setChecked(isChecked(behaviourName, attrib));
+    le_thresh->setText(readCondSetting(behaviourName, attrib));
 
     attrib = "propensity-to-consume";
-    cbx_prop_con->setChecked(isChecked(model, attrib));
-    sb_prop_con->setValue(readCondSetting(model, attrib).toInt());
+    cbx_prop_con->setChecked(isChecked(behaviourName, attrib));
+    sb_prop_con->setValue(readCondSetting(behaviourName, attrib).toInt());
 
     attrib = "pre-tax-dedns-rate";
-    cbx_dedns->setChecked(isChecked(model, attrib));
-    sb_dedns->setValue(readCondSetting(model, attrib).toInt());
+    cbx_dedns->setChecked(isChecked(behaviourName, attrib));
+    sb_dedns->setValue(readCondSetting(behaviourName, attrib).toInt());
 
     attrib = "income-tax-rate";
-    cbx_inc_tax->setChecked(isChecked(model, attrib));
-    sb_inc_tax->setValue(readCondSetting(model, attrib).toInt());
+    cbx_inc_tax->setChecked(isChecked(behaviourName, attrib));
+    sb_inc_tax->setValue(readCondSetting(behaviourName, attrib).toInt());
 
     attrib = "sales-tax-rate";
-    cbx_sales_tax->setChecked(isChecked(model, attrib));
-    sb_sales_tax->setValue(readCondSetting(model, attrib).toInt());
+    cbx_sales_tax->setChecked(isChecked(behaviourName, attrib));
+    sb_sales_tax->setValue(readCondSetting(behaviourName, attrib).toInt());
 
     attrib = "firm-creation-prob";
-    cbx_bcr->setChecked(isChecked(model, attrib));
-    sb_bcr->setValue(readCondSetting(model, attrib).toInt());
+    cbx_bcr->setChecked(isChecked(behaviourName, attrib));
+    sb_bcr->setValue(readCondSetting(behaviourName, attrib).toInt());
 
     attrib = "capex-recoup-periods";
-    cbx_recoup->setChecked(isChecked(model, attrib));
-    sb_recoup->setValue(readCondSetting(model, attrib).toInt());
+    cbx_recoup->setChecked(isChecked(behaviourName, attrib));
+    sb_recoup->setValue(readCondSetting(behaviourName, attrib).toInt());
 
     attrib = "reserve-rate";
-    cbx_distrib->setChecked(isChecked(model, attrib));
-    sb_distrib->setValue(readCondSetting(model, attrib).toInt());
+    cbx_distrib->setChecked(isChecked(behaviourName, attrib));
+    sb_distrib->setValue(readCondSetting(behaviourName, attrib).toInt());
 
     attrib = "prop-invest";
-    cbx_prop_inv->setChecked(isChecked(model, attrib));
-    sb_prop_inv->setValue(readCondSetting(model, attrib).toInt());
+    cbx_prop_inv->setChecked(isChecked(behaviourName, attrib));
+    sb_prop_inv->setValue(readCondSetting(behaviourName, attrib).toInt());
 
     attrib = "unempl-benefit-rate";
-    cbx_ubr->setChecked(isChecked(model, attrib));
-    sb_ubr->setValue(readCondSetting(model, attrib).toInt());
+    cbx_ubr->setChecked(isChecked(behaviourName, attrib));
+    sb_ubr->setValue(readCondSetting(behaviourName, attrib).toInt());
 
     attrib = "boe-interest";
-    cbx_boe_loan_int->setChecked(isChecked(model, attrib));
-    sb_boe_loan_int->setValue(readCondSetting(model, attrib).toInt());
+    cbx_boe_loan_int->setChecked(isChecked(behaviourName, attrib));
+    sb_boe_loan_int->setValue(readCondSetting(behaviourName, attrib).toInt());
 
     attrib = "bus-interest";
-    cbx_bus_loan_int->setChecked(isChecked(model, attrib));
-    sb_bus_loan_int->setValue(readCondSetting(model, attrib).toInt());
+    cbx_bus_loan_int->setChecked(isChecked(behaviourName, attrib));
+    sb_bus_loan_int->setValue(readCondSetting(behaviourName, attrib).toInt());
 
     attrib = "loan-prob";
-    cbx_loan_prob->setChecked(isChecked(model, attrib));
-    cb_loan_prob->setCurrentIndex(readCondSetting(model, attrib).toInt());
+    cbx_loan_prob->setChecked(isChecked(behaviourName, attrib));
+    cb_loan_prob->setCurrentIndex(readCondSetting(behaviourName, attrib).toInt());
 }
 
 bool ExtraPage::validatePage()
 {
     qDebug() << "ExtraPage::validatePage()";
 
-    QString model = wiz->current_model;
+    QString model = wiz->currentBehaviour;
     QString key = model + "/condition-" + QString::number(pnum) + "/";
 
     // TODO: We don't currently do any actual validation here.
@@ -579,10 +577,10 @@ bool ExtraPage::validatePage()
     QSettings settings;
     bool ok;
 
-    // We need to store an actual property (Model::Property enum) here, but we
+    // We need to store an actual property (Behaviour::Property enum) here, but we
     // have to convert it to an int first
     QString selected_text = cb_property->currentText();
-    Model::Property prop = wiz->property_map.value(selected_text);
+    Behaviour::Property prop = wiz->propertyMap.value(selected_text);
     settings.setValue(key + "property", static_cast<int>(prop));
 
     settings.setValue(key + "rel", cb_rel->currentIndex());

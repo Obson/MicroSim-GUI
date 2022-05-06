@@ -1,5 +1,7 @@
 #include "mainwindow.h"
-#include "newmodeldlg.h"
+#include "createdomaindlg.h"
+#include "domain.h"
+#include "newbehaviourldlg.h"
 #include <QtWidgets>
 #include <QMessageBox>
 #include <QDebug>
@@ -27,7 +29,7 @@
 
 MainWindow::MainWindow()
 {
-    _current_model = nullptr;
+    _currentBehaviour = nullptr;
     first_time_shown = true;
 
     statsDialog = new StatsDialog(this);
@@ -39,46 +41,46 @@ MainWindow::MainWindow()
     // is declared as static. And of course this is no help when it has to
     // point to instance members.
 
-    property_map[tr("Current period")] = Model::Property::current_period;
-    property_map[tr("Population size")] = Model::Property::pop_size;
-    property_map[tr("Govt exp excl benefits")] = Model::Property::gov_exp;
-    property_map[tr("Govt exp incl benefits")] = Model::Property::gov_exp_plus;
-    property_map[tr("Benefits paid")] = Model::Property::bens_paid;
-    property_map[tr("Government receipts")] = Model::Property::gov_recpts;
-    property_map[tr("Deficit (absolute)")] = Model::Property::deficit;
-    property_map[tr("Deficit as % GDP")] = Model::Property::deficit_pc;
-    property_map[tr("National Debt")] = Model::Property::gov_bal;
-    property_map[tr("Number of businesses")] = Model::Property::num_firms;
-    property_map[tr("Number employed")] = Model::Property::num_emps;
-    property_map[tr("Number of govt employees")] = Model::Property::num_gov_emps;
-    property_map[tr("Percent employed")] = Model::Property::pc_emps;
-    property_map[tr("Number unemployed")] = Model::Property::num_unemps;
-    property_map[tr("Percent unemployed")] = Model::Property::pc_unemps;
-    property_map[tr("Percent active")] = Model::Property::pc_active;
-    property_map[tr("Number of new hires")] = Model::Property::num_hired;
-    property_map[tr("Number of new fires")] = Model::Property::num_fired;
-    property_map[tr("Businesses balance")] = Model::Property::prod_bal;
-    property_map[tr("Wages paid")] = Model::Property::wages;
-    property_map[tr("Consumption")] = Model::Property::consumption;
-    property_map[tr("Bonuses paid")] = Model::Property::bonuses;
-    property_map[tr("Pre-tax deductions")] = Model::Property::dedns;
-    property_map[tr("Income tax paid")] = Model::Property::inc_tax;
-    property_map[tr("Sales tax paid")] = Model::Property::sales_tax;
-    property_map[tr("Households balance")] = Model::Property::dom_bal;
-    property_map[tr("Bank loans")] = Model::Property::amount_owed;
-    property_map[tr("Average business size")] = Model::Property::bus_size;
-    property_map[tr("100 reference line")] = Model::Property::hundred;
-    property_map[tr("Procurement expenditure")] = Model::Property::procurement;
-    property_map[tr("Productivity")] = Model::Property::productivity;
-    property_map[tr("Productivity (relative)")] = Model::Property::rel_productivity;
-    property_map[tr("Govt direct support")] = Model::Property::unbudgeted;
-    property_map[tr("Investment")] = Model::Property::investment;
-    property_map[tr("GDP")] = Model::Property::gdp;
-    property_map[tr("Profit")] = Model::Property::profit;
-    property_map[tr("Zero reference line")] = Model::Property::zero;
+    propertyMap[tr("Current period")] = Behaviour::Property::current_period;
+    propertyMap[tr("Population size")] = Behaviour::Property::pop_size;
+    propertyMap[tr("Govt exp excl benefits")] = Behaviour::Property::gov_exp;
+    propertyMap[tr("Govt exp incl benefits")] = Behaviour::Property::gov_exp_plus;
+    propertyMap[tr("Benefits paid")] = Behaviour::Property::bens_paid;
+    propertyMap[tr("Government receipts")] = Behaviour::Property::gov_recpts;
+    propertyMap[tr("Deficit (absolute)")] = Behaviour::Property::deficit;
+    propertyMap[tr("Deficit as % GDP")] = Behaviour::Property::deficit_pc;
+    propertyMap[tr("National Debt")] = Behaviour::Property::gov_bal;
+    propertyMap[tr("Number of businesses")] = Behaviour::Property::num_firms;
+    propertyMap[tr("Number employed")] = Behaviour::Property::num_emps;
+    propertyMap[tr("Number of govt employees")] = Behaviour::Property::num_gov_emps;
+    propertyMap[tr("Percent employed")] = Behaviour::Property::pc_emps;
+    propertyMap[tr("Number unemployed")] = Behaviour::Property::num_unemps;
+    propertyMap[tr("Percent unemployed")] = Behaviour::Property::pc_unemps;
+    propertyMap[tr("Percent active")] = Behaviour::Property::pc_active;
+    propertyMap[tr("Number of new hires")] = Behaviour::Property::num_hired;
+    propertyMap[tr("Number of new fires")] = Behaviour::Property::num_fired;
+    propertyMap[tr("Businesses balance")] = Behaviour::Property::prod_bal;
+    propertyMap[tr("Wages paid")] = Behaviour::Property::wages;
+    propertyMap[tr("Consumption")] = Behaviour::Property::consumption;
+    propertyMap[tr("Bonuses paid")] = Behaviour::Property::bonuses;
+    propertyMap[tr("Pre-tax deductions")] = Behaviour::Property::dedns;
+    propertyMap[tr("Income tax paid")] = Behaviour::Property::inc_tax;
+    propertyMap[tr("Sales tax paid")] = Behaviour::Property::sales_tax;
+    propertyMap[tr("Households balance")] = Behaviour::Property::dom_bal;
+    propertyMap[tr("Bank loans")] = Behaviour::Property::amount_owed;
+    propertyMap[tr("Average business size")] = Behaviour::Property::bus_size;
+    propertyMap[tr("100 reference line")] = Behaviour::Property::hundred;
+    propertyMap[tr("Procurement expenditure")] = Behaviour::Property::procurement;
+    propertyMap[tr("Productivity")] = Behaviour::Property::productivity;
+    propertyMap[tr("Productivity (relative)")] = Behaviour::Property::rel_productivity;
+    propertyMap[tr("Govt direct support")] = Behaviour::Property::unbudgeted;
+    propertyMap[tr("Investment")] = Behaviour::Property::investment;
+    propertyMap[tr("GDP")] = Behaviour::Property::gdp;
+    propertyMap[tr("Profit")] = Behaviour::Property::profit;
+    propertyMap[tr("Zero reference line")] = Behaviour::Property::zero;
 
     // If non-zero, points to currently selected listwidget item
-    selectedModelItem = 0;
+    selectedBehaviourItem = nullptr;
 
     // Make sure preferences exist
     QSettings settings;
@@ -95,7 +97,7 @@ MainWindow::MainWindow()
         //settings.setValue("sample-size", 10); // for moving averages -- adjust as necessary
     }
 
-    current_profile = settings.value("current-profile", "").toString();
+    currentProfile = settings.value("current-profile", "").toString();
 
     createChart();
     createActions();
@@ -160,7 +162,7 @@ void MainWindow::createActions()
     const QIcon csvIcon = QIcon(":/chart-2.icns");
     saveCSVAction = new QAction(csvIcon, tr("&Save as CSV file..."), this);
     saveCSVAction->setStatusTip(tr("Save current chart as a CSV file"));
-    saveCSVAction->setDisabled(!isModelSelected());
+    saveCSVAction->setDisabled(!isBehaviourSelected());
     connect(saveCSVAction, &QAction::triggered, this, &MainWindow::saveCSV);
 
     // Save profile
@@ -177,9 +179,9 @@ void MainWindow::createActions()
 
     // Edit model parameters
     const QIcon setupIcon = QIcon(":/settings.icns");
-    changeAction = new QAction(setupIcon, tr("Edit &parameters..."));
-    changeAction->setDisabled(!isModelSelected());
-    changeAction->setStatusTip(tr("Modify the parameters for this model"));
+    changeAction = new QAction(setupIcon, tr("Edit &behaviour..."));
+    changeAction->setDisabled(!isBehaviourSelected());
+    changeAction->setStatusTip(tr("Modify this behaviour definition"));
     connect(changeAction, &QAction::triggered, this, &MainWindow::editParameters);
 
     // Reassign colours
@@ -190,20 +192,26 @@ void MainWindow::createActions()
 
     // New model
     const QIcon newIcon = QIcon(":/add-model.icns");
-    newAction = new QAction(newIcon, tr("&New model..."), this);
-    newAction->setStatusTip(tr("Create a new model"));
-    connect(newAction, &QAction::triggered, this, &MainWindow::createNewModel);
+    newAction = new QAction(newIcon, tr("&New behaviour definitionl..."), this);
+    newAction->setStatusTip(tr("Create a new behaviour definition"));
+    connect(newAction, &QAction::triggered, this, &MainWindow::createNewBehaviour);
+
+    // New domain
+    const QIcon domainIcon = QIcon(":/world.icns");
+    domainAction = new QAction(domainIcon, tr("New &domain..."), this);
+    domainAction->setStatusTip(tr("Create a new domain"));
+    connect(domainAction, &QAction::triggered, this, &MainWindow::createDomain);
 
     // Remove models
     const QIcon removeIcon = QIcon(":/delete-model.icns");
-    removeAction = new QAction(removeIcon, tr("&Remove models..."));
-    removeAction->setStatusTip(tr("Remove a model or models"));
+    removeAction = new QAction(removeIcon, tr("&Remove behaviour definitions..."));
+    removeAction->setStatusTip(tr("Remove one or more behaviour definitions"));
     connect(removeAction, &QAction::triggered, this, &MainWindow::remove);
 
     // Edit model description
     const QIcon notesIcon = QIcon(":/notes.icns");
     notesAction = new QAction(notesIcon, tr("&Edit description..."));
-    notesAction->setStatusTip(tr("Edit the description for this model"));
+    notesAction->setStatusTip(tr("Edit the description for this behaviour definition"));
     connect(notesAction, &QAction::triggered, this, &MainWindow::editModelDescription);
 
     setOptionsAction = new QAction(tr("&Preferences"));
@@ -250,7 +258,7 @@ void MainWindow::createActions()
     closeAction->setStatusTip(tr("Quit Obson"));
     connect(closeAction, &QAction::triggered, this, &MainWindow::close);
 
-    connect(this, &MainWindow::windowShown, this, &MainWindow::createFirstModel);
+    connect(this, &MainWindow::windowShown, this, &MainWindow::createDefaultBehaviour);
     connect(this, &MainWindow::windowLoaded, this, &MainWindow::restoreState);
 }
 
@@ -262,6 +270,8 @@ void MainWindow::createMenus()
 
     fileMenu = myMenuBar->addMenu(tr("&File"));
     fileMenu->addAction(newAction);
+    fileMenu->addAction(domainAction);
+    fileMenu->addSeparator();
     fileMenu->addAction(removeAction);
     fileMenu->addSeparator();
     fileMenu->addAction(saveCSVAction);
@@ -287,6 +297,7 @@ void MainWindow::createMenus()
     addToolBar(Qt::LeftToolBarArea, myToolBar);
 
     myToolBar->addAction(newAction);
+    myToolBar->addAction(domainAction);
     myToolBar->addAction(removeAction);
     myToolBar->addAction(changeAction);
     myToolBar->addAction(notesAction);
@@ -301,9 +312,9 @@ void MainWindow::createMenus()
     myToolBar->addAction(closeAction);
 }
 
-Model *MainWindow::current_model()
+Behaviour *MainWindow::currentBehaviour()
 {
-    return _current_model;
+    return _currentBehaviour;
 }
 
 void MainWindow::reassignColours()
@@ -316,7 +327,7 @@ void MainWindow::saveCSV()
 {
     qDebug() << "MainWindow::saveCSV():  called";
 
-    Model *model = current_model();
+    Behaviour *model = currentBehaviour();
     QString filename = QFileDialog::getSaveFileName(this, tr("Save As"),
                                 QDir::homePath() + QDir::separator() + model->name() + ".csv",
                                 tr("CSV files (*.csv)"));
@@ -356,8 +367,8 @@ void MainWindow::saveCSV()
             }
             QString series_name = item->text();
             out << ",\"" << series_name << "\"";
-            Model::Property prop = property_map[series_name];
-            lists[n++] = _current_model->series[prop]->points();
+            Behaviour::Property prop = propertyMap[series_name];
+            lists[n++] = _currentBehaviour->series[prop]->points();
         }
     }
 
@@ -430,7 +441,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
             saveSettingsAsProfile(dlg.profileName());
         }
     }
-    settings.setValue("current-profile", current_profile);
+    settings.setValue("current-profile", currentProfile);
     event->accept();
 }
 
@@ -455,7 +466,7 @@ void MainWindow::restoreState()
     }
     else
     {
-        QList<QListWidgetItem*> items = modelList->findItems(s, Qt::MatchExactly);
+        QList<QListWidgetItem*> items = behaviourList->findItems(s, Qt::MatchExactly);
         if (items.count() == 1) {
             items[0]->setSelected(true);
             changeModel(items[0]);
@@ -463,17 +474,17 @@ void MainWindow::restoreState()
     }
 }
 
-#include "model.h"
+#include "behaviour.h"
 
 void MainWindow::saveSettingsAsProfile(QString name)
 {
     if (name.isEmpty()) {
-        if (current_profile.isEmpty()) {
+        if (currentProfile.isEmpty()) {
             // TODO: There should be an error message here, unless this case is
             // filtered out -- check.
             return;
         } else {
-            name = current_profile;
+            name = currentProfile;
         }
     }
 
@@ -507,7 +518,7 @@ void MainWindow::saveSettingsAsProfile(QString name)
     settings.endGroup();
 
     settings.setValue("current-profile", name);
-    current_profile = name;
+    currentProfile = name;
 }
 
 void MainWindow::createProfile()
@@ -534,17 +545,17 @@ void MainWindow::removeProfile()
     settings.endGroup();
 
     // Now we have to select the item corresponding to the current profile
-    QList<QListWidgetItem*> items = profileList->findItems(current_profile, Qt::MatchExactly);
+    QList<QListWidgetItem*> items = profileList->findItems(currentProfile, Qt::MatchExactly);
     if (items.count() == 1) {
         profileList->setCurrentRow(profileList->row(items[0]), QItemSelectionModel::SelectCurrent);
     }
     updatingProfileList = false;
 }
 
-void MainWindow::createNewModel()
+void MainWindow::createNewBehaviour()
 {
     qDebug() << "MainWindow::createNewModel(): calling NewModelDlg";
-    NewModelDlg dlg(this);
+    NewBehaviourlDlg dlg(this);
 
     if (dlg.exec() == QDialog::Accepted)
     {
@@ -553,13 +564,13 @@ void MainWindow::createNewModel()
 
         QString name = dlg.getName();
 
-        _current_model = Model::createModel(name);
+        _currentBehaviour = Behaviour::createBehaviour(name);
         qDebug() << "MainWindow::createNewModel(): name =" << name;
 
         // Find the currently selected item and deselect it
-        for (int i = 0; i < modelList->count(); ++i)
+        for (int i = 0; i < behaviourList->count(); ++i)
         {
-            QListWidgetItem* it = modelList->item(i);
+            QListWidgetItem* it = behaviourList->item(i);
             if (it->isSelected())
             {
                 it->setSelected(false);
@@ -570,8 +581,8 @@ void MainWindow::createNewModel()
         // Add a new item to the list of models, giving the new model name
         QListWidgetItem *item = new QListWidgetItem;
         item->setText(name);
-        modelList->addItem(item);
-        selectedModelItem = item;
+        behaviourList->addItem(item);
+        selectedBehaviourItem = item;
 
         // Remove the current [Models] section from settings
         QSettings settings;
@@ -581,9 +592,9 @@ void MainWindow::createNewModel()
 
         // Repopulate it with a list containing the new model name
         settings.beginWriteArray("Models");
-        for (int i = 0; i < modelList->count(); ++i) {
+        for (int i = 0; i < behaviourList->count(); ++i) {
             settings.setArrayIndex(i);
-            settings.setValue("name", modelList->item(i)->text());
+            settings.setValue("name", behaviourList->item(i)->text());
         }
         settings.endArray();
 
@@ -600,7 +611,7 @@ void MainWindow::createNewModel()
         // Highlight the row containing the new item. We do this after they've
         // had a chance to update the parameters as it will trigger a re-run of
         // the model.
-        modelList->setCurrentRow(modelList->row(item), QItemSelectionModel::Select);
+        behaviourList->setCurrentRow(behaviourList->row(item), QItemSelectionModel::Select);
     }
     else
     {
@@ -610,25 +621,40 @@ void MainWindow::createNewModel()
     }
 }
 
+void MainWindow::createDomain()
+{
+    qDebug() << "MainWindow::createDomain(): calling CreateDomainDlg";
+    CreateDomainDlg dlg(this);
+    if (dlg.exec() == QDialog::Accepted)
+    {
+        Domain *newDomain = new Domain(
+                    dlg.getDomainName(),
+                    Behaviour::getBehaviour(dlg.getBehaviourName()),
+                    dlg.getCurrency(),
+                    dlg.getCurrencyAbbrev()
+                    );
+    }
+}
+
 void MainWindow::remove()
 {
     RemoveModelDlg dlg(this);
     dlg.exec();
 
     reloading = true;
-    loadModelList();
+    loadBehaviourList();
     reloading = false;
 }
 
 void MainWindow::editParameters()
 {
-    Q_ASSERT(selectedModelItem != 0);
-    QString model_name = selectedModelItem->text();
-    qDebug() << "MainWindow::edit(): model_name =" << model_name;
-    wiz->setCurrentModel(model_name);
+    Q_ASSERT(selectedBehaviourItem != nullptr);
+    QString behaviourName = selectedBehaviourItem->text();
+    qDebug() << "MainWindow::edit(): model_name =" << behaviourName;
+    wiz->setCurrentModel(behaviourName);
     if (wiz->exec() == QDialog::Accepted)
     {
-        Model *mod = current_model();
+        Behaviour *mod = currentBehaviour();
         mod->run();
     }
     propertyChanged();
@@ -636,7 +662,7 @@ void MainWindow::editParameters()
 
 void MainWindow::editModelDescription()
 {
-    NewModelDlg *dlg = new NewModelDlg(this);
+    NewBehaviourlDlg *dlg = new NewBehaviourlDlg(this);
     dlg->setPreexisting();
     if (dlg->exec() == QDialog::Accepted)
     {
@@ -664,7 +690,7 @@ void MainWindow::setOptions()
 {
     OptionsDialog dlg(this);
     dlg.setModal(true);
-    if (dlg.exec() == QDialog::Accepted && _current_model != nullptr)
+    if (dlg.exec() == QDialog::Accepted && _currentBehaviour != nullptr)
     {
         drawChart(true);
     }
@@ -687,10 +713,10 @@ void MainWindow::propertyChanged()
 {
     qDebug() << "MainWindow::propertyChanged";
     // Allow the property to be changed even when there's no model selected.
-    if (_current_model != nullptr && !reloading)
+    if (_currentBehaviour != nullptr && !reloading)
     {
         drawChart(false);   // no need to rerun
-        if (!current_profile.isEmpty()) {
+        if (!currentProfile.isEmpty()) {
             qDebug() << "MainWindow::propertyChanged(): setting profile_changed";
             profile_changed = true;
         }
@@ -714,8 +740,8 @@ void MainWindow::createDockWindows()
     //propertyList->setFixedWidth(220);
 
     // Populate the property list
-    QMap<QString,Model::Property>::iterator i;
-    for (i = property_map.begin(); i != property_map.end(); ++i)
+    QMap<QString,Behaviour::Property>::iterator i;
+    for (i = propertyMap.begin(); i != propertyMap.end(); ++i)
     {
         QListWidgetItem *item = new QListWidgetItem;
         item->setText(i.key());
@@ -732,16 +758,16 @@ void MainWindow::createDockWindows()
     addDockWidget(Qt::LeftDockWidgetArea, dock);
 
     // Create the model list
-    dock = new QDockWidget(tr("Models"), this);
+    dock = new QDockWidget(tr("Behaviours"), this);
     dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    modelList = new QListWidget(dock);
+    behaviourList = new QListWidget(dock);
     //modelList->setFixedWidth(220);
 
     // Populate the model list
-    loadModelList();
+    loadBehaviourList();
 
     // Add to dock
-    dock->setWidget(modelList);
+    dock->setWidget(behaviourList);
     //dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
     addDockWidget(Qt::LeftDockWidgetArea, dock);
 
@@ -758,8 +784,8 @@ void MainWindow::createDockWindows()
     settings.endGroup();
 
     // Select the item corresponding to the current profile
-    if (!current_profile.isEmpty()) {
-        selectProfile(current_profile);
+    if (!currentProfile.isEmpty()) {
+        selectProfile(currentProfile);
     }
 
     // Add to dock
@@ -769,12 +795,12 @@ void MainWindow::createDockWindows()
 
     // Create the parameter wizard
     wiz = new ParameterWizard(this);
-    wiz->setProperties(property_map);
+    wiz->setProperties(propertyMap);
     wiz->setModal(true);
 
     // Connect signals for changing selection and double-click
-    connect(modelList, &QListWidget::currentItemChanged, this, &MainWindow::changeModel);
-    connect(modelList, &QListWidget::itemDoubleClicked, this, &MainWindow::editParameters);
+    connect(behaviourList, &QListWidget::currentItemChanged, this, &MainWindow::changeModel);
+    connect(behaviourList, &QListWidget::itemDoubleClicked, this, &MainWindow::editParameters);
     connect(profileList, &QListWidget::currentItemChanged, this, &MainWindow::changeProfile);
 }
 
@@ -794,19 +820,19 @@ int MainWindow::loadProfileList()
     return 0;
 }
 
-void MainWindow::createFirstModel()
+void MainWindow::createDefaultBehaviour()
 {
-    if (0 == Model::loadAllModels())
+    if (0 == Behaviour::loadAllBehaviours())
     {
-        createNewModel();
+        createNewBehaviour();
     }
 }
 
-int MainWindow::loadModelList()
+int MainWindow::loadBehaviourList()
 {
     qDebug() << "MainWindow::loadModelList(): opening Settings";
     QSettings settings;
-    QStringList model_names;
+    QStringList behaviourNames;
 
     // Read the model names from settings
     int count = settings.beginReadArray("Models");
@@ -816,7 +842,7 @@ int MainWindow::loadModelList()
         for (int i = 0; i < count; ++i)
         {
             settings.setArrayIndex(i);
-            model_names.append(settings.value("name").toString());
+            behaviourNames.append(settings.value("name").toString());
         }
     }
     settings.endArray();
@@ -825,17 +851,17 @@ int MainWindow::loadModelList()
     // the model names from scratch. In practice we generally add them one at a
     // time (except when starting up).
     qDebug() << "MainWindow::loadModelList(): clearing modelList";
-    modelList->clear();
+    behaviourList->clear();
 
     qDebug() << "MainWindow::loadModelList(): adding new items";
-    modelList->addItems(model_names);
+    behaviourList->addItems(behaviourNames);
 
-    return modelList->count();
+    return behaviourList->count();
 }
 
-bool MainWindow::isModelSelected()
+bool MainWindow::isBehaviourSelected()
 {
-    return selectedModelItem != 0;
+    return selectedBehaviourItem != nullptr;
 }
 
 QColor MainWindow::nextColour(int n)
@@ -867,9 +893,18 @@ void MainWindow::drawChart(bool rerun, bool randomised)    // uses _current_mode
     // ***
 
     QList<QAbstractSeries*> current_series = chart->series();
+
+    // We remove the series one by one because for some reason removeAllSeries
+    // causes the program to crash. I think it's after restart() is called, so
+    // perhaps it doesn't like it if there are no series to remove.
+    /*
+    chart->removeAllSeries();        // causes crash
+    */
+
     for (int i = 0; i < current_series.count(); i++) {
         chart->removeSeries(current_series[i]);
     }
+
     if (chart->axisX() != nullptr) {
         chart->removeAxis(chart->axisX());
     }
@@ -884,7 +919,7 @@ void MainWindow::drawChart(bool rerun, bool randomised)    // uses _current_mode
 
     if (rerun)
     {
-        _current_model->run(randomised);
+        _currentBehaviour->run(randomised);
         statsDialog->hide();
         if (property_selected) {
             updateStatsDialog(propertyList->currentItem());
@@ -893,12 +928,15 @@ void MainWindow::drawChart(bool rerun, bool randomised)    // uses _current_mode
 
     chart->legend()->show();
     chart->setTitle("<h2 style=\"text-align:center;\">"
-                    + _current_model->name()
+                    + _currentBehaviour->name()
                     + "</h2><p style=\"text-align:center;\">"
-                    + current_profile
+                    + currentProfile
                     + "</p>");
 
     QLineSeries *anySeries = nullptr;
+
+    int y_max = -INT_MAX, y_min = INT_MAX;
+    qDebug() << "MainWindow::drawChart(): resetting range y_min = " << y_min << "y_max" << y_max << "***";
 
     for (int i = 0, n = propertyColours.count(); i < propertyList->count(); i++)
     {
@@ -908,16 +946,18 @@ void MainWindow::drawChart(bool rerun, bool randomised)    // uses _current_mode
         if (selected)
         {
             QString series_name = item->text();
-            Model::Property prop = property_map[series_name];
-            QLineSeries *ser = _current_model->series[prop];
+            Behaviour::Property prop = propertyMap[series_name];
+            QLineSeries *ser = _currentBehaviour->series[prop];
             ser->setName(series_name);
             chart->addSeries(ser);
+
             anySeries = ser;
 
+            // Set the line colour and type for this series
             switch(prop)
             {
-            case Model::Property::zero:
-            case Model::Property::hundred:
+            case Behaviour::Property::zero:
+            case Behaviour::Property::hundred:
                 ser->setColor(Qt::black);
                 ser->setPen(QPen(Qt::DotLine));
                 break;
@@ -934,8 +974,29 @@ void MainWindow::drawChart(bool rerun, bool randomised)    // uses _current_mode
                 }
                 break;
             }
+
+
+            // Set values for y axis range
+
+            // TODO: prop is an enum but max_value() and min_value() expect
+            // ints, so we have to do a static cast. Perhaps this should really
+            // be done in the functions themselves.
+            int ix = static_cast<int>(prop);
+
+            y_max = std::max(y_max, _currentBehaviour->max_value(ix));
+            y_min = std::min(y_min,_currentBehaviour->min_value(ix));
+            qDebug() << "MainWindow::drawChart(): series name" << series_name
+                     << "series max" << _currentBehaviour->max_value(ix)
+                     << "y_max" << y_max
+                     << "series min" << _currentBehaviour->min_value(ix)
+                     << "y_min" << y_min;
         }
+
     }
+
+    int scale = magnitude(std::max(std::abs(y_max), std::abs(y_min)));
+
+    qDebug() << "MainWindow::drawChart(): min" << y_min << "max" << y_max << "scale" << scale;
 
     // Format the axis numbers to whole integers. This needs a series to have
     // been selected, so avoid otherwise
@@ -946,15 +1007,45 @@ void MainWindow::drawChart(bool rerun, bool randomised)    // uses _current_mode
         x_axis->setLabelFormat("%d");
         QValueAxis *y_axis = static_cast<QValueAxis*>(chart->axisY(anySeries));
         y_axis->setLabelFormat("%d");
+
+        int temp;
+        if (y_max > 0 && y_min >= 0) {
+            // Both positive: range from zero to y_max rounded up to power of 10
+            temp = std::pow(10, (scale + 1));
+            y_max = (temp >= y_max * 2 ? (temp >= y_max * 4 ? temp / 4 : temp / 2) : temp);
+            y_min = 0;
+        } else if (y_min < 0 && y_max <= 0) {
+            // Both negative: range y_min rounded down to power of 10, to zero
+            y_max = 0;
+            temp = -std::pow(10, (scale + 1));
+            y_min = (temp <= y_min * 2 ? (temp <= y_min * 4 ? temp / 4 : temp / 2) : temp);
+        } else {
+            // TODO: It would be nicer if the intervals were equally reflected
+            // about the x-axis but this isn't really very important
+            temp = std::pow(10, (scale + 1));
+            y_max = (temp >= y_max * 2 ? (temp >= y_max * 4 ? temp / 4: temp / 2) : temp);
+            temp = -std::pow(10, (scale + 1));
+            y_min = (temp <= y_min * 2 ? (temp <= y_min * 4 ? temp / 4 : temp / 2) : temp);
+        }
+
+        qDebug() << "MainWindow::drawChart(): Setting range from" << y_min << "to" << y_max;
+        y_axis->setRange(y_min, y_max);
     }
 
-    double gini = _current_model->getGini();
-    double prod = _current_model->getProductivity();
+    double gini = _currentBehaviour->getGini();
+    double prod = _currentBehaviour->getProductivity();
 
     inequalityLabel->setText(tr("Inequality: ") + QString::number(round(gini * 100)) + "%");
     productivityLabel->setText(tr("Productivity: ") + QString::number(round(prod + 0.5)) + "%");
 
-    emit drawingCompleted();
+    // emit drawingCompleted();
+}
+
+int MainWindow::magnitude(double y)
+{
+    int x = (y == 0.0 ? -INT_MAX : (static_cast<int>(log10(abs(y)))));
+    qDebug() << "MainWindow::magnitude(): magnitude of" << y << "is" << x;
+    return x;
 }
 
 void MainWindow::updateStatsDialog(QListWidgetItem *current)
@@ -970,11 +1061,11 @@ void MainWindow::updateStatsDialog(QListWidgetItem *current)
 
     QListWidgetItem *it = current; //propertyList->currentItem();
     QString key = it->text();
-    Model::Property prop = property_map[key];
+    Behaviour::Property prop = propertyMap[key];
     int ix = static_cast<int>(prop);
-    int min = _current_model->min_value(ix);
-    int max = _current_model->max_value(ix);
-    int total = _current_model->total(ix);
+    int min = _currentBehaviour->min_value(ix);
+    int max = _currentBehaviour->max_value(ix);
+    int total = _currentBehaviour->total(ix);
     int mean = total / range;
 
     statsDialog->setLimits(key, min, max, mean);
@@ -996,16 +1087,16 @@ void MainWindow::changeProfile(QListWidgetItem *item)
     }
 
     qDebug() << "Changing profile";
-    current_profile = item->text();
-    qDebug() << "New profile is" << current_profile;
+    currentProfile = item->text();
+    qDebug() << "New profile is" << currentProfile;
 
     profile_changed = false;    // i.e. _this_ profile hasn't been changed
 
     // Load settings for this profile and redraw the chart
     QSettings settings;
-    settings.setValue("current-profile", current_profile);
+    settings.setValue("current-profile", currentProfile);
     settings.beginGroup("Profiles");
-    settings.beginGroup(current_profile);
+    settings.beginGroup(currentProfile);
 
     for (int i = 0; i < propertyList->count(); i++)
     {
@@ -1030,12 +1121,12 @@ void MainWindow::changeModel(QListWidgetItem *item)
         return;
     }
 
-    selectedModelItem = item;
+    selectedBehaviourItem = item;
     changeAction->setDisabled(false);
     saveCSVAction->setDisabled(false);
-    _current_model = Model::model(item->text());
+    _currentBehaviour = Behaviour::getBehaviour(item->text());
 
-    if (_current_model == nullptr) {
+    if (_currentBehaviour == nullptr) {
         errorMessage("Cannot find the requested model");    // exits
     }
 
