@@ -42,6 +42,8 @@ class Behaviour : public QObject
 {
     Q_OBJECT
 
+    friend class MainWindow;
+
 public:
 
     static Behaviour *createBehaviour(QString name);

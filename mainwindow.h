@@ -50,6 +50,7 @@ protected:
     Domain *getDomain(QString);
 
     int loadBehaviourList();
+    int loadDomainList();
     int loadProfileList();
 
     int getIters();         // number of iterations (periods)
@@ -129,7 +130,9 @@ private:
     Behaviour *_currentBehaviour;
 
     QList<Domain*> domains;
+    QList<Behaviour*> behaviours;
 
+    Behaviour *defaultBehaviour;
     QString currentProfile;
 
     StatsDialog *statsDialog;

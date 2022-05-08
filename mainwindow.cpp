@@ -41,6 +41,9 @@ MainWindow::MainWindow()
     // is declared as static. And of course this is no help when it has to
     // point to instance members.
 
+    // Note that Behaviour::Property is an enum, so in effect PropertyMap
+    // maps property names to indices that reference a chart series
+
     propertyMap[tr("Current period")] = Behaviour::Property::current_period;
     propertyMap[tr("Population size")] = Behaviour::Property::pop_size;
     propertyMap[tr("Govt exp excl benefits")] = Behaviour::Property::gov_exp;
@@ -86,8 +89,19 @@ MainWindow::MainWindow()
     QSettings settings;
     qDebug() << "Settings are in" << settings.fileName();
 
+    // If there are no global settings set up sensible defaults
     if (!settings.contains("iterations"))
     {
+        QMessageBox msgBox(this);
+        msgBox.setText(tr("Using default settings"));
+        msgBox.setInformativeText(tr("You have not yet customised the settings "
+                                     " for this application. To do so, please select "
+                                     "\"Preferences\" from the main menu."));
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setDefaultButton(QMessageBox::Ok);
+        msgBox.exec();
+
         settings.setValue("iterations", 100);
         settings.setValue("start-period", 0);
         settings.setValue("startups", 10);
@@ -104,6 +118,32 @@ MainWindow::MainWindow()
     createMenus();
     createStatusBar();
     createDockWindows();
+
+    // Set up existing domains and there parameters
+    settings.beginGroup("Domains");
+    for (int j = 0; j < domainList->count(); ++j)
+    {
+        QListWidgetItem *item = domainList->item(j);
+        QString domainName = item->text();
+        qDebug() << "adding domain" << domainName;
+        settings.beginGroup(domainName);
+
+        // This assumes something has created the named behaviour. Currently
+        // this done only when selecting a behaviour by name, and ia stored in
+        // _currentBehaviour somewhere...
+        Behaviour *beh = Behaviour::getBehaviour(settings.value("Behaviour").toString());
+
+        Domain *dom = new Domain(
+                    domainName,
+                    beh,
+                    settings.value("Currency").toString(),
+                    settings.value("Abbrev").toString()
+                    );
+        domains.append(dom);
+        settings.endGroup();
+    }
+
+
 
     setWindowTitle(tr("Obson"));
     setWindowIcon(QIcon(":/obson.icns"));
@@ -258,7 +298,12 @@ void MainWindow::createActions()
     closeAction->setStatusTip(tr("Quit Obson"));
     connect(closeAction, &QAction::triggered, this, &MainWindow::close);
 
-    connect(this, &MainWindow::windowShown, this, &MainWindow::createDefaultBehaviour);
+    // If there is no default behaviour, create one
+    connect(this,
+      &MainWindow::windowShown,
+      this,
+      &MainWindow::createDefaultBehaviour);
+
     connect(this, &MainWindow::windowLoaded, this, &MainWindow::restoreState);
 }
 
@@ -317,10 +362,21 @@ Behaviour *MainWindow::currentBehaviour()
     return _currentBehaviour;
 }
 
-// NEXT: COMPLETE THIS FUNCTION -- IMPORTANT!
-Domain *MainWindow::getDomain(QString)
+Domain *MainWindow::getDomain(QString domainName)
 {
+    // NEXT: COMPLETE THIS FUNCTION -- IMPORTANT!
 
+    int numDomains = domains.count();
+
+    for (int i = 0; i < numDomains; i++)
+    {
+        Domain *dom = domains.at(i);
+        if (dom->getName() == domainName) {
+            return dom;
+        }
+    }
+
+    return nullptr;
 }
 
 void MainWindow::reassignColours()
@@ -398,7 +454,7 @@ void MainWindow::saveCSV()
 void MainWindow::nyi()
 {
     QMessageBox msgBox(this);
-    msgBox.setText(tr("Not yet implemented!"));
+    msgBox.setText(tr("Not Yet Implemented"));
     msgBox.setInformativeText(tr("You have just requested a service that is not yet implemented."));
     msgBox.setIcon(QMessageBox::Warning);
     msgBox.setStandardButtons(QMessageBox::Ok);
@@ -558,6 +614,11 @@ void MainWindow::removeProfile()
     updatingProfileList = false;
 }
 
+
+// NEXT: This function is no longer correct. Note that behaviourList here is
+// a QListWidget containing the behaviour names only. The behaviour parameters
+// are stored in settings independently (see Behaviour::createBehaviour()).
+// This architecture will have to be changed.
 void MainWindow::createNewBehaviour()
 {
     qDebug() << "MainWindow::createNewModel(): calling NewModelDlg";
@@ -627,6 +688,9 @@ void MainWindow::createNewBehaviour()
     }
 }
 
+
+// This function creates a new domain using the information returned by the
+// CreateDomainDlg and appends it to QList<Domain*>::domains
 void MainWindow::createDomain()
 {
     qDebug() << "MainWindow::createDomain(): calling CreateDomainDlg";
@@ -809,6 +873,9 @@ void MainWindow::createDockWindows()
     dock->setWidget(domainList);
     addDockWidget(Qt::LeftDockWidgetArea, dock);
 
+
+
+
     // Create the parameter wizard
     wiz = new ParameterWizard(this);
     wiz->setProperties(propertyMap);
@@ -847,15 +914,45 @@ void MainWindow::createDefaultBehaviour()
     }
 }
 
+// NEXT: THIS NEEDS TO APPEND TO THE GLOBAL BEHAVIOURS LIST. Also, the way
+// behaviours are stored in settings neeeds to be changed
 int MainWindow::loadBehaviourList()
 {
-    qDebug() << "MainWindow::loadModelList(): opening Settings";
+    qDebug() << "MainWindow::loadBehaviourList(): opening Settings";
     QSettings settings;
     QStringList behaviourNames;
 
+    // TODO: Set up defaultGroup manually...
+
+    settings.beginGroup("Behaviours");
+    QStringList groups = settings.childGroups();
+
+    for (int i = 0; i < groups.size(); i++)
+    {
+        QString group = groups.at(i);
+
+        settings.beginGroup(group);
+        Behaviour *newBehaviour = new Behaviour(group);
+
+        // TODO: Read settings for behaviour i ...
+
+        // Append new behaviour to the list
+        behaviours.append(newBehaviour);
+        settings.endGroup();
+    }
+    settings.endGroup();
+
+
+
+
+
+    // ----------------------------------
+    //       OLD STUFF -- REPLACE
+    // ----------------------------------
+
     // Read the model names from settings
-    int count = settings.beginReadArray("Models");
-    qDebug() << "MainWindow::loadModelList():" << count << "models found in settings";
+    int count = settings.beginReadArray("Behaviours");
+    qDebug() << "MainWindow::loadBehaviourList():" << count << "behaviours found in settings";
     if (count > 0)
     {
         for (int i = 0; i < count; ++i)
@@ -869,13 +966,41 @@ int MainWindow::loadBehaviourList()
     // This allows the function to be called again should we want to reload all
     // the model names from scratch. In practice we generally add them one at a
     // time (except when starting up).
-    qDebug() << "MainWindow::loadModelList(): clearing modelList";
+    qDebug() << "MainWindow::loadBehaviourList(): clearing behaviourList";
     behaviourList->clear();
 
-    qDebug() << "MainWindow::loadModelList(): adding new items";
+    qDebug() << "MainWindow::loadBehaviourList(): adding new items";
     behaviourList->addItems(behaviourNames);
 
     return behaviourList->count();
+}
+
+int MainWindow::loadDomainList()
+{
+    qDebug() << "MainWindow::loadDomainList(): opening Settings";
+    QSettings settings;
+    QStringList domainNames;
+
+    // Read the model names from settings
+
+    /*
+     * This is now done when creating dock windows
+     *
+    int count = settings.beginReadArray("Domains");
+    qDebug() << "MainWindow::loadDomainList():" << count << "domains found in settings";
+    if (count > 0)
+    {
+        for (int i = 0; i < count; ++i)
+        {
+            settings.setArrayIndex(i);
+
+
+            domainNames.append(settings.value("name").toString());
+        }
+    }
+    settings.endArray();
+    */
+
 }
 
 bool MainWindow::isBehaviourSelected()
@@ -1137,8 +1262,33 @@ void MainWindow::changeProfile(QListWidgetItem *item)
 // NEXT: COMPLETE THIS FUNCTION (changeDomain())
 void MainWindow::changeDomain(QListWidgetItem *item)
 {
+    QString domainName = item->text();
+
     qDebug() << "MainWindow::changeDomain(): changing to"
-             << item->text();
+             << domainName;
+
+    QSettings settings;
+
+    settings.setValue("current_domain", domainName);
+    settings.beginGroup("Domains");
+    int count = settings.beginReadArray(domainName);
+
+    /* sort this out later
+     *
+    if (count > 0)
+    {
+        for (int i = 0; i < count; ++i)
+        {
+            settings.setArrayIndex(i);
+            ui->comboBox->addItem(settings.value("name").toString());
+        }
+    } else {
+        // TODO:
+    }
+    */
+
+    settings.endArray();
+
 
     /*
      * We need to use most of the functionality of the changeBehaviour function
@@ -1148,7 +1298,17 @@ void MainWindow::changeDomain(QListWidgetItem *item)
      */
 
     // Get the behaviour associated with the required domain and set it as current.
-    _currentBehaviour = getDomain(item->text())->getBehaviour();
+    Domain *dom = getDomain(domainName);
+
+    if (dom == nullptr) {
+        errorMessage("Cannot find the requested domain (" + item->text() + ")");    // exits
+
+    }
+    qDebug() << "MainWindow::changeDomain(): domain"
+             << item->text()
+             << "found";
+
+    _currentBehaviour = dom->getBehaviour();
 
     qDebug() << "MainWindow::changeDomain(): _currentBehaviour set";
 
@@ -1162,8 +1322,6 @@ void MainWindow::changeDomain(QListWidgetItem *item)
     saveCSVAction->setDisabled(false);
 
     qDebug() << "MainWindow::changeDomain(): opening Settings";
-
-    QSettings settings;
 
     // Get settings to display the status bar. This should really be done globally, not here...
     double nominal_population = settings.value("nominal-population", 1000).toDouble();

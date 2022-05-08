@@ -41,8 +41,11 @@ int Behaviour::loadAllBehaviours()
     for (int i = 0; i < count; ++i)
     {
         settings.setArrayIndex(i);
-        // TODO: Change this to a QMap so we can quickly find a behaviour by name?
         behaviours.append(new Behaviour(settings.value("name").toString()));
+        // NEXT: Currently we rely on the behaviour properties in settings. It
+        // would be much better to store them all internally in the behaviour
+        // instances. This will then mean we have to change the code where they
+        // are retrieved or updated as well.
     }
     settings.endArray();
 
@@ -105,6 +108,7 @@ Behaviour *Behaviour::createBehaviour(QString name)
     qDebug() << "Behaviour::createBehaviour(): adding Behaviour"
              << name
              << "to list";
+
     behaviours.append(behaviour);
 
     // Return a pointer to the new Behaviour
@@ -113,17 +117,26 @@ Behaviour *Behaviour::createBehaviour(QString name)
 
 Behaviour *Behaviour::getBehaviour(QString name)
 {
+    qDebug() << "Behaviour::getBehaviour("
+             << name
+             << "):"
+             << "checking"
+             << behaviours.count()
+             << "behaviours";
+
     for (int i = 0; i < behaviours.count(); i++)
     {
         if (behaviours[i]->name() == name)
         {
-            qDebug() << "Behaviour::model(): found model with name" << name;
+            qDebug() << "Behaviour::getBehaviour(): found behaviour with name"
+                     << name;
             currentBehaviour = behaviours[i];
             return currentBehaviour;
         }
     }
 
-    qDebug() << "Behaviour::model(): cannot find model with name" << name;
+    qDebug() << "Behaviour::getBehaviour(): cannot find behaviour with name"
+             << name;
     return nullptr;         // no model found with that name
 }
 

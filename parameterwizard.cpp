@@ -568,8 +568,8 @@ bool ExtraPage::validatePage()
 {
     qDebug() << "ExtraPage::validatePage()";
 
-    QString model = wiz->currentBehaviour;
-    QString key = model + "/condition-" + QString::number(pnum) + "/";
+    QString behaviourName = wiz->currentBehaviour;
+    QString key = behaviourName + "/condition-" + QString::number(pnum) + "/";
 
     // TODO: We don't currently do any actual validation here.
     // We just save the settings assuming they're OK.

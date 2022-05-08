@@ -22,6 +22,8 @@ public:
 
 private:
     QString _name;
+    QString _currency;
+    QString _abbrev;
     Behaviour *_behaviour;
     Bank *_centralBank;
 
