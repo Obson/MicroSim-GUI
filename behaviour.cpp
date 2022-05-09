@@ -142,26 +142,30 @@ Behaviour *Behaviour::getBehaviour(QString name)
 
 Behaviour::Behaviour(QString behaviourName)
 {
-    qDebug() << "Behaviour::Behaviour(" << behaviourName << ")";
-
     _name = behaviourName;
+
+    qDebug() << "Behaviour::Behaviour():" << behaviourName << "reading parameters";
+
+    readParameters();
+
+    // This should be global, and therefore maintained by MainWindow
+
+#if 0
 
     // _notes and _iterations must be retrieved from settings. Possibly best not
     // to do this until they are needed as this constructor is called while
     // traversing settings and looking up different settings seems likely to
     // disrupt the process. Haven't checked this.
-    //_notes = notes;
-    //_iterations = iterations;
+    _notes = notes;
+    _iterations = iterations;
 
-    // Set up a default set of parameters and copy them to settings
-    // Same applies here...
-    // Params *params = new Params();
+#endif
 
-    // TODO: Disassociate Model (now called 'behaviour' in the GUI) from a
-    // specific Government. Instead, behaviours should defined independently
-    // and associated with Domains as required. Any given behaviour can be
-    // associated with any number of Domains. This will complicate deletions of
-    // behaviours as they cannot be deleted if they are assigned.
+    // ------------
+    // NEXT: The following processing should be Domain-specific
+    // ------------
+
+#if 0
 
     // Create the Government. This will automatically set up a single firm
     // representing nationalised industries, civil service, and any other
@@ -229,8 +233,7 @@ Behaviour::Behaviour(QString behaviourName)
         series[prop_list[i]] = new QLineSeries;
     }
 
-    qDebug() << "Behaviour::Behaviour():" << behaviourName << "reading default parameters";
-    readParameters();
+#endif
 }
 
 double Behaviour::scale(Property p)
@@ -348,13 +351,14 @@ double Behaviour::productivity()
 
 void Behaviour::readParameters()
 {
-    // Get parameters from settings.
+    // Get parameters for this Behaviour from settings.
 
     QSettings settings;
 
     qDebug() << "Behaviour::readParameters(): file is" << settings.fileName();
 
-    // Global settings
+    // TODO: Global settings (these should be read by, and stored in MainWindow)
+
     _iterations = settings.value("iterations", 100).toInt();
     _startups = settings.value("startups", 10).toInt();
     _first_period = settings.value("start-period", 1).toInt();
@@ -362,13 +366,11 @@ void Behaviour::readParameters()
     _std_wage = settings.value("unit-wage", 100).toInt();
     _population = 1000;
 
-    // Model-specific settings
-    settings.beginGroup(_name);
+    // Select parameters for this Behaviour
+    settings.beginGroup("Behaviours\\" + _name);
 
-    _notes = settings.value("notes").toString();
-
-    // Default model-specific settings
-    settings.beginGroup("default");
+    // Default (non-conditional) settings
+    settings.beginGroup(_name + "\\default");
 
     // For the default parameter set we only care about the val component of
     // each pair (and that's all that will have been stored for default
@@ -377,40 +379,44 @@ void Behaviour::readParameters()
 
     Params *p = new Params;     // default parameter set
 
-    p->procurement.val        = settings.value(parameter_keys[ParamType::procurement]).toInt();
-    p->emp_rate.val           = settings.value(parameter_keys[ParamType::emp_rate]).toInt();
-    p->prop_con.val           = settings.value(parameter_keys[ParamType::prop_con]).toInt();
-    p->inc_tax_rate.val       = settings.value(parameter_keys[ParamType::inc_tax_rate]).toInt();
-    p->inc_thresh.val         = settings.value(parameter_keys[ParamType::inc_thresh]).toInt();
-    p->sales_tax_rate.val     = settings.value(parameter_keys[ParamType::sales_tax_rate]).toInt();
-    p->firm_creation_prob.val = settings.value(parameter_keys[ParamType::firm_creation_prob]).toInt();
-    p->dedns.val              = settings.value(parameter_keys[ParamType::dedns]).toInt();
-    p->unemp_ben_rate.val     = settings.value(parameter_keys[ParamType::unemp_ben_rate]).toInt();
-    p->active_pop.val         = settings.value(parameter_keys[ParamType::active_pop]).toInt();
-    p->distrib.val            = settings.value(parameter_keys[ParamType::distrib]).toInt();
-    p->prop_inv.val           = settings.value(parameter_keys[ParamType::prop_inv]).toInt();
-    p->boe_int.val            = settings.value(parameter_keys[ParamType::boe_int]).toInt();
-    p->bus_int.val            = settings.value(parameter_keys[ParamType::bus_int]).toInt();
-    p->loan_prob.val          = settings.value(parameter_keys[ParamType::loan_prob]).toInt();
-    p->recoup.val             = settings.value(parameter_keys[ParamType::recoup]).toInt();
+    p->procurement.val        = settings.value(parameter_keys[ParamType::procurement], 0).toInt();
+    p->emp_rate.val           = settings.value(parameter_keys[ParamType::emp_rate], 95).toInt();
+    p->prop_con.val           = settings.value(parameter_keys[ParamType::prop_con], 80).toInt();
+    p->inc_tax_rate.val       = settings.value(parameter_keys[ParamType::inc_tax_rate], 10).toInt();
+    p->inc_thresh.val         = settings.value(parameter_keys[ParamType::inc_thresh], 50).toInt();
+    p->sales_tax_rate.val     = settings.value(parameter_keys[ParamType::sales_tax_rate], 0).toInt();
+    p->firm_creation_prob.val = settings.value(parameter_keys[ParamType::firm_creation_prob], 0).toInt();
+    p->dedns.val              = settings.value(parameter_keys[ParamType::dedns], 0).toInt();
+    p->unemp_ben_rate.val     = settings.value(parameter_keys[ParamType::unemp_ben_rate], 100).toInt();
+    p->active_pop.val         = settings.value(parameter_keys[ParamType::active_pop], 60).toInt();
+    p->distrib.val            = settings.value(parameter_keys[ParamType::distrib], 90).toInt();
+    p->prop_inv.val           = settings.value(parameter_keys[ParamType::prop_inv], 20).toInt();
+    p->boe_int.val            = settings.value(parameter_keys[ParamType::boe_int], 2).toInt();
+    p->bus_int.val            = settings.value(parameter_keys[ParamType::bus_int], 3).toInt();
+    p->loan_prob.val          = settings.value(parameter_keys[ParamType::loan_prob], 4).toInt();
+    p->recoup.val             = settings.value(parameter_keys[ParamType::recoup], 10).toInt();
 
-    settings.endGroup();
+    settings.endGroup();        // end defaults
 
-    // Conditional parameter sets must be appended, but the default set must
-    // always be the first, so clear the list
-    parameter_sets.clear();
-    parameter_sets.append(p);
+    parameter_sets.clear();     // TODO: it would be better to do this after appending
+    parameter_sets.append(p);   // append the defaults we just read
 
-    num_parameter_sets = settings.value("pages", 1).toInt();
-    qDebug() << "Behaviour::readParameters():  model" << _name << "has" << num_parameter_sets << "pages";
-    for (int page = 1; page < num_parameter_sets; page++)
+    // How many conditional parameter sets...
+    numParameterSets = settings.value("pages", 1).toInt();
+
+    qDebug() << "Behaviour::readParameters():  Behaviour" << _name << "has" << numParameterSets << "pages";
+
+    for (int page = 1; page < numParameterSets; page++)
     {
         p = new Params;         // conditional parameter set
 
+        // Start conditional settings
         settings.beginGroup("condition-" + QString::number(page));
 
+        // Conditions are relations between properties and integer values
         p->condition.property = getProperty(settings.value("property").toInt());
 
+        // relations are encoded as integers
         int rel = settings.value("rel").toInt();
         switch (rel)
         {
@@ -437,8 +443,13 @@ void Behaviour::readParameters()
             break;
         }
 
+        // Set the value
         p->condition.val = settings.value("value").toInt();
 
+
+        // Get the parameter values to be applied if the codition is met. Where
+        // is_set is false the value will be ignored and the existing value --
+        // either default or from a previous condition -- used instead
         QString attrib;
 
         attrib = parameter_keys[ParamType::procurement];
@@ -505,11 +516,13 @@ void Behaviour::readParameters()
         p->recoup.is_set          = settings.value(attrib + "/isset").toBool();
         p->recoup.val             = settings.value(attrib + "/value").toInt();
 
+        // End settings for this condition
         settings.endGroup();
 
         parameter_sets.append(p);
     }
 
+    settings.endGroup();        // end Behaviours group
 
     qDebug() << "Behaviour::readParameters(): completed OK";
 }
@@ -1407,13 +1420,14 @@ double Behaviour::getAmountOwed()
 }
 
 // ----------------------------------------------------------------------------
-// These functions retrieve model parameters
+// These functions set and retrieve behaviour parameters
 // ----------------------------------------------------------------------------
+
 
 int Behaviour::getParameterVal(ParamType type)
 {
     Pair p;
-    for (int i = 0; i < num_parameter_sets; i++)
+    for (int i = 0; i < numParameterSets; i++)
     {
         if (i == 0 || applies(parameter_sets[i]->condition))
         {

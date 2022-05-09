@@ -23,6 +23,15 @@ namespace Ui {
 class MainWindow;
 }
 
+/*
+ * UPGRADE
+ * -------
+ * Parameters are used by Behaviours, Properties by Domains. Previously there
+ * was no distinction as a Model had both and only one Model
+ * could be active at any time.
+ */
+
+
 // This makes references to QCharts and related classes simpler.
 QT_CHARTS_USE_NAMESPACE
 

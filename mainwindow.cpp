@@ -925,16 +925,31 @@ int MainWindow::loadBehaviourList()
     // TODO: Set up defaultGroup manually...
 
     settings.beginGroup("Behaviours");
-    QStringList groups = settings.childGroups();
+    QStringList groups = settings.childGroups();    // e.g. EU, US, UK, etc
 
     for (int i = 0; i < groups.size(); i++)
     {
         QString group = groups.at(i);
-
-        settings.beginGroup(group);
         Behaviour *newBehaviour = new Behaviour(group);
 
-        // TODO: Read settings for behaviour i ...
+        settings.beginGroup(group);
+        QStringList keys = settings.allKeys();  // e.g. boe-interest, loan-prob, etc
+
+        for (int j = 0; j < keys.size(); j++)
+        {
+            // TODO: Read settings for behaviour i ...
+
+            QString key = keys.at(j);
+//            Behaviour::Property p = newBehaviour->getProperty(
+//                        static_cast<int>(propertyMap[ key ])
+//                    );
+//            newBehaviour->property(key.value<QString>());
+
+            newBehaviour->setProperty(
+                        key.toStdString().c_str(),
+                        settings.value(key)
+                        );
+        }
 
         // Append new behaviour to the list
         behaviours.append(newBehaviour);

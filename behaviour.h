@@ -63,6 +63,14 @@ public:
 
     QString name();
 
+
+
+
+
+    // ----------------
+    // Practically everyting from here on should go into the Domain class
+    // ----------------
+
     void run(bool randomised = false);
     void restart();
 
@@ -342,7 +350,7 @@ protected:
 
     QVector<Params*> parameter_sets;
 
-    int num_parameter_sets;
+    int numParameterSets;
 
     static QMap<ParamType,QString> parameter_keys;
 
@@ -351,8 +359,9 @@ protected:
     int getParameterVal(ParamType type);
     bool isParamSet(ParamType t, int n);
 
-    void readParameters();
+    void readParameters();      // get parameters for this Behaviour from settings
 
 };
+
 
 #endif // BEHAVIOUR_H
