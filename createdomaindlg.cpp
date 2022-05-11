@@ -12,29 +12,34 @@ CreateDomainDlg::CreateDomainDlg(QWidget *parent) :
     ui(new Ui::CreateDomainDlg)
 {
     ui->setupUi(this);
+    ui->cbBehaviour->insertItem(0, "Default");
 
     int ixCurrent = 0;
 
-    QSettings settings;
-    int count = settings.beginReadArray(
-                "Models"    // historical (Behaviour used to be Model)
-                );
-    if (count > 0)
-    {
-        for (int i = 0; i < count; ++i)
-        {
-            settings.setArrayIndex(i);
-            QString name = settings.value("name").toString();
-            if (name == Behaviour::currentBehaviour->name()) {
-                ixCurrent = i;
-            }
-            ui->cbBehaviour->addItem(settings.value("name").toString());
-        }
-    }
-    settings.endArray();
+    /*
+     * This all needs rewriting
+     */
 
-    ui->cbBehaviour->setCurrentIndex(ixCurrent);
-    ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
+//    QSettings settings;
+//    int count = settings.beginReadArray(
+//                "Behaviours"    // historical (Behaviour used to be Model)
+//                );
+//    if (count > 0)
+//    {
+//        for (int i = 0; i < count; ++i)
+//        {
+//            settings.setArrayIndex(i);
+//            QString name = settings.value("name").toString();
+//            if (name == Behaviour::currentBehaviour->name()) {
+//                ixCurrent = i;
+//            }
+//            ui->cbBehaviour->addItem(settings.value("name").toString());
+//        }
+//    }
+//    settings.endArray();
+
+//    ui->cbBehaviour->setCurrentIndex(ixCurrent);
+//    ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
 }
 
 CreateDomainDlg::~CreateDomainDlg()

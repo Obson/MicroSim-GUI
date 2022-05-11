@@ -14,11 +14,18 @@
 
 #include "behaviour.h"
 
+/*
+ * ParameterWizard sets the parameters for a behaviour. At present this will
+ * always be the current behaviour (i.e. 'model') as only one behaviour is
+ * in effect at any given time. In future several behaviours can be current at
+ * the same time (one to each active domain), and the behaviour -- and
+ * therefore its parameters -- will be accessed via the domain that owns it.
+ */
+
 class ExtraPage;
 
 class ParameterWizard : public QWizard
 {
-    //friend class StartPage;
     friend class DefaultPage;
     friend class ExtraPage;
 
@@ -26,12 +33,12 @@ public:
     ParameterWizard(QWidget *parent = Q_NULLPTR);
     QSpinBox *getSpinBox(int min, int max);
 
-    void setCurrentModel(QString model_name);
-    void importFrom(QString model_name);
+    void setCurrentBehaviour(QString behaviourName);
+    void importFrom(QString behaviourName);
     void setProperties(QMap<QString,Behaviour::Property> map);
 
-    void done(int result);
-    int nextId() const;
+    void done(int result) override;
+    int nextId() const override;
 
 private:
     enum PageType {
@@ -55,10 +62,10 @@ protected:
                                 // pages, which isn't much help if we want to
                                 // validate the page we are just leaving!
 
-    int nextPageNumber = -1;        // We set this to the id of a new page just before
+    int nextPageNumber = -1;    // We set this to the id of a new page just before
                                 // calling next. It's then picked up by our
                                 // reimplemented nextid() to ensure that that's
-                                // the page we go to. Iy must then be immediately
+                                // the page we go to. It must then be immediately
                                 // reset to -1.
 
 public slots:

@@ -52,7 +52,7 @@
    <property name="title">
     <string>Currency</string>
    </property>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -140,7 +140,7 @@
     </layout>
    </widget>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>122</x>
@@ -154,11 +154,21 @@
      <widget class="QLineEdit" name="leDomainName"/>
     </item>
     <item>
-     <widget class="QComboBox" name="cbBehaviour"/>
+     <widget class="QComboBox" name="cbBehaviour">
+      <property name="editable">
+       <bool>false</bool>
+      </property>
+      <property name="currentText">
+       <string/>
+      </property>
+      <property name="currentIndex">
+       <number>-1</number>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>30</x>

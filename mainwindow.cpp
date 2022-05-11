@@ -108,28 +108,35 @@ MainWindow::MainWindow()
         settings.setValue("nominal-population", 1000);
         settings.setValue("unit-wage", 100);
         settings.setValue("government-employees", 200); // approx tot pop / 5
+
         //settings.setValue("sample-size", 10); // for moving averages -- adjust as necessary
     }
 
-    currentProfile = settings.value("current-profile", "").toString();
+    // The chart profile applies regardless of the domain or behaviour
+    chartProfile = settings.value("current-profile", "").toString();
 
-    createChart();
+    createChart();          // this creates the chart but doesn't populate it
     createActions();
     createMenus();
     createStatusBar();
+
+    // Create and populate the dock windows, instantiating domains and
+    // behaviours from the values in settings.
     createDockWindows();
 
-    // Set up existing domains and there parameters
+    // Set up existing domains and their parameters
+
+    // ******************
+/*
     settings.beginGroup("Domains");
     for (int j = 0; j < domainList->count(); ++j)
     {
-        QListWidgetItem *item = domainList->item(j);
-        QString domainName = item->text();
+        QString domainName = domainList->item(j)->text();
         qDebug() << "adding domain" << domainName;
         settings.beginGroup(domainName);
 
         // This assumes something has created the named behaviour. Currently
-        // this done only when selecting a behaviour by name, and ia stored in
+        // this done only when selecting a behaviour by name, and is stored in
         // _currentBehaviour somewhere...
         Behaviour *beh = Behaviour::getBehaviour(settings.value("Behaviour").toString());
 
@@ -142,10 +149,8 @@ MainWindow::MainWindow()
         domains.append(dom);
         settings.endGroup();
     }
-
-
-
-    setWindowTitle(tr("Obson"));
+*/
+    setWindowTitle(tr("Obson Macro-Economic Modelling"));
     setWindowIcon(QIcon(":/obson.icns"));
     setUnifiedTitleAndToolBarOnMac(true);
     setMinimumSize(1024, 768);
@@ -155,6 +160,9 @@ MainWindow::MainWindow()
     // of the window. May not really be a good idea. The border and padding
     // definitely improve things though.
     // setStyleSheet("QListWidget{margin-left: 2px; border: 0px; padding:12px;}");
+
+
+    qDebug() << "*******";
 }
 
 MainWindow::~MainWindow()
@@ -164,10 +172,22 @@ MainWindow::~MainWindow()
 
 void MainWindow::show()
 {
+    // NOTE: I no longer remember why we have to override QMainWindow::show(),
+    // but if this is removed the window remains invisible. Investigate...
+
+    qDebug() << "MainWindow::show()";
+
     QMainWindow::show();
     QApplication::processEvents();
 
-    emit windowShown();
+    if (domains.isEmpty())
+    {
+        createDomain();
+        wiz->exec();
+    }
+
+    // This isn't connected to anything and seems to be redundant
+    // emit windowShown();
 
     if (first_time_shown == true)
     {
@@ -298,14 +318,9 @@ void MainWindow::createActions()
     closeAction->setStatusTip(tr("Quit Obson"));
     connect(closeAction, &QAction::triggered, this, &MainWindow::close);
 
-    // If there is no default behaviour, create one
-    connect(this,
-      &MainWindow::windowShown,
-      this,
-      &MainWindow::createDefaultBehaviour);
-
     connect(this, &MainWindow::windowLoaded, this, &MainWindow::restoreState);
 }
+
 
 void MainWindow::createMenus()
 {
@@ -362,8 +377,10 @@ Behaviour *MainWindow::currentBehaviour()
     return _currentBehaviour;
 }
 
+
 Domain *MainWindow::getDomain(QString domainName)
 {
+
     // NEXT: COMPLETE THIS FUNCTION -- IMPORTANT!
 
     int numDomains = domains.count();
@@ -378,6 +395,7 @@ Domain *MainWindow::getDomain(QString domainName)
 
     return nullptr;
 }
+
 
 void MainWindow::reassignColours()
 {
@@ -455,7 +473,7 @@ void MainWindow::nyi()
 {
     QMessageBox msgBox(this);
     msgBox.setText(tr("Not Yet Implemented"));
-    msgBox.setInformativeText(tr("You have just requested a service that is not yet implemented."));
+    msgBox.setInformativeText(tr("You have requested a service that is not yet implemented."));
     msgBox.setIcon(QMessageBox::Warning);
     msgBox.setStandardButtons(QMessageBox::Ok);
     msgBox.setDefaultButton(QMessageBox::Ok);
@@ -503,9 +521,14 @@ void MainWindow::closeEvent(QCloseEvent *event)
             saveSettingsAsProfile(dlg.profileName());
         }
     }
-    settings.setValue("current-profile", currentProfile);
+    settings.setValue("current-profile", chartProfile);
     event->accept();
 }
+
+// MainWindow::restoreState() is a slot that is activated (only) at the end of
+// MainWindow::createActions. I can't see any reason why the state can't be
+// read in as part of the setup (probably in createDockWindows), without
+// resorting to signals and slots. Investigate...
 
 void MainWindow::restoreState()
 {
@@ -541,12 +564,12 @@ void MainWindow::restoreState()
 void MainWindow::saveSettingsAsProfile(QString name)
 {
     if (name.isEmpty()) {
-        if (currentProfile.isEmpty()) {
+        if (chartProfile.isEmpty()) {
             // TODO: There should be an error message here, unless this case is
             // filtered out -- check.
             return;
         } else {
-            name = currentProfile;
+            name = chartProfile;
         }
     }
 
@@ -580,7 +603,7 @@ void MainWindow::saveSettingsAsProfile(QString name)
     settings.endGroup();
 
     settings.setValue("current-profile", name);
-    currentProfile = name;
+    chartProfile = name;
 }
 
 void MainWindow::createProfile()
@@ -607,7 +630,7 @@ void MainWindow::removeProfile()
     settings.endGroup();
 
     // Now we have to select the item corresponding to the current profile
-    QList<QListWidgetItem*> items = profileList->findItems(currentProfile, Qt::MatchExactly);
+    QList<QListWidgetItem*> items = profileList->findItems(chartProfile, Qt::MatchExactly);
     if (items.count() == 1) {
         profileList->setCurrentRow(profileList->row(items[0]), QItemSelectionModel::SelectCurrent);
     }
@@ -617,22 +640,26 @@ void MainWindow::removeProfile()
 
 // NEXT: This function is no longer correct. Note that behaviourList here is
 // a QListWidget containing the behaviour names only. The behaviour parameters
-// are stored in settings independently (see Behaviour::createBehaviour()).
-// This architecture will have to be changed.
+// are stored in settings independently (see Behaviour::createBehaviour()) and
+// only when the program is closed. This architecture will have to be changed.
+
 void MainWindow::createNewBehaviour()
 {
-    qDebug() << "MainWindow::createNewModel(): calling NewModelDlg";
+    qDebug() << "MainWindow::createNewBehaviour(): calling NewBehaviourDlg";
     NewBehaviourlDlg dlg(this);
+    dlg.setExistingBehaviourNames(&behaviourNames); // avoid duplicates
 
     if (dlg.exec() == QDialog::Accepted)
     {
-        qDebug() << "MainWindow::createNewModel(): "
-                    "NewModelDlg returns" << QDialog::Accepted;
+        qDebug() << "MainWindow::createNewBehaviour(): NewBehaviourDlg returns"
+                 << QDialog::Accepted;
 
         QString name = dlg.getName();
 
         _currentBehaviour = Behaviour::createBehaviour(name);
-        qDebug() << "MainWindow::createNewModel(): name =" << name;
+
+        qDebug() << "MainWindow::createNewBehaviour(): name ="
+                 << name;
 
         // Find the currently selected item and deselect it
         for (int i = 0; i < behaviourList->count(); ++i)
@@ -645,34 +672,20 @@ void MainWindow::createNewBehaviour()
             }
         }
 
-        // Add a new item to the list of models, giving the new model name
+        // Add a new item to the list of behaviours, giving the new behaviour name
         QListWidgetItem *item = new QListWidgetItem;
         item->setText(name);
         behaviourList->addItem(item);
         selectedBehaviourItem = item;
 
-        // Remove the current [Models] section from settings
-        QSettings settings;
-        settings.beginGroup("Models");
-        settings.remove("");
-        settings.endGroup();
-
-        // Repopulate it with a list containing the new model name
-        settings.beginWriteArray("Models");
-        for (int i = 0; i < behaviourList->count(); ++i) {
-            settings.setArrayIndex(i);
-            settings.setValue("name", behaviourList->item(i)->text());
-        }
-        settings.endArray();
-
-        // Get the name of the model (if any) from which to import parameters
+        // Get the name of the behaviour (if any) from which to import parameters
         // and pass it to the parameter wizard
         if (!dlg.importFrom().isEmpty()) {
             wiz->importFrom(dlg.importFrom());
         }
 
         // Call the parameter wizard to allow the user to change the parameters
-        qDebug() << "MainWindow::createNew(): calling editParameters()";
+        qDebug() << "MainWindow::createNewBehaviour(): calling editParameters()";
         editParameters();
 
         // Highlight the row containing the new item. We do this after they've
@@ -682,7 +695,7 @@ void MainWindow::createNewBehaviour()
     }
     else
     {
-        qDebug() << "MainWindow::createNew(): NewModelDlg returns"
+        qDebug() << "MainWindow::createNewBehaviour(): NewModelDlg returns"
                  << QDialog::Rejected;
         // No action needed...
     }
@@ -697,14 +710,23 @@ void MainWindow::createDomain()
     CreateDomainDlg dlg(this);
     if (dlg.exec() == QDialog::Accepted)
     {
+        QString bName = dlg.getBehaviourName();
+
         Domain *newDomain = new Domain(
                     dlg.getDomainName(),
-                    Behaviour::getBehaviour(dlg.getBehaviourName()),
+
+                    bName == "Default" ?
+                        Behaviour::getDefaultBehaviour() :
+                        Behaviour::getBehaviour(bName),
+
                     dlg.getCurrency(),
                     dlg.getCurrencyAbbrev()
                     );
 
         domains.append(newDomain);
+
+        qDebug() << "MainWindow::createDomain(): Calling parameterwizard";
+        wiz->exec();
     }
 }
 
@@ -722,12 +744,13 @@ void MainWindow::editParameters()
 {
     Q_ASSERT(selectedBehaviourItem != nullptr);
     QString behaviourName = selectedBehaviourItem->text();
-    qDebug() << "MainWindow::edit(): model_name =" << behaviourName;
-    wiz->setCurrentModel(behaviourName);
+    qDebug() << "MainWindow::editParameters(): model_name =" << behaviourName;
+    wiz->setCurrentBehaviour(behaviourName);
     if (wiz->exec() == QDialog::Accepted)
     {
-        Behaviour *mod = currentBehaviour();
-        mod->run();
+        // NEXT: ***** Transfer run() to Domain *****
+        // Behaviour *mod = currentBehaviour();
+        // mod->run();
     }
     propertyChanged();
 }
@@ -735,6 +758,7 @@ void MainWindow::editParameters()
 void MainWindow::editModelDescription()
 {
     NewBehaviourlDlg *dlg = new NewBehaviourlDlg(this);
+
     dlg->setPreexisting();
     if (dlg->exec() == QDialog::Accepted)
     {
@@ -778,7 +802,7 @@ void MainWindow::createStatusBar()
     statusBar()->addPermanentWidget(productivityLabel);
     statusBar()->addPermanentWidget(infoLabel);
 
-    infoLabel->setText(tr("No model has been selected"));
+    // infoLabel->setText(tr("No model has been selected"));
 }
 
 void MainWindow::propertyChanged()
@@ -788,7 +812,7 @@ void MainWindow::propertyChanged()
     if (_currentBehaviour != nullptr && !reloading)
     {
         drawChart(false);   // no need to rerun
-        if (!currentProfile.isEmpty()) {
+        if (!chartProfile.isEmpty()) {
             qDebug() << "MainWindow::propertyChanged(): setting profile_changed";
             profile_changed = true;
         }
@@ -810,6 +834,10 @@ void MainWindow::createDockWindows()
     dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     propertyList = new QListWidget(dock);
     //propertyList->setFixedWidth(220);
+
+    // NEXT: Read the state here so it can be use to set the property
+    // checkboxes
+
 
     // Populate the property list
     QMap<QString,Behaviour::Property>::iterator i;
@@ -852,14 +880,19 @@ void MainWindow::createDockWindows()
     settings.endGroup();
 
     // Select the item corresponding to the current profile
-    if (!currentProfile.isEmpty()) {
-        selectProfile(currentProfile);
+    if (!chartProfile.isEmpty()) {
+        selectProfile(chartProfile);
     }
 
     // Add to dock
     dock->setWidget(profileList);
     //dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
     addDockWidget(Qt::LeftDockWidgetArea, dock);
+
+    // Create a default behaviour
+    // NOTE: It's probably unnecessary, but we store it in MainWindow as it's
+    // common to all domains so we have quick access to it from anywhere
+    defaultBehaviour = Behaviour::createDefaultBehaviour();
 
     // Create domain list
     dock = new QDockWidget(tr("Domain"), this);
@@ -874,11 +907,27 @@ void MainWindow::createDockWindows()
     addDockWidget(Qt::LeftDockWidgetArea, dock);
 
 
+    int count = settings.beginReadArray("Domains");
+    qDebug() << "MainWindow::loadDomainList():" << count << "domains found in settings";
+    if (count > 0)
+    {
+        for (int i = 0; i < count; ++i)
+        {
+            QString domainName = settings.value("name").toString();
+            domainList->addItem(domainName);
+            domainNames.append(domainName);
+        }
+    } else
+    {
+    }
+    settings.endArray();
+
+
 
 
     // Create the parameter wizard
     wiz = new ParameterWizard(this);
-    wiz->setProperties(propertyMap);
+    // wiz->setProperties(propertyMap); (should be associated with specific behaviour)
     wiz->setModal(true);
 
     // Connect signals for changing selection and double-click
@@ -906,23 +955,21 @@ int MainWindow::loadProfileList()
     return 0;
 }
 
-void MainWindow::createDefaultBehaviour()
-{
-    if (0 == Behaviour::loadAllBehaviours())
-    {
-        createNewBehaviour();
-    }
-}
+// This function is called on startup, to populate the behaviour list widget in
+// the dock. It interrogates the settings and not only populates the widget but
+// also creates the defined behaviour objects, which it stores (as pointers)
+// in QList MainWindow::behaviours. It should only be called on startup. The
+// widget and behaviours should be maintained dynamically, only updating the
+// settings when the program terminates.
 
-// NEXT: THIS NEEDS TO APPEND TO THE GLOBAL BEHAVIOURS LIST. Also, the way
-// behaviours are stored in settings neeeds to be changed
+// TODO: At present this function is called again after a behaviour is removed.
+// This must be changed in MainWindow::remove().
+
 int MainWindow::loadBehaviourList()
 {
     qDebug() << "MainWindow::loadBehaviourList(): opening Settings";
-    QSettings settings;
-    QStringList behaviourNames;
 
-    // TODO: Set up defaultGroup manually...
+    QSettings settings;
 
     settings.beginGroup("Behaviours");
     QStringList groups = settings.childGroups();    // e.g. EU, US, UK, etc
@@ -932,18 +979,15 @@ int MainWindow::loadBehaviourList()
         QString group = groups.at(i);
         Behaviour *newBehaviour = new Behaviour(group);
 
+        behaviours.append(newBehaviour);
+        behaviourNames.append(group);
+
         settings.beginGroup(group);
         QStringList keys = settings.allKeys();  // e.g. boe-interest, loan-prob, etc
 
         for (int j = 0; j < keys.size(); j++)
         {
-            // TODO: Read settings for behaviour i ...
-
             QString key = keys.at(j);
-//            Behaviour::Property p = newBehaviour->getProperty(
-//                        static_cast<int>(propertyMap[ key ])
-//                    );
-//            newBehaviour->property(key.value<QString>());
 
             newBehaviour->setProperty(
                         key.toStdString().c_str(),
@@ -952,38 +996,13 @@ int MainWindow::loadBehaviourList()
         }
 
         // Append new behaviour to the list
-        behaviours.append(newBehaviour);
         settings.endGroup();
     }
     settings.endGroup();
 
-
-
-
-
-    // ----------------------------------
-    //       OLD STUFF -- REPLACE
-    // ----------------------------------
-
-    // Read the model names from settings
-    int count = settings.beginReadArray("Behaviours");
-    qDebug() << "MainWindow::loadBehaviourList():" << count << "behaviours found in settings";
-    if (count > 0)
-    {
-        for (int i = 0; i < count; ++i)
-        {
-            settings.setArrayIndex(i);
-            behaviourNames.append(settings.value("name").toString());
-        }
-    }
-    settings.endArray();
-
-    // This allows the function to be called again should we want to reload all
-    // the model names from scratch. In practice we generally add them one at a
-    // time (except when starting up).
+    // Populate the behaviourList widget
     qDebug() << "MainWindow::loadBehaviourList(): clearing behaviourList";
     behaviourList->clear();
-
     qDebug() << "MainWindow::loadBehaviourList(): adding new items";
     behaviourList->addItems(behaviourNames);
 
@@ -1014,6 +1033,7 @@ int MainWindow::loadDomainList()
         }
     }
     settings.endArray();
+
     */
 
 }
@@ -1089,7 +1109,7 @@ void MainWindow::drawChart(bool rerun, bool randomised)    // uses _current_mode
     chart->setTitle("<h2 style=\"text-align:center;\">"
                     + _currentBehaviour->name()
                     + "</h2><p style=\"text-align:center;\">"
-                    + currentProfile
+                    + chartProfile
                     + "</p>");
 
     QLineSeries *anySeries = nullptr;
@@ -1246,16 +1266,16 @@ void MainWindow::changeProfile(QListWidgetItem *item)
     }
 
     qDebug() << "Changing profile";
-    currentProfile = item->text();
-    qDebug() << "New profile is" << currentProfile;
+    chartProfile = item->text();
+    qDebug() << "New profile is" << chartProfile;
 
     profile_changed = false;    // i.e. _this_ profile hasn't been changed
 
     // Load settings for this profile and redraw the chart
     QSettings settings;
-    settings.setValue("current-profile", currentProfile);
+    settings.setValue("current-profile", chartProfile);
     settings.beginGroup("Profiles");
-    settings.beginGroup(currentProfile);
+    settings.beginGroup(chartProfile);
 
     for (int i = 0; i < propertyList->count(); i++)
     {

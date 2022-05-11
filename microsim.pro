@@ -68,7 +68,7 @@ HEADERS += \
 
 FORMS += \
     createdomaindlg.ui \
-    newmodeldlg.ui \
+    newbehaviourdlg.ui \
     optionsdialog.ui \
     removemodeldlg.ui \
     saveprofiledialog.ui \

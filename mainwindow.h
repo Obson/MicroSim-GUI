@@ -78,7 +78,7 @@ protected:
     void saveCSV();
     void editParameters();
     void editModelDescription();
-    void createDefaultBehaviour();
+    //void createDefaultBehaviour();
     void createNewBehaviour();
     void createDomain();
     void createProfile();
@@ -137,12 +137,15 @@ private:
     Ui::MainWindow *ui;
     ParameterWizard *wiz;
     Behaviour *_currentBehaviour;
+    Behaviour *defaultBehaviour;
 
     QList<Domain*> domains;
-    QList<Behaviour*> behaviours;
+    QStringList domainNames;        // for easy access
 
-    Behaviour *defaultBehaviour;
-    QString currentProfile;
+    QList<Behaviour*> behaviours;
+    QStringList behaviourNames;     // for easy access
+
+    QString chartProfile;
 
     StatsDialog *statsDialog;
 

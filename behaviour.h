@@ -38,6 +38,7 @@ enum class ParamType {
     loan_prob,
 };
 
+
 class Behaviour : public QObject
 {
     Q_OBJECT
@@ -48,8 +49,6 @@ public:
 
     static Behaviour *createBehaviour(QString name);
 
-    static int loadAllBehaviours();
-
     // List of all Behaviours. When a new Behaviour is created it is automatically
     // added to this list.
     static QList<Behaviour*> behaviours;
@@ -58,17 +57,16 @@ public:
     // set it as current. Requires loadAllBehaviours() to have been called
     // (which loads all the Behaviours into QList<Behaviour*> behaviours).
     static Behaviour *getBehaviour(QString name);
-
     static Behaviour *currentBehaviour;
+
+    inline static Behaviour *getDefaultBehaviour() {
+        return defaultBehaviour;
+    }
 
     QString name();
 
-
-
-
-
     // ----------------
-    // Practically everyting from here on should go into the Domain class
+    // Practically everything from here on should go into the Domain class
     // ----------------
 
     void run(bool randomised = false);
@@ -348,19 +346,21 @@ protected:
     bool applies(Condition);
     bool compare(int lhs, int rhs, Opr op);
 
-    QVector<Params*> parameter_sets;
+    QVector<Params*> parameterSets;
 
     int numParameterSets;
 
-    static QMap<ParamType,QString> parameter_keys;
+    static QMap<ParamType,QString> parameterKeys;
 
-    Params *default_parameters;
+    // Params *default_parameters;
 
     int getParameterVal(ParamType type);
     bool isParamSet(ParamType t, int n);
 
     void readParameters();      // get parameters for this Behaviour from settings
 
+    static Behaviour *createDefaultBehaviour();
+    static Behaviour *defaultBehaviour;
 };
 
 

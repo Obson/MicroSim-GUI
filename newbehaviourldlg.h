@@ -4,7 +4,7 @@
 #include <QDialog>
 
 namespace Ui {
-class NewModelDlg;
+class NewBehaviourDlg;
 }
 
 class NewBehaviourlDlg : public QDialog
@@ -12,7 +12,7 @@ class NewBehaviourlDlg : public QDialog
     Q_OBJECT
 
 public:
-    explicit NewBehaviourlDlg(QWidget *parent = nullptr);
+    explicit NewBehaviourlDlg(QWidget *parent);
     ~NewBehaviourlDlg() override;
 
     QString getName();
@@ -20,13 +20,16 @@ public:
     int     getIters();
     QString importFrom();
 
+    void    setExistingBehaviourNames(QStringList*);
+
     void    setPreexisting();
 
 private:
-    Ui::NewModelDlg *ui;
+    Ui::NewBehaviourDlg *ui;
 
     QString current_name;                   // when updating
     QString behaviourName;
+    QStringList *existingBehaviourNames;
     QString notes;
 
     bool preexisting = false;

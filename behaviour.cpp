@@ -1,5 +1,6 @@
 #include "behaviour.h"
 #include <QtGlobal>
+#include "QtWidgets/qerrormessage.h"
 #include "account.h"
 #include <QDebug>
 #include <limits>
@@ -9,8 +10,9 @@
 
 QList<Behaviour*> Behaviour::behaviours;
 Behaviour *Behaviour::currentBehaviour = nullptr;
+Behaviour *Behaviour::defaultBehaviour = nullptr;
 
-QMap<ParamType,QString> Behaviour::parameter_keys
+QMap<ParamType,QString> Behaviour::parameterKeys
 {
     {ParamType::procurement, "govt-procurement"},
     {ParamType::emp_rate, "employment-rate"},
@@ -30,35 +32,16 @@ QMap<ParamType,QString> Behaviour::parameter_keys
     {ParamType::recoup, "capex-recoup-periods"},
 };
 
-int Behaviour::loadAllBehaviours()
-{
-    qDebug() << "Behaviour::loadAllBehaviours()";
-
-    // Read the behaviour (model) names from settings and create a new
-    // behaviour for each one, returning the number of behaviours loaded.
-    QSettings settings;
-    int count = settings.beginReadArray("Models");
-    for (int i = 0; i < count; ++i)
-    {
-        settings.setArrayIndex(i);
-        behaviours.append(new Behaviour(settings.value("name").toString()));
-        // NEXT: Currently we rely on the behaviour properties in settings. It
-        // would be much better to store them all internally in the behaviour
-        // instances. This will then mean we have to change the code where they
-        // are retrieved or updated as well.
-    }
-    settings.endArray();
-
-    qDebug() << "Behaviour::loadAllModels():" << count << "models loaded";
-    return count;
-}
-
 // This function creates a Behaviour with the given name and default
 // parameters (but doesn't set it as current -- perhaps it should).
 Behaviour *Behaviour::createBehaviour(QString name)
 {
     qDebug() << "Behaviour::createBehaviour(): name =" << name;
     qDebug() << "Behaviour::createBehaviour(): setting default parameters for model" << name;
+
+    if (name.isEmpty()) {
+
+    }
 
     // Store default parameters:
     // Note that global parameters (Behaviour-wide) are not listed in ParamType
@@ -71,15 +54,15 @@ Behaviour *Behaviour::createBehaviour(QString name)
 
     // Add all Behaviour-specific parameters with default values here,,,
     settings.beginGroup("/default");
-    settings.setValue(parameter_keys[ParamType::procurement],        0);
-    settings.setValue(parameter_keys[ParamType::emp_rate],          95);
-    settings.setValue(parameter_keys[ParamType::prop_con],          80);
-    settings.setValue(parameter_keys[ParamType::inc_tax_rate],      10);
-    settings.setValue(parameter_keys[ParamType::inc_thresh],        50);
-    settings.setValue(parameter_keys[ParamType::sales_tax_rate],     0);
-    settings.setValue(parameter_keys[ParamType::firm_creation_prob], 0);
-    settings.setValue(parameter_keys[ParamType::dedns],              0);
-    settings.setValue(parameter_keys[ParamType::unemp_ben_rate],    60);
+    settings.setValue(parameterKeys[ParamType::procurement],        0);
+    settings.setValue(parameterKeys[ParamType::emp_rate],          95);
+    settings.setValue(parameterKeys[ParamType::prop_con],          80);
+    settings.setValue(parameterKeys[ParamType::inc_tax_rate],      10);
+    settings.setValue(parameterKeys[ParamType::inc_thresh],        50);
+    settings.setValue(parameterKeys[ParamType::sales_tax_rate],     0);
+    settings.setValue(parameterKeys[ParamType::firm_creation_prob], 0);
+    settings.setValue(parameterKeys[ParamType::dedns],              0);
+    settings.setValue(parameterKeys[ParamType::unemp_ben_rate],    60);
 
     // This setting is not currently used and should not be confused with the
     // emp_rate property. active_pop was intended to allow a distinction to be
@@ -87,14 +70,14 @@ Behaviour *Behaviour::createBehaviour(QString name)
     // actually active. In practice this hasn't been needed as we have
     // assumed that the whole population is active (or equivalently that the
     // nominal population size refers only to the active population).
-    settings.setValue(parameter_keys[ParamType::active_pop],        60);
+    settings.setValue(parameterKeys[ParamType::active_pop],        60);
 
-    settings.setValue(parameter_keys[ParamType::distrib],           50);
-    settings.setValue(parameter_keys[ParamType::prop_inv],           2);
-    settings.setValue(parameter_keys[ParamType::boe_int],            1);
-    settings.setValue(parameter_keys[ParamType::bus_int],            3);
-    settings.setValue(parameter_keys[ParamType::loan_prob],          0);
-    settings.setValue(parameter_keys[ParamType::recoup],            10);
+    settings.setValue(parameterKeys[ParamType::distrib],           50);
+    settings.setValue(parameterKeys[ParamType::prop_inv],           2);
+    settings.setValue(parameterKeys[ParamType::boe_int],            1);
+    settings.setValue(parameterKeys[ParamType::bus_int],            3);
+    settings.setValue(parameterKeys[ParamType::loan_prob],          0);
+    settings.setValue(parameterKeys[ParamType::recoup],            10);
 
     settings.endGroup();
     settings.endGroup();
@@ -140,15 +123,66 @@ Behaviour *Behaviour::getBehaviour(QString name)
     return nullptr;         // no model found with that name
 }
 
+
+Behaviour *Behaviour::createDefaultBehaviour()
+{
+    defaultBehaviour = new Behaviour("");
+    return defaultBehaviour;
+}
+
+// This creates a new Behaviour having the given name but without setting any
+// parameters. These must be set immediately by calling setParameters() (TBD).
+// If invoked with an empty behaviourName will create a default behaviour
+// with default parameters. This is done in the  This may subsequently be retrieved using
+// static const Behaviour *Behaviour::defaultBehaviour(). Incidently, this is
+// initially set to nullptr
 Behaviour::Behaviour(QString behaviourName)
 {
-    _name = behaviourName;
+    if (behaviourName.isEmpty())
+    {
+        if (nullptr != defaultBehaviour)
+        {
+            QErrorMessage msg;
+            msg.showMessage(tr("Cannot reset default behaviour"));
+            exit(997);
+        }
+        else
+        {
+            defaultBehaviour = this;
 
-    qDebug() << "Behaviour::Behaviour():" << behaviourName << "reading parameters";
+            Params *p = new Params;     // default parameter set
 
-    readParameters();
+            p->procurement.val        = 0;
+            p->emp_rate.val           = 95;
+            p->prop_con.val           = 80;
+            p->inc_tax_rate.val       = 10;
+            p->inc_thresh.val         = 50;
+            p->sales_tax_rate.val     = 0;
+            p->firm_creation_prob.val = 0;
+            p->dedns.val              = 0;
+            p->unemp_ben_rate.val     = 100;
+            p->active_pop.val         = 60;
+            p->distrib.val            = 90;
+            p->prop_inv.val           = 20;
+            p->boe_int.val            = 2;
+            p->bus_int.val            = 3;
+            p->loan_prob.val          = 4;
+            p->recoup.val             = 10;
 
-    // This should be global, and therefore maintained by MainWindow
+            parameterSets.append(p);
+
+            _name = ""; // would not be valid for a user-defined behaviour
+        }
+    }
+    else
+    {
+        _name = behaviourName;
+
+        qDebug() << "Behaviour::Behaviour():" << behaviourName << "reading parameters";
+
+        readParameters();
+
+        // This should be global, and therefore maintained by MainWindow
 
 #if 0
 
@@ -234,6 +268,7 @@ Behaviour::Behaviour(QString behaviourName)
     }
 
 #endif
+    }
 }
 
 double Behaviour::scale(Property p)
@@ -379,32 +414,36 @@ void Behaviour::readParameters()
 
     Params *p = new Params;     // default parameter set
 
-    p->procurement.val        = settings.value(parameter_keys[ParamType::procurement], 0).toInt();
-    p->emp_rate.val           = settings.value(parameter_keys[ParamType::emp_rate], 95).toInt();
-    p->prop_con.val           = settings.value(parameter_keys[ParamType::prop_con], 80).toInt();
-    p->inc_tax_rate.val       = settings.value(parameter_keys[ParamType::inc_tax_rate], 10).toInt();
-    p->inc_thresh.val         = settings.value(parameter_keys[ParamType::inc_thresh], 50).toInt();
-    p->sales_tax_rate.val     = settings.value(parameter_keys[ParamType::sales_tax_rate], 0).toInt();
-    p->firm_creation_prob.val = settings.value(parameter_keys[ParamType::firm_creation_prob], 0).toInt();
-    p->dedns.val              = settings.value(parameter_keys[ParamType::dedns], 0).toInt();
-    p->unemp_ben_rate.val     = settings.value(parameter_keys[ParamType::unemp_ben_rate], 100).toInt();
-    p->active_pop.val         = settings.value(parameter_keys[ParamType::active_pop], 60).toInt();
-    p->distrib.val            = settings.value(parameter_keys[ParamType::distrib], 90).toInt();
-    p->prop_inv.val           = settings.value(parameter_keys[ParamType::prop_inv], 20).toInt();
-    p->boe_int.val            = settings.value(parameter_keys[ParamType::boe_int], 2).toInt();
-    p->bus_int.val            = settings.value(parameter_keys[ParamType::bus_int], 3).toInt();
-    p->loan_prob.val          = settings.value(parameter_keys[ParamType::loan_prob], 4).toInt();
-    p->recoup.val             = settings.value(parameter_keys[ParamType::recoup], 10).toInt();
+    p->procurement.val        = settings.value(parameterKeys[ParamType::procurement], 0).toInt();
+    p->emp_rate.val           = settings.value(parameterKeys[ParamType::emp_rate], 95).toInt();
+    p->prop_con.val           = settings.value(parameterKeys[ParamType::prop_con], 80).toInt();
+    p->inc_tax_rate.val       = settings.value(parameterKeys[ParamType::inc_tax_rate], 10).toInt();
+    p->inc_thresh.val         = settings.value(parameterKeys[ParamType::inc_thresh], 50).toInt();
+    p->sales_tax_rate.val     = settings.value(parameterKeys[ParamType::sales_tax_rate], 0).toInt();
+    p->firm_creation_prob.val = settings.value(parameterKeys[ParamType::firm_creation_prob], 0).toInt();
+    p->dedns.val              = settings.value(parameterKeys[ParamType::dedns], 0).toInt();
+    p->unemp_ben_rate.val     = settings.value(parameterKeys[ParamType::unemp_ben_rate], 100).toInt();
+    p->active_pop.val         = settings.value(parameterKeys[ParamType::active_pop], 60).toInt();
+    p->distrib.val            = settings.value(parameterKeys[ParamType::distrib], 90).toInt();
+    p->prop_inv.val           = settings.value(parameterKeys[ParamType::prop_inv], 20).toInt();
+    p->boe_int.val            = settings.value(parameterKeys[ParamType::boe_int], 2).toInt();
+    p->bus_int.val            = settings.value(parameterKeys[ParamType::bus_int], 3).toInt();
+    p->loan_prob.val          = settings.value(parameterKeys[ParamType::loan_prob], 4).toInt();
+    p->recoup.val             = settings.value(parameterKeys[ParamType::recoup], 10).toInt();
 
     settings.endGroup();        // end defaults
 
-    parameter_sets.clear();     // TODO: it would be better to do this after appending
-    parameter_sets.append(p);   // append the defaults we just read
+    parameterSets.clear();     // TODO: it would be better to do this after appending
+    parameterSets.append(p);   // append the defaults we just read
 
     // How many conditional parameter sets...
     numParameterSets = settings.value("pages", 1).toInt();
 
-    qDebug() << "Behaviour::readParameters():  Behaviour" << _name << "has" << numParameterSets << "pages";
+    qDebug() << "Behaviour::readParameters():  Behaviour"
+             << _name
+             << "has"
+             << numParameterSets
+             << "pages";
 
     for (int page = 1; page < numParameterSets; page++)
     {
@@ -452,74 +491,74 @@ void Behaviour::readParameters()
         // either default or from a previous condition -- used instead
         QString attrib;
 
-        attrib = parameter_keys[ParamType::procurement];
+        attrib = parameterKeys[ParamType::procurement];
         p->procurement.is_set     = settings.value(attrib + "/isset").toBool();
         p->procurement.val        = settings.value(attrib + "/value").toInt();
 
-        attrib = parameter_keys[ParamType::emp_rate];
+        attrib = parameterKeys[ParamType::emp_rate];
         p->emp_rate.is_set        = settings.value(attrib + "/isset").toBool();
         p->emp_rate.val           = settings.value(attrib + "/value").toInt();
 
-        attrib = parameter_keys[ParamType::prop_con];
+        attrib = parameterKeys[ParamType::prop_con];
         p->prop_con.is_set        = settings.value(attrib + "/isset").toBool();
         p->prop_con.val           = settings.value(attrib + "/value").toInt();
 
-        attrib = parameter_keys[ParamType::inc_tax_rate];
+        attrib = parameterKeys[ParamType::inc_tax_rate];
         p->inc_tax_rate.is_set    = settings.value(attrib + "/isset").toBool();
         p->inc_tax_rate.val       = settings.value(attrib + "/value").toInt();
 
-        attrib = parameter_keys[ParamType::inc_thresh];
+        attrib = parameterKeys[ParamType::inc_thresh];
         p->inc_thresh.is_set      = settings.value(attrib + "/isset").toBool();
         p->inc_thresh.val         = settings.value(attrib + "/value").toInt();
 
-        attrib = parameter_keys[ParamType::sales_tax_rate];
+        attrib = parameterKeys[ParamType::sales_tax_rate];
         p->sales_tax_rate.is_set  = settings.value(attrib + "/isset").toBool();
         p->sales_tax_rate.val     = settings.value(attrib + "/value").toInt();
 
-        attrib = parameter_keys[ParamType::firm_creation_prob];
+        attrib = parameterKeys[ParamType::firm_creation_prob];
         p->firm_creation_prob.is_set = settings.value(attrib + "/isset").toBool();
         p->firm_creation_prob.val = settings.value(attrib + "/value").toInt();
 
-        attrib = parameter_keys[ParamType::dedns];
+        attrib = parameterKeys[ParamType::dedns];
         p->dedns.is_set           = settings.value(attrib + "/isset").toBool();
         p->dedns.val              = settings.value(attrib + "/value").toInt();
 
-        attrib = parameter_keys[ParamType::unemp_ben_rate];
+        attrib = parameterKeys[ParamType::unemp_ben_rate];
         p->unemp_ben_rate.is_set  = settings.value(attrib + "/isset").toBool();
         p->unemp_ben_rate.val     = settings.value(attrib + "/value").toInt();
 
-        attrib = parameter_keys[ParamType::active_pop];
+        attrib = parameterKeys[ParamType::active_pop];
         p->active_pop.is_set      = settings.value(attrib + "/isset").toBool();
         p->active_pop.val         = settings.value(attrib + "/value").toInt();
 
-        attrib = parameter_keys[ParamType::distrib];
+        attrib = parameterKeys[ParamType::distrib];
         p->distrib.is_set         = settings.value(attrib + "/isset").toBool();
         p->distrib.val            = settings.value(attrib + "/value").toInt();
 
-        attrib = parameter_keys[ParamType::prop_inv];
+        attrib = parameterKeys[ParamType::prop_inv];
         p->prop_inv.is_set        = settings.value(attrib + "/isset").toBool();
         p->prop_inv.val           = settings.value(attrib + "/value").toInt();
 
-        attrib = parameter_keys[ParamType::boe_int];
+        attrib = parameterKeys[ParamType::boe_int];
         p->boe_int.is_set         = settings.value(attrib + "/isset").toBool();
         p->boe_int.val            = settings.value(attrib + "/value").toInt();
 
-        attrib = parameter_keys[ParamType::bus_int];
+        attrib = parameterKeys[ParamType::bus_int];
         p->bus_int.is_set         = settings.value(attrib + "/isset").toBool();
         p->bus_int.val            = settings.value(attrib + "/value").toInt();
 
-        attrib = parameter_keys[ParamType::loan_prob];
+        attrib = parameterKeys[ParamType::loan_prob];
         p->loan_prob.is_set       = settings.value(attrib + "/isset").toBool();
         p->loan_prob.val          = settings.value(attrib + "/value").toInt();
 
-        attrib = parameter_keys[ParamType::recoup];
+        attrib = parameterKeys[ParamType::recoup];
         p->recoup.is_set          = settings.value(attrib + "/isset").toBool();
         p->recoup.val             = settings.value(attrib + "/value").toInt();
 
         // End settings for this condition
         settings.endGroup();
 
-        parameter_sets.append(p);
+        parameterSets.append(p);
     }
 
     settings.endGroup();        // end Behaviours group
@@ -1429,28 +1468,28 @@ int Behaviour::getParameterVal(ParamType type)
     Pair p;
     for (int i = 0; i < numParameterSets; i++)
     {
-        if (i == 0 || applies(parameter_sets[i]->condition))
+        if (i == 0 || applies(parameterSets[i]->condition))
         {
             // TODO: p doesn't have to be a Pair as we now only use the val component
             if (isParamSet(type, i))
             {
-                p =    (type == ParamType::procurement) ? parameter_sets[i]->procurement
-                     : ((type == ParamType::emp_rate) ? parameter_sets[i]->emp_rate
-                     : ((type == ParamType::prop_con) ? parameter_sets[i]->prop_con
-                     : ((type == ParamType::inc_tax_rate) ? parameter_sets[i]->inc_tax_rate
-                     : ((type == ParamType::sales_tax_rate) ? parameter_sets[i]->sales_tax_rate
-                     : ((type == ParamType::firm_creation_prob) ? parameter_sets[i]->firm_creation_prob
-                     : ((type == ParamType::dedns) ? parameter_sets[i]->dedns
-                     : ((type == ParamType::unemp_ben_rate) ? parameter_sets[i]->unemp_ben_rate
-                     : ((type == ParamType::active_pop) ? parameter_sets[i]->active_pop
-                     : ((type == ParamType::distrib) ? parameter_sets[i]->distrib
-                     : ((type == ParamType::prop_inv) ? parameter_sets[i]->prop_inv
-                     : ((type == ParamType::boe_int) ? parameter_sets[i]->boe_int
-                     : ((type == ParamType::bus_int) ? parameter_sets[i]->bus_int
-                     : ((type == ParamType::loan_prob) ? parameter_sets[i]->loan_prob
-                     : ((type == ParamType::inc_thresh) ? parameter_sets[i]->inc_thresh
-                     : ((type == ParamType::recoup) ? parameter_sets[i]->recoup
-                     : parameter_sets[i]->invalid
+                p =    (type == ParamType::procurement) ? parameterSets[i]->procurement
+                     : ((type == ParamType::emp_rate) ? parameterSets[i]->emp_rate
+                     : ((type == ParamType::prop_con) ? parameterSets[i]->prop_con
+                     : ((type == ParamType::inc_tax_rate) ? parameterSets[i]->inc_tax_rate
+                     : ((type == ParamType::sales_tax_rate) ? parameterSets[i]->sales_tax_rate
+                     : ((type == ParamType::firm_creation_prob) ? parameterSets[i]->firm_creation_prob
+                     : ((type == ParamType::dedns) ? parameterSets[i]->dedns
+                     : ((type == ParamType::unemp_ben_rate) ? parameterSets[i]->unemp_ben_rate
+                     : ((type == ParamType::active_pop) ? parameterSets[i]->active_pop
+                     : ((type == ParamType::distrib) ? parameterSets[i]->distrib
+                     : ((type == ParamType::prop_inv) ? parameterSets[i]->prop_inv
+                     : ((type == ParamType::boe_int) ? parameterSets[i]->boe_int
+                     : ((type == ParamType::bus_int) ? parameterSets[i]->bus_int
+                     : ((type == ParamType::loan_prob) ? parameterSets[i]->loan_prob
+                     : ((type == ParamType::inc_thresh) ? parameterSets[i]->inc_thresh
+                     : ((type == ParamType::recoup) ? parameterSets[i]->recoup
+                     : parameterSets[i]->invalid
                      )))))))))))))));
             }
         }
@@ -1465,23 +1504,23 @@ bool Behaviour::isParamSet(ParamType t, int n)
         return true;
     }
 
-    return  (t == ParamType::procurement) ? parameter_sets[n]->procurement.is_set
-         : ((t == ParamType::emp_rate) ? parameter_sets[n]->emp_rate.is_set
-         : ((t == ParamType::prop_con) ? parameter_sets[n]->prop_con.is_set
-         : ((t == ParamType::inc_tax_rate) ? parameter_sets[n]->inc_tax_rate.is_set
-         : ((t == ParamType::sales_tax_rate) ? parameter_sets[n]->sales_tax_rate.is_set
-         : ((t == ParamType::firm_creation_prob) ? parameter_sets[n]->firm_creation_prob.is_set
-         : ((t == ParamType::dedns) ? parameter_sets[n]->dedns.is_set
-         : ((t == ParamType::unemp_ben_rate) ? parameter_sets[n]->unemp_ben_rate.is_set
-         : ((t == ParamType::active_pop) ? parameter_sets[n]->active_pop.is_set
-         : ((t == ParamType::distrib) ? parameter_sets[n]->distrib.is_set
-         : ((t == ParamType::prop_inv) ? parameter_sets[n]->prop_inv.is_set
-         : ((t == ParamType::boe_int) ? parameter_sets[n]->boe_int.is_set
-         : ((t == ParamType::bus_int) ? parameter_sets[n]->bus_int.is_set
-         : ((t == ParamType::loan_prob) ? parameter_sets[n]->loan_prob.is_set
-         : ((t == ParamType::inc_thresh) ? parameter_sets[n]->inc_thresh.is_set
-         : ((t == ParamType::recoup) ? parameter_sets[n]->recoup.is_set
-         : parameter_sets[n]->invalid.is_set
+    return  (t == ParamType::procurement) ? parameterSets[n]->procurement.is_set
+         : ((t == ParamType::emp_rate) ? parameterSets[n]->emp_rate.is_set
+         : ((t == ParamType::prop_con) ? parameterSets[n]->prop_con.is_set
+         : ((t == ParamType::inc_tax_rate) ? parameterSets[n]->inc_tax_rate.is_set
+         : ((t == ParamType::sales_tax_rate) ? parameterSets[n]->sales_tax_rate.is_set
+         : ((t == ParamType::firm_creation_prob) ? parameterSets[n]->firm_creation_prob.is_set
+         : ((t == ParamType::dedns) ? parameterSets[n]->dedns.is_set
+         : ((t == ParamType::unemp_ben_rate) ? parameterSets[n]->unemp_ben_rate.is_set
+         : ((t == ParamType::active_pop) ? parameterSets[n]->active_pop.is_set
+         : ((t == ParamType::distrib) ? parameterSets[n]->distrib.is_set
+         : ((t == ParamType::prop_inv) ? parameterSets[n]->prop_inv.is_set
+         : ((t == ParamType::boe_int) ? parameterSets[n]->boe_int.is_set
+         : ((t == ParamType::bus_int) ? parameterSets[n]->bus_int.is_set
+         : ((t == ParamType::loan_prob) ? parameterSets[n]->loan_prob.is_set
+         : ((t == ParamType::inc_thresh) ? parameterSets[n]->inc_thresh.is_set
+         : ((t == ParamType::recoup) ? parameterSets[n]->recoup.is_set
+         : parameterSets[n]->invalid.is_set
          )))))))))))))));
 }
 

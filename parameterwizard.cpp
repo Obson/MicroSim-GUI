@@ -9,19 +9,15 @@
 #include <QListWidgetItem>
 #include <QPixmap>
 
-////////////////////////////////////////////////////////////////////////////////
-/// \brief ParameterWizard::ParameterWizard
-/// \param parent
-///
 ParameterWizard::ParameterWizard(QWidget *parent) : QWizard(parent)
 {
     setWindowTitle("Behaviour Definition");
     setPixmap(QWizard::BackgroundPixmap, QPixmap(":/background3.png"));
-
     setButtonText(QWizard::CustomButton1, tr("&Add conditionals"));
     setOption(QWizard::HaveCustomButton1, true);
     setOption(QWizard::NoCancelButton, false);
     setOption(QWizard::CancelButtonOnLeft, true);
+
     //setOption(QWizard::HaveFinishButtonOnEarlyPages, true);
 
     importBehaviour.clear();
@@ -45,6 +41,7 @@ void ParameterWizard::setProperties(QMap<QString,Behaviour::Property> map)
     // should be removed. Care needed if translating to make sure the
     // same translation is used here as in MainWindow. Any other redundant
     // series (names) should also be removed here.
+
     propertyMap = map;
 
     propertyNames.append(map.keys());
@@ -53,14 +50,14 @@ void ParameterWizard::setProperties(QMap<QString,Behaviour::Property> map)
 
 }
 
-void ParameterWizard::importFrom(QString model_name)
+void ParameterWizard::importFrom(QString behaviourName)
 {
-    importBehaviour = model_name;
+    importBehaviour = behaviourName;
 }
 
-void ParameterWizard::setCurrentModel(QString model_name)
+void ParameterWizard::setCurrentBehaviour(QString behaviourName)
 {
-    qDebug() << "ParameterWizard::setCurrentModel(): model_name =" << model_name;
+    qDebug() << "ParameterWizard::setCurrentBehaviour(): model_name =" << behaviourName;
 
     // TODO: Build pages from settings for current_model. At the moment we just
     // have a default page unless the user adds more pages. For updating the
@@ -75,14 +72,14 @@ void ParameterWizard::setCurrentModel(QString model_name)
     }
 
     // Then add a default page for the new model
-    currentBehaviour = model_name;
+    currentBehaviour = behaviourName;
     qDebug() << "ParameterWizard::modelChanged(): adding default page";
     setPage(default_page, new DefaultPage(this));
     qDebug() << "ParameterWizard::modelChanged(): restarting";
 
     // and then extra pages if needed
     QSettings settings;
-    int num_pages = settings.value(model_name + "/pages", 1).toInt();
+    int num_pages = settings.value(behaviourName + "/pages", 1).toInt();
     qDebug() << "ParameterWizard::setCurrentModel():  existing pages =" << num_pages;
     for (int i = 0; i < num_pages - 1; i++) {
         ExtraPage *page = createNewPage();
