@@ -29,14 +29,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 # This next line may not be necessary (see comment under 1st answer in
 # https://stackoverflow.com/questions/52385658/no-such-sysroot-directory-while-building-qt-project)
-QMAKE_MAC_SDK = macosx10.14
+# QMAKE_MAC_SDK = macosx10.14
 
 
 SOURCES += \
-    behaviour.cpp \
     domain.cpp \
     createdomaindlg.cpp \
-        main.cpp \
+    main.cpp \
     mainwindow.cpp \
     newbehaviourldlg.cpp \
     parameterwizard.cpp \
@@ -52,8 +51,6 @@ SOURCES += \
     removeprofiledialog.cpp
 
 HEADERS += \
-    behaviour.h \
-    domain.h \
     createdomaindlg.h \
     mainwindow.h \
     newbehaviourldlg.h \

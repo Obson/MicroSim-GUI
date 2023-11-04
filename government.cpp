@@ -1,3 +1,4 @@
+
 #include "account.h"
 #include <QDebug>
 
@@ -15,20 +16,22 @@ void Government::reset()
 {
     init();
     balance = 0;
-    _gov_firm = behaviour()->createFirm(true);
+    // _gov_firm = _domain->createFirm(true);
 }
 
-Government::Government(Behaviour *model) : Account(model)
+Government::Government(Domain *domain) : Bank(domain)
 {
-    // The 'true' argument tells the model that this is a (the) government-
-    // supported firm and that it should have a preset (user-defined) number
-    //of employees.
-    _gov_firm = model->createFirm(true);
-}
-
-size_t Government::getNumEmployees()
-{
-    return _gov_firm->getNumEmployees();
+    /*
+     * Government is derived from Bank, which is derived from Firm. This
+     * allows it to have employees and pay wages (etc.) using bank money.
+     * Its role as central bank is separate and simply means it can maintain
+     * (HPM, i.e.reserve) accounts for its clients the clearing banks. It does
+     * this by 'lending' to the banks at Bank Rate. It must keep a record of
+     * these operations but there is no associated risk and its own balance
+     * will always be negative. This negative balance (less tax 'receipts')
+     * would conventionally trigger borrowing and we may choose to model this
+     * for demo purposes later on.
+     */
 }
 
 double Government::getExpenditure()
@@ -68,16 +71,6 @@ double Government::debit(Account *requester, double amount)
     return amount;
 }
 
-bool Government::isGovernment()
-{
-    return true;
-}
-
-Firm *Government::gov_firm()
-{
-    return _gov_firm;
-}
-
 void Government::trigger(int period)
 {
     // ***
@@ -103,40 +96,30 @@ void Government::trigger(int period)
         last_triggered = period;
 
         // Direct purchases (procurement), adjusts balance automatically
-        double amt = behaviour()->getProcurement();
-        transferSafely(behaviour()->selectRandomFirm(), amt, this, true);
+        double amt = _domain->getDistributionRate();
+        transferSafely(_domain->selectRandomFirm(), amt, this);
         proc += amt;
         exp += amt;     // include in expenditure not as a separate item as
                         // less confusing
 
         // Benefits payments to all unemployed workers (doesn't adjust balance,
         // so we must do this on return)
-        ben += behaviour()->payWorkers(behaviour()->getStdWage() * behaviour()->getUBR(),
-                               this,                // source
-                               Behaviour::for_benefits  // reason
+        ben += payWorkers(_domain->getStdWage() * _domain->getUBR(),    // amount
+                               this,                                    // source
+                               Reason::for_benefits                     // reason
                                );
         balance -= ben;
     }
 }
 
-//
-// This function is an alternative to Account::transferTo allowing a negative balance.
-//
-bool Government::transferSafely(Account *recipient, double amount, Account *, bool procurement)
+bool Government::transferSafely(Account *recipient, double amount, Account *)
 {
-    // ***
-    // We adopt the convention that receipts from the government are not
-    // taxable. This is probably a rather murky area, given that the
-    // mechanisms by which government injects money into the economy are
-    // unclear and seem to involve financing banks to make more loans.
-    // In the case of the NHS, nationalised industries, the civil service
-    // and the 'armed forces' the mechanism is probably more direct.
-    // Anyway, to go into this would be a distraction so we'll simply
-    // treat it as untaxable payment for services.
-    // ***
-
+    /*
+     * We no longer mark procurement transfers, which means they are
+     * automatically taxable. This may need changing.
+     */
     if (recipient != nullptr) {
-        recipient->credit(amount, this, procurement);
+        recipient->credit(amount, this, true);
         balance -= amount;
     }
 
@@ -154,6 +137,54 @@ void Government::credit(double amount, Account*, bool)
     Account::credit(amount);
     rec += amount;
 }
+
+/*
+ * Note that a Government is also a Firm and therefor naintains a list of its
+ * employees whose wages are paid in the normal way. Additionally, as
+ * governmentit has access to the domain-wide list of Workers to which it pays
+ * benefits, pensions, etc., as necessary.
+ */
+double Government::payWorkers(double amount, Account *source, Reason reason)
+{
+    QVector<Worker*> workers = _domain->workers;
+    int num_workers = workers.count();
+    double amt_paid = 0;
+
+    for (int i = 0; i < num_workers; i++)
+    {
+        switch (reason)
+        {
+        case Reason::for_benefits:
+
+            if (!workers[i]->isEmployed())
+            {
+                workers[i]->credit(amount, source);
+                amt_paid += amount;
+            }
+            break;
+
+        case Reason::for_bonus:
+
+            /*
+             * THIS SHOULD PROBABLY BE FIXED
+             * -----------------------------
+             * Note that when paying bonuses we do not check that sufficient
+             * funds are available -- it's up to the caller to ensure that the
+             * amount is correct. Any overpayment will simply create a negative
+             * balance in the caller's account.
+             */
+            if (workers[i]->getEmployer() == source)
+            {
+                workers[i]->credit(amount, source);
+                amt_paid += amount;
+            }
+            break;
+        }
+    }
+
+    return amt_paid;
+}
+
 
 
 

@@ -20,7 +20,7 @@ ParameterWizard::ParameterWizard(QWidget *parent) : QWizard(parent)
 
     //setOption(QWizard::HaveFinishButtonOnEarlyPages, true);
 
-    importBehaviour.clear();
+    importDomain.clear();
 
     setMinimumHeight(660);
 
@@ -34,7 +34,7 @@ ParameterWizard::ParameterWizard(QWidget *parent) : QWizard(parent)
     connect(this, &QWizard::customButtonClicked, this, &ParameterWizard::createNewPage);
 }
 
-void ParameterWizard::setProperties(QMap<QString,Behaviour::Property> map)
+void ParameterWizard::setProperties(QMap<QString,Domain::Property> map)
 {
     // NOTE: This includes the preudo-series 'Zero reference line' and
     // 'Hundred reference line'. These serve no useful purpose here and
@@ -50,14 +50,14 @@ void ParameterWizard::setProperties(QMap<QString,Behaviour::Property> map)
 
 }
 
-void ParameterWizard::importFrom(QString behaviourName)
+void ParameterWizard::importFrom(QString domainName)
 {
-    importBehaviour = behaviourName;
+    importDomain = domainName;
 }
 
-void ParameterWizard::setCurrentBehaviour(QString behaviourName)
+void ParameterWizard::setCurrentDomain(QString domainName)
 {
-    qDebug() << "ParameterWizard::setCurrentBehaviour(): model_name =" << behaviourName;
+    qDebug() << "ParameterWizard::setCurrentBehaviour(): model_name =" << domainName;
 
     // TODO: Build pages from settings for current_model. At the moment we just
     // have a default page unless the user adds more pages. For updating the
@@ -72,14 +72,14 @@ void ParameterWizard::setCurrentBehaviour(QString behaviourName)
     }
 
     // Then add a default page for the new model
-    currentBehaviour = behaviourName;
+    currentBehaviour = domainName;
     qDebug() << "ParameterWizard::modelChanged(): adding default page";
     setPage(default_page, new DefaultPage(this));
     qDebug() << "ParameterWizard::modelChanged(): restarting";
 
     // and then extra pages if needed
     QSettings settings;
-    int num_pages = settings.value(behaviourName + "/pages", 1).toInt();
+    int num_pages = settings.value(domainName + "/pages", 1).toInt();
     qDebug() << "ParameterWizard::setCurrentModel():  existing pages =" << num_pages;
     for (int i = 0; i < num_pages - 1; i++) {
         ExtraPage *page = createNewPage();
@@ -135,11 +135,19 @@ DefaultPage::DefaultPage(ParameterWizard *w)
 {
     wiz = w;
 
+    int width = 48; // change as required
+
+    leCurrencyName = new QLineEdit();
+    leCurrencyName->setFixedWidth(width);
+
+    leCurrencyAbbrev = new QLineEdit();
+    leCurrencyAbbrev->setFixedWidth(width);
+
     le_dir_exp_rate = new QLineEdit();
-    le_dir_exp_rate->setFixedWidth(48);
+    le_dir_exp_rate->setFixedWidth(width);
 
     le_thresh = new QLineEdit();
-    le_thresh->setFixedWidth(48);
+    le_thresh->setFixedWidth(width);
 
     sb_emp_rate = wiz->getSpinBox(0, 100);
     sb_prop_con = wiz->getSpinBox(0, 100);
@@ -166,7 +174,14 @@ DefaultPage::DefaultPage(ParameterWizard *w)
 
     QFormLayout *layout = new QFormLayout;
 
+    layout->addRow(new QLabel(tr("Currency name")));
+    layout->addRow(new QLabel(tr("Currency abbreviation")));
+
     layout->addRow(new QLabel(tr("<b>Government</b>")));
+
+    layout->addRow(new QLabel(tr("Currency name")));
+    layout->addRow(new QLabel(tr("Currency abbreviation")));
+
     layout->addRow(new QLabel(tr("Periodic procurement expenditure")), le_dir_exp_rate);
     layout->addRow(new QLabel(tr("Unemployment benefit (%)")), sb_ubr);
 
@@ -254,7 +269,7 @@ void DefaultPage::initializePage()
     QString model = wiz->currentBehaviour;
     qDebug() << "DefaultPage::initialize(): currentBehaviourl =" << model;
     setTitle(tr("Default Profile For ") + model);
-    readSettings(wiz->importBehaviour.isEmpty() ? model : wiz->importBehaviour);
+    readSettings(wiz->importDomain.isEmpty() ? model : wiz->importDomain);
 }
 
 bool DefaultPage::validatePage()
@@ -453,7 +468,7 @@ void ExtraPage::setPageNumber(int page_num)
     qDebug() << "ExtraPage::setPageNumber():  page_num =" << page_num;
     pnum = page_num;
     setTitle(tr("Conditional Parameters - Page ") + QString::number(page_num));
-    readSettings(wiz->importBehaviour.isEmpty() ? wiz->currentBehaviour : wiz->importBehaviour);
+    readSettings(wiz->importDomain.isEmpty() ? wiz->currentBehaviour : wiz->importDomain);
 }
 
 // Attempts to read setting from the settings for the current page. if it
@@ -470,10 +485,10 @@ QString ExtraPage::readCondSetting(QString behaviourName, QString key)
 QString ExtraPage::getPropertyName(int prop)
 {
     // Convert the int to a property
-    Behaviour::Property p = static_cast<Behaviour::Property>(prop);
+    Domain::Property p = static_cast<Domain::Property>(prop);
 
     // and look it up in the property map
-    QMapIterator<QString, Behaviour::Property> it(wiz->propertyMap);
+    QMapIterator<QString, Domain::Property> it(wiz->propertyMap);
     while (it.hasNext())
     {
         it.next();
@@ -577,7 +592,7 @@ bool ExtraPage::validatePage()
     // We need to store an actual property (Behaviour::Property enum) here, but we
     // have to convert it to an int first
     QString selected_text = cb_property->currentText();
-    Behaviour::Property prop = wiz->propertyMap.value(selected_text);
+    Domain::Property prop = wiz->propertyMap.value(selected_text);
     settings.setValue(key + "property", static_cast<int>(prop));
 
     settings.setValue(key + "rel", cb_rel->currentIndex());

@@ -1,5 +1,5 @@
+
 #include "account.h"
-#include "behaviour.h"
 #include <QDebug>
 
 int Account::_id = 0;
@@ -8,17 +8,12 @@ int Account::nextId() {
     return _id++;
 }
 
-Account::Account(Behaviour *behaviour)
+Account::Account(Domain *domain)
 {
-    _behaviour = behaviour;
+    _domain = domain;
     id = nextId();
     //balance = 0;
     //owed_to_bank = 0;
-}
-
-Behaviour *Account::behaviour()
-{
-    return _behaviour;
 }
 
 double Account::getBalance()
@@ -33,11 +28,6 @@ double Account::getAmountOwed()
 
 // To be overridden by classes that could be government supported (i.e. Firm)
 bool Account::isGovernmentSupported()
-{
-    return false;
-}
-
-bool Account::isGovernment()
 {
     return false;
 }
@@ -69,7 +59,7 @@ void Account::credit(double amount, Account*, bool)
 void Account::loan(double amount, double rate, Account *creditor)
 {
     balance += amount;
-    if (creditor == behaviour()->bank())
+    if (creditor->isBank())
     {
         // TODO: Note that if interest rate changes on subsequent loans, the
         // new rate will replace the old rate for the whole amount. This is not

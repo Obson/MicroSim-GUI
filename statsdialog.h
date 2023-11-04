@@ -12,7 +12,7 @@ class StatsDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit StatsDialog(QWidget *parent = 0);
+    explicit StatsDialog(QWidget *parent = nullptr);
     ~StatsDialog();
 
     void setLimits(QString property, double min, double max, double mean);

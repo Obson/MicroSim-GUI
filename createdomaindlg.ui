@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>448</height>
+    <width>399</width>
+    <height>336</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,8 +20,8 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>390</y>
-     <width>341</width>
+     <y>280</y>
+     <width>331</width>
      <height>32</height>
     </rect>
    </property>
@@ -41,7 +41,7 @@
      <x>30</x>
      <y>130</y>
      <width>341</width>
-     <height>231</height>
+     <height>131</height>
     </rect>
    </property>
    <property name="font">
@@ -58,7 +58,7 @@
       <x>10</x>
       <y>40</y>
       <width>321</width>
-      <height>191</height>
+      <height>71</height>
      </rect>
     </property>
     <layout class="QFormLayout" name="formLayout">
@@ -90,81 +90,21 @@
        </property>
       </widget>
      </item>
-     <item row="3" column="0">
-      <widget class="QLabel" name="label_3">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Peg</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="1">
-      <widget class="QComboBox" name="cbPeg">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="0">
-      <widget class="QLabel" name="label_4">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Rate</string>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="1">
-      <widget class="QDoubleSpinBox" name="sbRate">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="value">
-        <double>1.000000000000000</double>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="1">
-      <widget class="QCheckBox" name="cbxFloat">
-       <property name="text">
-        <string>Float</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
     </layout>
    </widget>
   </widget>
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>122</x>
-     <y>40</y>
+     <x>110</x>
+     <y>50</y>
      <width>251</width>
-     <height>62</height>
+     <height>41</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
      <widget class="QLineEdit" name="leDomainName"/>
-    </item>
-    <item>
-     <widget class="QComboBox" name="cbBehaviour">
-      <property name="editable">
-       <bool>false</bool>
-      </property>
-      <property name="currentText">
-       <string/>
-      </property>
-      <property name="currentIndex">
-       <number>-1</number>
-      </property>
-     </widget>
     </item>
    </layout>
   </widget>
@@ -182,13 +122,6 @@
      <widget class="QLabel" name="label">
       <property name="text">
        <string>Name</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QLabel" name="label_6">
-      <property name="text">
-       <string>Behaviour</string>
       </property>
      </widget>
     </item>

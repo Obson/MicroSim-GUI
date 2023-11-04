@@ -52,15 +52,18 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext&, const QString&ms
 
 int main(int argc, char *argv[])
 {
+    // Set up a custom message handler
     qInstallMessageHandler(myMessageOutput);
+
+    // Create the application
     QApplication a(argc, argv);
 
-    // NOTE: Most of the info about this, including in Qt forums, seems to be
-    // out of date. The only scheme that seems to work is to put the icns file
-    // into resources and associate it with the application as here. I have
-    // also left it in the .pro file, as instructed by Qt, as well as manually
-    // adding a reference to it in the plist.info. Whether either or both of
-    // these is/are actually necessary is unclear.
+    // NOTE: Most of the info about this (the application icon), including in
+    // Qt forums, seems to be out of date. The only scheme that seems to work
+    // is to put the icns file into resources and associate it with the
+    // application as here. I have also left it in the .pro file, as instructed
+    // by Qt, as well as manually adding a reference to it in the plist.info.
+    // Whether either or both of these is/are actually necessary is unclear.
     //
     // Later: This only works while the program is actually running. The icon
     // that appears in the dock after the program has been closed is the
@@ -79,9 +82,13 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationDomain("Obson.net");
     QCoreApplication::setApplicationName("MicroSim");
 
+    // We want settings to be held in an INI file so we can edit them manually.
+    // The file will be called MicroSim.ini
     QSettings::setDefaultFormat(QSettings::IniFormat);
+
     QSettings settings;
     settings.setFallbacksEnabled(false);
+
     MainWindow mainwindow;
     //mainwindow.setWindowIcon(QIcon(":/obson.icns"));
     mainwindow.show();

@@ -12,14 +12,10 @@
 #include <QComboBox>
 #include <QCheckBox>
 
-#include "behaviour.h"
+#include "account.h"
 
 /*
- * ParameterWizard sets the parameters for a behaviour. At present this will
- * always be the current behaviour (i.e. 'model') as only one behaviour is
- * in effect at any given time. In future several behaviours can be current at
- * the same time (one to each active domain), and the behaviour -- and
- * therefore its parameters -- will be accessed via the domain that owns it.
+ * ParameterWizard sets the parameters for a domain.
  */
 
 class ExtraPage;
@@ -33,9 +29,9 @@ public:
     ParameterWizard(QWidget *parent = Q_NULLPTR);
     QSpinBox *getSpinBox(int min, int max);
 
-    void setCurrentBehaviour(QString behaviourName);
-    void importFrom(QString behaviourName);
-    void setProperties(QMap<QString,Behaviour::Property> map);
+    void setCurrentDomain(QString domainName);
+    void importFrom(QString domainName);
+    void setProperties(QMap<QString, Domain::Property> map);
 
     void done(int result) override;
     int nextId() const override;
@@ -51,10 +47,10 @@ protected:
     QStringList propertyNames;
     QStringList rels;
 
-    QMap<QString,Behaviour::Property> propertyMap;
+    QMap<QString,Domain::Property> propertyMap;
 
     QString currentBehaviour;
-    QString importBehaviour;    // Behaviour to import settings from or empty
+    QString importDomain;    // Behaviour to import settings from or empty
 
     int pid;                    // This is the CURRENT page id -- i.e. the id of
                                 // the page currently being processed. Qt's
@@ -84,6 +80,9 @@ private:
     void readSettings(QString model);
 
     ParameterWizard *wiz;
+
+    QLineEdit *leCurrencyName;
+    QLineEdit *leCurrencyAbbrev;
 
     QLineEdit *le_dir_exp_rate;
     QLineEdit *le_thresh;

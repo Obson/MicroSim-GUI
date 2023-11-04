@@ -15,7 +15,8 @@
 #include <QAction>
 #include <QLabel>
 
-#include "behaviour.h"
+//#include "account.h"
+//#include "behaviour.h"
 //#include "controlwidget.h"
 #include "statsdialog.h"
 
@@ -35,6 +36,10 @@ class MainWindow;
 // This makes references to QCharts and related classes simpler.
 QT_CHARTS_USE_NAMESPACE
 
+static QList<Domain*> domains;
+static Domain *currentDomain = nullptr;
+static Domain *defaultDomain = nullptr;
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -45,9 +50,13 @@ public:
 
     void show();
 
+
     static int magnitude(double);
 
 signals:
+
+    void clockTick(int period);
+
     void modelChanged(QString);
     void windowShown();
     void windowLoaded();
@@ -55,14 +64,30 @@ signals:
 
 protected:
 
-    Behaviour *currentBehaviour();
-    Domain *getDomain(QString);
+    // These functions have been moved from the Behaviour class as they should
+    // be global
 
-    int loadBehaviourList();
+
+    void run(bool randomised = false);
+    void restart();
+    int getStartPeriod();
+
+    // Much of this should be transferred to Domain
+
+    int _period;
+    int _iterations;
+    int _first_period;
+
+    // Domain *getDomain(QString);
+
+    int loadDomains();
     int loadDomainList();
     int loadProfileList();
 
     int getIters();         // number of iterations (periods)
+    int getPeriod();
+
+#if 0
     int getPopSize();       // max available population size
     int getActivePop();     // target size of economically active population
     int getGovExpRate();    // government expenditure (currency units per period)
@@ -74,7 +99,7 @@ protected:
     int getUBR();           // unemployment benefit rate (% of std wage)
     int getPropInv();       // propensity to invest
     int getReserve();       // funds kept in reserve for next period (%)
-
+#endif
     void saveCSV();
     void editParameters();
     void editModelDescription();
@@ -136,14 +161,13 @@ private:
 
     Ui::MainWindow *ui;
     ParameterWizard *wiz;
-    Behaviour *_currentBehaviour;
-    Behaviour *defaultBehaviour;
+
+    // Default and currently seleected behaviours
+    Domain *_currentDomain;
+    Domain *defaultDomain;
 
     QList<Domain*> domains;
     QStringList domainNames;        // for easy access
-
-    QList<Behaviour*> behaviours;
-    QStringList behaviourNames;     // for easy access
 
     QString chartProfile;
 
@@ -157,7 +181,7 @@ private:
     bool updatingProfileList = false;
     bool property_selected = false;
 
-    QMap<QString,Behaviour::Property> propertyMap;
+    QMap<QString,Domain::Property> propertyMap;
 
     void createChart();
     void createActions();
@@ -176,7 +200,7 @@ private:
     void changeDomain(QListWidgetItem*);
 
     QList<QColor> colours;
-    QMap<Behaviour::Property,QColor> propertyColours;
+    QMap<Domain::Property,QColor> propertyColours;
 
     QListWidgetItem *selectedBehaviourItem;
 
@@ -230,7 +254,7 @@ private:
 
     struct Condition
     {
-        Behaviour::Property property = Behaviour::Property::zero;
+        Domain::Property property = Domain::Property::zero;
         Opr opr;
         int val;            // possibly extend to allow expressions later
     };

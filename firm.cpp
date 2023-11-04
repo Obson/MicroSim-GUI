@@ -28,9 +28,10 @@
 
 #include "account.h"
 #include <cassert>
+#include <QtMath>
 #include <QDebug>
 
-Firm::Firm(Behaviour *model, bool state_supported) : Account(model)
+Firm::Firm(Domain *domain, bool state_supported) : Account(domain)
 {
     _state_supported = state_supported;
 }
@@ -73,23 +74,151 @@ void Firm::trigger(int period)
             if (interest > 0 && interest <= balance)
             {
                 //qDebug() << "Firm::trigger(): paying loan interest of" << interest;
-                if (!transferSafely(behaviour()->bank(), interest, this))
+                if (!transferSafely(_bank, interest, this))
                 {
                         qDebug() << "Firm::trigger(): failed to transfer interest to bank";
                 }
             }
-            else if (interest == 0 && owed_to_bank > 0)
+            else if (interest < 1.0 && owed_to_bank > 0)
             {
-                qDebug() << "Firm::trigger(): adding interest of" << interest << "to loan";
+                qDebug() << "Firm::trigger(): adding interest of"
+                         << interest
+                         << "to loan";
                 owed_to_bank += interest;
             }
         }
 
         // Important: wages_paid is not cumulative!
-        wages_paid = behaviour()->payWages(this, period);
+        wages_paid = payWages();
         balance -= wages_paid;
     }
 }
+
+double Firm::payWages()
+{
+    double amt_paid = 0;
+    num_just_fired = 0;
+
+    double dedns_rate = _domain->getPreTaxDedns();
+    int num_employees = static_cast<int> (employees.count());
+
+    for (int i = 0; i < num_employees; i++)
+    {
+        Worker *w = employees[i];
+
+        double wage_due = w->agreed_wage;
+        double dedns = dedns_rate * wage_due;
+        double funds_available = getBalance();
+
+        bool ok_to_pay = false;
+
+        if (funds_available - amt_paid < wage_due + dedns)
+        {
+            /*
+             * The firm doesn't have enough money in its account to pay all
+             * the wages due.
+             */
+            double shortfall = wage_due + dedns - funds_available + amt_paid;
+            if (isGovernmentSupported())
+            {
+                /*
+                 * Get additional funds from government -- this needs
+                 * expanding. Government must advance fund (HPM) to the
+                 * firm's bank account, that account should then be debited
+                 * and the payee's bank account credited. To do this
+                 * properly we need to set up two transfer mechanisms -- one
+                 * from government to the firm's bank (HPM) followed by a
+                 * credit to the firms own account, and the other an
+                 * uncleared transfer from the firm's account to the
+                 * rmployee's account. Here we short circuit the process
+                 * but to exactly the same effect except that the funds are
+                 * in effect cleared immediately.
+                 */
+                _domain->government()->debit(this, shortfall);
+
+                // Transfer the funds to the firm
+                credit(shortfall, this);
+
+                ok_to_pay = true;
+            }
+            else
+            {
+                /*
+                 * Possibly request a loan from the bank, depending on
+                 * policy. Policy is determined by getLoanProb(), which
+                 * returns an integer from 0 (= never) to 4 (= always).
+                 */
+                if (qrand() % 4 < _domain->getLoanProb())
+                {
+                    // Apply a bank loan to cover the shortfall
+                    _bank->lend(shortfall, _domain->getBusRate(), this);
+                    ok_to_pay = true;
+                }
+            }
+        }
+        else
+        {
+            ok_to_pay = true;
+        }
+
+        if (ok_to_pay)
+        {
+            /*
+             * Pay the full amount of wages to the employee
+             */
+            employees[i]->credit(wage_due, this);
+
+            /*
+             * Pay deductions straight back to the government.
+             */
+            _domain->government()->credit(dedns, this);
+
+            amt_paid += wage_due + dedns;
+            _dedns += dedns;
+        }
+        else
+        {
+            if (isGovernmentSupported())
+            {
+                /*
+                 * This should never happen as govt-suptd firm can
+                 * always get required funds from government
+                 */
+                Q_ASSERT(false);
+            }
+            else
+            {
+                // Not able to pay this worker so fire instead
+                fire(i);
+            }
+        }
+    }
+    return amt_paid;                // so caller can update balance
+}
+
+/*
+ * This function is likely to be significantly slower than fire(int ix)
+ */
+void Firm::fire(Worker *w)
+{
+    employees.removeOne(w);
+    _domain->unemployedWorkers.append(w);
+    w->employer = nullptr;
+    num_fired++;
+}
+
+/*
+ * Faster version for use when ix is known
+ */
+void Firm::fire(int ix)
+{
+    Worker *w = employees.at(ix);
+    employees.removeAt(ix);
+    _domain->unemployedWorkers.append(w);
+    w->employer = nullptr;
+    num_fired++;
+}
+
 
 // Distribute any excess funds as bonuses/dividends. Excess is defined as
 // the current balance (after sales have been taken into account), less
@@ -97,7 +226,7 @@ void Firm::trigger(int period)
 // employees and the associated deductions) less the proportion designated
 // for investment (i.e. reserved for paying any additional employees). Then
 // hire new workers if funds permit.
-void Firm::epilogue(int period)
+void Firm::epilogue()
 {
     if (_state_supported) {
 
@@ -118,17 +247,16 @@ void Firm::epilogue(int period)
     {
         // We must keep in hand at least the amount needed to pay future wages
         double available = balance - wages_paid;   // now includes deductions
-
-        double investible = available * behaviour()->getPropInv();
-        double bonuses = (available - investible) * behaviour()->getDistributionRate();
+        double investible = available * _domain->getPropInv();
+        double bonuses = (available - investible) * _domain->getDistributionRate();
 
         // We distribute the funds as bonuses before hiring new workers to
         // ensure they only get distributed to existing workers.
-        int emps = behaviour()->getNumEmployedBy(this);
+        int emps = employees.count();
         double amt_paid = 0;
         if (emps > 0)
         {
-            amt_paid = behaviour()->payWorkers(bonuses/emps, this, Behaviour::for_bonus);
+            amt_paid = _domain->_gov->payWorkers(bonuses/emps, this, Reason::for_bonus);
         }
 
         // Adjust calculation if not all the bonus funds were used
@@ -144,19 +272,19 @@ void Firm::epilogue(int period)
 
         // How many more employees can we afford?
 
-        double std_wage = behaviour()->getStdWage();
+        double std_wage = _domain->getStdWage();
         double current_wage_rate = productivity * std_wage; // Note that productivity is initialised to 1.0 in Account
-        int num_to_hire = investible / (current_wage_rate * (1 + behaviour()->getPreTaxDedns()));
+        int num_to_hire = static_cast<int> (floor(investible / (current_wage_rate * (1 + _domain->getPreTaxDedns()))));
 
         // Hire new workers
 
         if (num_to_hire > 0)
         {
-            double invested = behaviour()->hireSome(this, current_wage_rate, period, num_to_hire);
+            double invested = hireSome(current_wage_rate, num_to_hire);
 
             // ***
             // If we are unable to hire all the workers we want we will
-            // have reserved funds that do not get spent. Even if we do there
+            // have reserved funds that do not get spent. Even if we can there
             // may well be a non-zero residue, although this would normally get
             // incoporated into subsequent investments. Where this fails
             // because there are no unemployed workers left to recruit, the
@@ -176,7 +304,7 @@ void Firm::epilogue(int period)
             if (excess > 0)
             {
                 // How many did we just hire?
-                int new_emps = behaviour()->getNumEmployedBy(this);
+                int new_emps = getNumHired();
 
                 if (emps > 0 || new_emps > 0)
                 {
@@ -192,7 +320,7 @@ void Firm::epilogue(int period)
                     // inflation.
                     // ***
 
-                    Firm *supplier = behaviour()->selectRandomFirm(this);
+                    Firm *supplier = _domain->selectRandomFirm(this);
 
                     // ***
                     // We must allow for the possibility that there are no firms
@@ -207,28 +335,85 @@ void Firm::epilogue(int period)
                         balance -= excess;
                         investment = excess;
 
-                        // Update productivity
+                        /*
+                         * Update productivity
+                         */
 
-                        // ***
-                        // We assume we want to recoup the investment over ten periods
-                        // (this must be parameterised), so we need to raise an
-                        // additional (excess / 10) per period. This can be shared
-                        // out over the new number of employees giving an additional
-                        //     excess / (10 * (emps + new_emps))
-                        // per employee. The new wage rate will then be
-                        //     current_wage_rate + (excess / (10 * (emps + new_emps))
-                        // so productivity will be
-                        //     {current_wage_rate + (excess / (10 * (emps + new_emps))} / std_wage
-                        // I think!
-                        // ***
+                        double n = _domain->getCapexRecoupTime();
 
-                        productivity = (current_wage_rate + (double(excess) / (behaviour()->getCapexRecoupTime() * (emps + new_emps)))) / std_wage;
+                        /* THIS NEEDS REVIEWING!
+                         * ---------------------
+                         * We to recoup the investment over n periods, so we
+                         * need to raise an additional (excess / n) per period.
+                         * This can be shared out over the new number of
+                         * employees, giving an additional
+                         *      excess / (n * (emps+new_emps))
+                         * per employee. The new wage rate will then be
+                         *      current_wage_rate + (excess / (n * (emps+new_emps))
+                         * and productivity will be that amount divided by
+                         * std_wage.
+                         *
+                         * I think!
+                         */
+
+                        productivity = (current_wage_rate +
+                                    (excess / (n * double(double(emps) + new_emps))
+                                    )
+                                    ) / std_wage;
                     }
                 }
             }
         }
     }
 }
+
+Worker *Firm::hire(double wage)
+{
+    Worker *w = nullptr;
+
+    if (!_domain->unemployedWorkers.isEmpty())
+    {
+        /*
+         * Get the last worker on the unemployed list. Check the workers last
+         * agreed wage (etc) to see whether s/he would be likely to accept a
+         * job (TODO). If OK, transfer to firm's list of employees and update
+         * the new employee's details
+         */
+        w = _domain->unemployedWorkers.last();
+        _domain->unemployedWorkers.removeLast();
+        employees.append(w);
+        w->setAgreedWage(wage);
+        w->setEmployer(this);
+
+        num_hired += 1;
+    }
+
+    return w;
+}
+
+/*
+ * Review and revise if necessary...
+ */
+double Firm::hireSome(double wage, int number_to_hire)
+{
+    int count;
+    double wages_due;
+    for (count = 0, wages_due = 0; count < number_to_hire; count++)
+    {
+        Worker *w = hire(wage);
+        if (w == nullptr)
+        {
+            break;
+        }
+        else
+        {
+            wages_due += w->agreed_wage;
+        }
+    }
+
+    return wages_due;
+}
+
 
 void Firm::credit(double amount, Account *creditor, bool force)
 {
@@ -248,11 +433,11 @@ void Firm::credit(double amount, Account *creditor, bool force)
         // not buyer, is responsible for paying sales tax and that payments
         // to a Firm are always for purchases and therefore subject to
         // sales tax.
-        double r = behaviour()->getSalesTaxRate();
+        double r = _domain->getSalesTaxRate();
         if (r > 0)
         {
             double t = (amount * r) / (r + 1.0);
-            if (transferSafely(behaviour()->gov(), t, this)) {
+            if (transferSafely(_domain->government(), t, this)) {
                 sales_tax_paid += t;
             }
         }
@@ -291,7 +476,7 @@ double Firm::getSalesReceipts()
 
 size_t Firm::getNumEmployees()
 {
-    return behaviour()->getNumEmployedBy(this);
+    return static_cast<size_t> (employees.count());
 }
 
 int Firm::getNumHired()

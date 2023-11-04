@@ -16,7 +16,6 @@ public:
     ~CreateDomainDlg() override;
 
     QString getDomainName();
-    QString getBehaviourName();
     QString getCurrency();
     QString getCurrencyAbbrev();
 

@@ -1,7 +1,9 @@
+
 #include "mainwindow.h"
 #include "createdomaindlg.h"
-#include "domain.h"
+#include "account.h"
 #include "newbehaviourldlg.h"
+
 #include <QtWidgets>
 #include <QMessageBox>
 #include <QDebug>
@@ -19,7 +21,6 @@
 #include <QUrl>
 #include <QDebug>
 
-#include "account.h"
 #include "optionsdialog.h"
 #include "removemodeldlg.h"
 #include "version.h"
@@ -29,7 +30,7 @@
 
 MainWindow::MainWindow()
 {
-    _currentBehaviour = nullptr;
+    _currentDomain = nullptr;
     first_time_shown = true;
 
     statsDialog = new StatsDialog(this);
@@ -41,46 +42,46 @@ MainWindow::MainWindow()
     // is declared as static. And of course this is no help when it has to
     // point to instance members.
 
-    // Note that Behaviour::Property is an enum, so in effect PropertyMap
+    // Note that Domain::Property is an enum, so in effect PropertyMap
     // maps property names to indices that reference a chart series
 
-    propertyMap[tr("Current period")] = Behaviour::Property::current_period;
-    propertyMap[tr("Population size")] = Behaviour::Property::pop_size;
-    propertyMap[tr("Govt exp excl benefits")] = Behaviour::Property::gov_exp;
-    propertyMap[tr("Govt exp incl benefits")] = Behaviour::Property::gov_exp_plus;
-    propertyMap[tr("Benefits paid")] = Behaviour::Property::bens_paid;
-    propertyMap[tr("Government receipts")] = Behaviour::Property::gov_recpts;
-    propertyMap[tr("Deficit (absolute)")] = Behaviour::Property::deficit;
-    propertyMap[tr("Deficit as % GDP")] = Behaviour::Property::deficit_pc;
-    propertyMap[tr("National Debt")] = Behaviour::Property::gov_bal;
-    propertyMap[tr("Number of businesses")] = Behaviour::Property::num_firms;
-    propertyMap[tr("Number employed")] = Behaviour::Property::num_emps;
-    propertyMap[tr("Number of govt employees")] = Behaviour::Property::num_gov_emps;
-    propertyMap[tr("Percent employed")] = Behaviour::Property::pc_emps;
-    propertyMap[tr("Number unemployed")] = Behaviour::Property::num_unemps;
-    propertyMap[tr("Percent unemployed")] = Behaviour::Property::pc_unemps;
-    propertyMap[tr("Percent active")] = Behaviour::Property::pc_active;
-    propertyMap[tr("Number of new hires")] = Behaviour::Property::num_hired;
-    propertyMap[tr("Number of new fires")] = Behaviour::Property::num_fired;
-    propertyMap[tr("Businesses balance")] = Behaviour::Property::prod_bal;
-    propertyMap[tr("Wages paid")] = Behaviour::Property::wages;
-    propertyMap[tr("Consumption")] = Behaviour::Property::consumption;
-    propertyMap[tr("Bonuses paid")] = Behaviour::Property::bonuses;
-    propertyMap[tr("Pre-tax deductions")] = Behaviour::Property::dedns;
-    propertyMap[tr("Income tax paid")] = Behaviour::Property::inc_tax;
-    propertyMap[tr("Sales tax paid")] = Behaviour::Property::sales_tax;
-    propertyMap[tr("Households balance")] = Behaviour::Property::dom_bal;
-    propertyMap[tr("Bank loans")] = Behaviour::Property::amount_owed;
-    propertyMap[tr("Average business size")] = Behaviour::Property::bus_size;
-    propertyMap[tr("100 reference line")] = Behaviour::Property::hundred;
-    propertyMap[tr("Procurement expenditure")] = Behaviour::Property::procurement;
-    propertyMap[tr("Productivity")] = Behaviour::Property::productivity;
-    propertyMap[tr("Productivity (relative)")] = Behaviour::Property::rel_productivity;
-    propertyMap[tr("Govt direct support")] = Behaviour::Property::unbudgeted;
-    propertyMap[tr("Investment")] = Behaviour::Property::investment;
-    propertyMap[tr("GDP")] = Behaviour::Property::gdp;
-    propertyMap[tr("Profit")] = Behaviour::Property::profit;
-    propertyMap[tr("Zero reference line")] = Behaviour::Property::zero;
+    propertyMap[tr("Current period")] = Domain::Property::current_period;
+    propertyMap[tr("Population size")] = Domain::Property::pop_size;
+    propertyMap[tr("Govt exp excl benefits")] = Domain::Property::gov_exp;
+    propertyMap[tr("Govt exp incl benefits")] = Domain::Property::gov_exp_plus;
+    propertyMap[tr("Benefits paid")] = Domain::Property::bens_paid;
+    propertyMap[tr("Government receipts")] = Domain::Property::gov_recpts;
+    propertyMap[tr("Deficit (absolute)")] = Domain::Property::deficit;
+    propertyMap[tr("Deficit as % GDP")] = Domain::Property::deficit_pc;
+    propertyMap[tr("National Debt")] = Domain::Property::gov_bal;
+    propertyMap[tr("Number of businesses")] = Domain::Property::num_firms;
+    propertyMap[tr("Number employed")] = Domain::Property::num_emps;
+    propertyMap[tr("Number of govt employees")] = Domain::Property::num_gov_emps;
+    propertyMap[tr("Percent employed")] = Domain::Property::pc_emps;
+    propertyMap[tr("Number unemployed")] = Domain::Property::num_unemps;
+    propertyMap[tr("Percent unemployed")] = Domain::Property::pc_unemps;
+    propertyMap[tr("Percent active")] = Domain::Property::pc_active;
+    propertyMap[tr("Number of new hires")] = Domain::Property::num_hired;
+    propertyMap[tr("Number of new fires")] = Domain::Property::num_fired;
+    propertyMap[tr("Businesses balance")] = Domain::Property::prod_bal;
+    propertyMap[tr("Wages paid")] = Domain::Property::wages;
+    propertyMap[tr("Consumption")] = Domain::Property::consumption;
+    propertyMap[tr("Bonuses paid")] = Domain::Property::bonuses;
+    propertyMap[tr("Pre-tax deductions")] = Domain::Property::dedns;
+    propertyMap[tr("Income tax paid")] = Domain::Property::inc_tax;
+    propertyMap[tr("Sales tax paid")] = Domain::Property::sales_tax;
+    propertyMap[tr("Households balance")] = Domain::Property::dom_bal;
+    propertyMap[tr("Bank loans")] = Domain::Property::amount_owed;
+    propertyMap[tr("Average business size")] = Domain::Property::bus_size;
+    propertyMap[tr("100 reference line")] = Domain::Property::hundred;
+    propertyMap[tr("Procurement expenditure")] = Domain::Property::procurement;
+    propertyMap[tr("Productivity")] = Domain::Property::productivity;
+    propertyMap[tr("Productivity (relative)")] = Domain::Property::rel_productivity;
+    propertyMap[tr("Govt direct support")] = Domain::Property::unbudgeted;
+    propertyMap[tr("Investment")] = Domain::Property::investment;
+    propertyMap[tr("GDP")] = Domain::Property::gdp;
+    propertyMap[tr("Profit")] = Domain::Property::profit;
+    propertyMap[tr("Zero reference line")] = Domain::Property::zero;
 
     // If non-zero, points to currently selected listwidget item
     selectedBehaviourItem = nullptr;
@@ -124,32 +125,44 @@ MainWindow::MainWindow()
     // behaviours from the values in settings.
     createDockWindows();
 
-    // Set up existing domains and their parameters
 
-    // ******************
-/*
+    /*
+     * Restore existing domains from settings -- this should now be done in the
+     * Domain class, using static functions
+     */
+
+    Domain::restoreDomains();
+
+#if 0
     settings.beginGroup("Domains");
+
     for (int j = 0; j < domainList->count(); ++j)
     {
         QString domainName = domainList->item(j)->text();
+
         qDebug() << "adding domain" << domainName;
+
         settings.beginGroup(domainName);
 
-        // This assumes something has created the named behaviour. Currently
-        // this done only when selecting a behaviour by name, and is stored in
-        // _currentBehaviour somewhere...
-        Behaviour *beh = Behaviour::getBehaviour(settings.value("Behaviour").toString());
+        // This assumes something has created the named domain. Currently
+        // this is only done when selecting a domain by name, and is stored in
+        // _currentDomain somewhere...
+        Domain *beh = Domain::getDomain(settings.value("Domain").toString());
 
         Domain *dom = new Domain(
                     domainName,
-                    beh,
+                    // beh,
                     settings.value("Currency").toString(),
                     settings.value("Abbrev").toString()
                     );
         domains.append(dom);
+
+        connect(this, &MainWindow::clockTick, dom, &Domain::iterate);
+
         settings.endGroup();
     }
-*/
+#endif
+
     setWindowTitle(tr("Obson Macro-Economic Modelling"));
     setWindowIcon(QIcon(":/obson.icns"));
     setUnifiedTitleAndToolBarOnMac(true);
@@ -372,29 +385,21 @@ void MainWindow::createMenus()
     myToolBar->addAction(closeAction);
 }
 
-Behaviour *MainWindow::currentBehaviour()
-{
-    return _currentBehaviour;
-}
 
-
-Domain *MainWindow::getDomain(QString domainName)
-{
-
-    // NEXT: COMPLETE THIS FUNCTION -- IMPORTANT!
-
-    int numDomains = domains.count();
-
-    for (int i = 0; i < numDomains; i++)
-    {
-        Domain *dom = domains.at(i);
-        if (dom->getName() == domainName) {
-            return dom;
-        }
-    }
-
-    return nullptr;
-}
+// MainWindow shouldn't need access to specific domains
+//Domain *MainWindow::getDomain(QString domainName)
+//{
+//    // NEXT: COMPLETE THIS FUNCTION -- IMPORTANT!
+//    int numDomains = domains.count();
+//    for (int i = 0; i < numDomains; i++)
+//    {
+//        Domain *dom = domains.at(i);
+//        if (dom->getName() == domainName) {
+//            return dom;
+//        }
+//    }
+//    return nullptr;
+//}
 
 
 void MainWindow::reassignColours()
@@ -405,6 +410,7 @@ void MainWindow::reassignColours()
 
 void MainWindow::saveCSV()
 {
+#if 0   // this needs rewriting or removing
     qDebug() << "MainWindow::saveCSV():  called";
 
     Behaviour *model = currentBehaviour();
@@ -432,7 +438,7 @@ void MainWindow::saveCSV()
 
     // Output headers and set up points lists for series
     bool first = true;
-    int iters = model->getIters(), n = 0;
+    int iters = getIters(), n = 0;
     QList<QPointF>lists[iters];
     for (int j = 0; j < propertyList->count(); j++)
     {
@@ -452,7 +458,7 @@ void MainWindow::saveCSV()
         }
     }
 
-    int start = model->getStartPeriod();
+    int start = getStartPeriod();
     for (int i = 0; i < iters; i++)
     {
         first = true;
@@ -467,6 +473,7 @@ void MainWindow::saveCSV()
             out << ",\"" << lists[j].at(i).y() << "\"";
         }
     }
+#endif
 }
 
 void MainWindow::nyi()
@@ -559,7 +566,12 @@ void MainWindow::restoreState()
     }
 }
 
-#include "behaviour.h"
+// #include "domain.h"
+
+//QList<Domain*> domains;
+//Domain *currentDomain = nullptr;
+//Domain *defaultDomain = nullptr;
+
 
 void MainWindow::saveSettingsAsProfile(QString name)
 {
@@ -645,60 +657,60 @@ void MainWindow::removeProfile()
 
 void MainWindow::createNewBehaviour()
 {
-    qDebug() << "MainWindow::createNewBehaviour(): calling NewBehaviourDlg";
-    NewBehaviourlDlg dlg(this);
-    dlg.setExistingBehaviourNames(&behaviourNames); // avoid duplicates
+//    qDebug() << "MainWindow::createNewBehaviour(): calling NewBehaviourDlg";
+//    NewBehaviourlDlg dlg(this);
+//    dlg.setExistingBehaviourNames(&behaviourNames); // avoid duplicates
 
-    if (dlg.exec() == QDialog::Accepted)
-    {
-        qDebug() << "MainWindow::createNewBehaviour(): NewBehaviourDlg returns"
-                 << QDialog::Accepted;
+//    if (dlg.exec() == QDialog::Accepted)
+//    {
+//        qDebug() << "MainWindow::createNewBehaviour(): NewBehaviourDlg returns"
+//                 << QDialog::Accepted;
 
-        QString name = dlg.getName();
+//        QString name = dlg.getName();
 
-        _currentBehaviour = Behaviour::createBehaviour(name);
+//        _currentBehaviour = Behaviour::createBehaviour(name);
 
-        qDebug() << "MainWindow::createNewBehaviour(): name ="
-                 << name;
+//        qDebug() << "MainWindow::createNewBehaviour(): name ="
+//                 << name;
 
-        // Find the currently selected item and deselect it
-        for (int i = 0; i < behaviourList->count(); ++i)
-        {
-            QListWidgetItem* it = behaviourList->item(i);
-            if (it->isSelected())
-            {
-                it->setSelected(false);
-                break;
-            }
-        }
+//        // Find the currently selected item and deselect it
+//        for (int i = 0; i < behaviourList->count(); ++i)
+//        {
+//            QListWidgetItem* it = behaviourList->item(i);
+//            if (it->isSelected())
+//            {
+//                it->setSelected(false);
+//                break;
+//            }
+//        }
 
-        // Add a new item to the list of behaviours, giving the new behaviour name
-        QListWidgetItem *item = new QListWidgetItem;
-        item->setText(name);
-        behaviourList->addItem(item);
-        selectedBehaviourItem = item;
+//        // Add a new item to the list of behaviours, giving the new behaviour name
+//        QListWidgetItem *item = new QListWidgetItem;
+//        item->setText(name);
+//        behaviourList->addItem(item);
+//        selectedBehaviourItem = item;
 
-        // Get the name of the behaviour (if any) from which to import parameters
-        // and pass it to the parameter wizard
-        if (!dlg.importFrom().isEmpty()) {
-            wiz->importFrom(dlg.importFrom());
-        }
+//        // Get the name of the behaviour (if any) from which to import parameters
+//        // and pass it to the parameter wizard
+//        if (!dlg.importFrom().isEmpty()) {
+//            wiz->importFrom(dlg.importFrom());
+//        }
 
-        // Call the parameter wizard to allow the user to change the parameters
-        qDebug() << "MainWindow::createNewBehaviour(): calling editParameters()";
-        editParameters();
+//        // Call the parameter wizard to allow the user to change the parameters
+//        qDebug() << "MainWindow::createNewBehaviour(): calling editParameters()";
+//        editParameters();
 
-        // Highlight the row containing the new item. We do this after they've
-        // had a chance to update the parameters as it will trigger a re-run of
-        // the model.
-        behaviourList->setCurrentRow(behaviourList->row(item), QItemSelectionModel::Select);
-    }
-    else
-    {
-        qDebug() << "MainWindow::createNewBehaviour(): NewModelDlg returns"
-                 << QDialog::Rejected;
-        // No action needed...
-    }
+//        // Highlight the row containing the new item. We do this after they've
+//        // had a chance to update the parameters as it will trigger a re-run of
+//        // the model.
+//        behaviourList->setCurrentRow(behaviourList->row(item), QItemSelectionModel::Select);
+//    }
+//    else
+//    {
+//        qDebug() << "MainWindow::createNewBehaviour(): NewModelDlg returns"
+//                 << QDialog::Rejected;
+//        // No action needed...
+//    }
 }
 
 
@@ -706,28 +718,21 @@ void MainWindow::createNewBehaviour()
 // CreateDomainDlg and appends it to QList<Domain*>::domains
 void MainWindow::createDomain()
 {
-    qDebug() << "MainWindow::createDomain(): calling CreateDomainDlg";
-    CreateDomainDlg dlg(this);
-    if (dlg.exec() == QDialog::Accepted)
-    {
-        QString bName = dlg.getBehaviourName();
+//    qDebug() << "MainWindow::createDomain(): calling CreateDomainDlg";
+//    CreateDomainDlg dlg(this);
+//    if (dlg.exec() == QDialog::Accepted)
+//    {
+//        Domain *newDomain = new Domain(
+//                    dlg.getDomainName(),
+//                    dlg.getCurrency(),
+//                    dlg.getCurrencyAbbrev()
+//                    );
 
-        Domain *newDomain = new Domain(
-                    dlg.getDomainName(),
+//        domains.append(newDomain);
 
-                    bName == "Default" ?
-                        Behaviour::getDefaultBehaviour() :
-                        Behaviour::getBehaviour(bName),
-
-                    dlg.getCurrency(),
-                    dlg.getCurrencyAbbrev()
-                    );
-
-        domains.append(newDomain);
-
-        qDebug() << "MainWindow::createDomain(): Calling parameterwizard";
-        wiz->exec();
-    }
+//        qDebug() << "MainWindow::createDomain(): Calling parameterwizard";
+//        wiz->exec();
+//    }
 }
 
 void MainWindow::remove()
@@ -736,7 +741,7 @@ void MainWindow::remove()
     dlg.exec();
 
     reloading = true;
-    loadBehaviourList();
+    loadDomains();
     reloading = false;
 }
 
@@ -745,7 +750,7 @@ void MainWindow::editParameters()
     Q_ASSERT(selectedBehaviourItem != nullptr);
     QString behaviourName = selectedBehaviourItem->text();
     qDebug() << "MainWindow::editParameters(): model_name =" << behaviourName;
-    wiz->setCurrentBehaviour(behaviourName);
+    wiz->setCurrentDomain(behaviourName);
     if (wiz->exec() == QDialog::Accepted)
     {
         // NEXT: ***** Transfer run() to Domain *****
@@ -784,12 +789,12 @@ void MainWindow::aboutQt()
 
 void MainWindow::setOptions()
 {
-    OptionsDialog dlg(this);
-    dlg.setModal(true);
-    if (dlg.exec() == QDialog::Accepted && _currentBehaviour != nullptr)
-    {
-        drawChart(true);
-    }
+//    OptionsDialog dlg(this);
+//    dlg.setModal(true);
+//    if (dlg.exec() == QDialog::Accepted && _currentBehaviour != nullptr)
+//    {
+//        drawChart(true);
+//    }
 }
 
 void MainWindow::createStatusBar()
@@ -807,16 +812,16 @@ void MainWindow::createStatusBar()
 
 void MainWindow::propertyChanged()
 {
-    qDebug() << "MainWindow::propertyChanged";
-    // Allow the property to be changed even when there's no model selected.
-    if (_currentBehaviour != nullptr && !reloading)
-    {
-        drawChart(false);   // no need to rerun
-        if (!chartProfile.isEmpty()) {
-            qDebug() << "MainWindow::propertyChanged(): setting profile_changed";
-            profile_changed = true;
-        }
-    }
+//    qDebug() << "MainWindow::propertyChanged";
+//    // Allow the property to be changed even when there's no model selected.
+//    if (_currentBehaviour != nullptr && !reloading)
+//    {
+//        drawChart(false);   // no need to rerun
+//        if (!chartProfile.isEmpty()) {
+//            qDebug() << "MainWindow::propertyChanged(): setting profile_changed";
+//            profile_changed = true;
+//        }
+//    }
 }
 
 void MainWindow::selectProfile(QString text)
@@ -840,7 +845,7 @@ void MainWindow::createDockWindows()
 
 
     // Populate the property list
-    QMap<QString,Behaviour::Property>::iterator i;
+    QMap<QString,Domain::Property>::iterator i;
     for (i = propertyMap.begin(); i != propertyMap.end(); ++i)
     {
         QListWidgetItem *item = new QListWidgetItem;
@@ -862,7 +867,7 @@ void MainWindow::createDockWindows()
     behaviourList = new QListWidget(dock);
 
     // Populate the behaviour list
-    loadBehaviourList();
+    loadDomains();
 
     // Add to dock
     dock->setWidget(behaviourList);
@@ -892,7 +897,7 @@ void MainWindow::createDockWindows()
     // Create a default behaviour
     // NOTE: It's probably unnecessary, but we store it in MainWindow as it's
     // common to all domains so we have quick access to it from anywhere
-    defaultBehaviour = Behaviour::createDefaultBehaviour();
+    // defaultBehaviour = Behaviour::createDefaultBehaviour();
 
     // Create domain list
     dock = new QDockWidget(tr("Domain"), this);
@@ -908,6 +913,9 @@ void MainWindow::createDockWindows()
 
 
     int count = settings.beginReadArray("Domains");
+
+    // NEXT: update loadDomainList
+
     qDebug() << "MainWindow::loadDomainList():" << count << "domains found in settings";
     if (count > 0)
     {
@@ -945,7 +953,9 @@ void MainWindow::showStatistics()
         QMessageBox msgBox;
         msgBox.setText("Please select a property to display");
         msgBox.exec();
-    } else {
+    }
+    else
+    {
         statsDialog->show();
     }
 }
@@ -953,6 +963,196 @@ void MainWindow::showStatistics()
 int MainWindow::loadProfileList()
 {
     return 0;
+}
+
+/*
+ * Some (all?) of the functionality here should be in the Domain class (TBD)
+ */
+
+void MainWindow::run(bool randomised)
+{
+//    qDebug() << "MainWindow::run(): randomised =" << randomised;
+
+//    restart();
+
+//    // ***
+//    // Seed the pseudo-random number generator.
+//    // We need reproducibility so we always seed with the same number.
+//    // This makes inter-model comparisons more valid.
+//    // ***
+
+//    if (!randomised) {
+//        qDebug() << "Behaviour::run(): using fixed seed (42)";
+//        qsrand(42);
+//    }
+
+//    for (_period = 0; _period <= _iterations + _first_period; _period++)
+//    {
+//        /*
+//         *  Signal domains to go on to the next period. _period==0 should
+//         *   trigger initialisation
+//         */
+//        emit(clockTick(_period));
+
+//        // -------------------------------------------
+//        // Initialise objects ready for next iteration
+//        // -------------------------------------------
+
+//        _dedns = 0;         // deductions are tracked by the model object and are
+//                            // accumulated within but not across periods
+
+//        // _gov shuld be a member of Domain
+//        _gov->init();
+
+//        int num_workers = workers.count();
+//        int num_firms = firms.count();
+
+//        for (int i = 0; i < num_firms; i++) {
+//            firms[i]->init();
+//        }
+
+//        for (int i = 0; i < num_workers; i++) {
+//            workers[i]->init();
+//        }
+
+//        // Reset counters
+
+//        num_hired = 0;
+//        num_fired = 0;
+//        num_just_fired = 0;
+
+//        // -------------------------------------------
+//        // Trigger objects
+//        // -------------------------------------------
+
+//        // Triggering government will direct payments to firms and benefits to
+//        //  workers before they are triggered
+//        _gov->trigger(_period);
+
+//        // Triggering firms will pay deductions to government and wages to
+//        // workers. Firms will also fire any workers they can't afford to pay.
+//        // Workers receiving payment will pay income tax to the government
+//        for (int i = 0; i < num_firms; i++) {
+//            firms[i]->trigger(_period);
+//        }
+
+//        // Trigger workers to make purchases
+//        for (int i = 0; i < num_workers; i++) {
+//            workers[i]->trigger(_period);
+//        }
+
+//        // -------------------------------------------
+//        // Post-trigger (epilogue) phase
+//        // -------------------------------------------
+
+//        // Post-trigger for firms so they can pay tax on sales just made, pay
+//        // bonuses, and hire more employees (investment)
+//        for (int i = 0, c = firms.count(); i < c; i++) {
+//            firms[i]->epilogue(_period);
+//        }
+
+//        // Same for workers so they can keep rolling averages up to date
+//        for (int i = 0, c = workers.count(); i < c; i++) {
+//            workers[i]->epilogue(_period);
+//        }
+
+//        // -------------------------------------------
+//        // Stats
+//        // -------------------------------------------
+
+//        // Append the values from this iteration to the series
+//        if (_period >= _first_period)
+//        {
+//            for (int i = 0; i < _num_properties/*static_cast<int>(Property::num_properties)*/; i++)
+//            {
+//                Property prop = prop_list[i];
+//                double val = scale(prop);
+//                series[prop]->append(_period, val);
+
+//                int j = static_cast<int> (prop);
+
+//                if (_period == _first_period)
+//                {
+//                    max_val[j] = val;
+//                    min_val[j] = val;
+//                    sum[j] = val;
+//                }
+//                else
+//                {
+//                    if (val > max_val[j])
+//                    {
+//                        max_val[j] = val;
+//                    }
+//                    else if (val < min_val[j])
+//                    {
+//                        min_val[j] = val;
+//                    }
+
+//                    sum[j] += val;
+//                }
+//            }
+//        }
+
+//        // -------------------------------------------
+//        // Exogenous changes
+//        // -------------------------------------------
+
+//        // Create a new firm, possibly
+//        if (qrand() % 100 < getFCP()) {
+//            createFirm();
+//        }
+//    }
+
+
+//    qDebug() << "Behaviour::run(): _name =" << _name << "  gini =" << gini();
+}
+
+
+void MainWindow::restart()
+{
+
+//    readParameters();
+
+//    // Clear all series
+//    for (int i = 0; i < static_cast<int>(Property::num_properties); i++)
+//    {
+//        Property prop = prop_list[i];
+//        series[prop]->clear();
+//    }
+
+//    int num_workers = workers.count();
+//    int num_firms = firms.count();
+
+//    // Delete all workers and clear the list
+//    for (int i = 0; i < num_workers; i++)
+//    {
+//        delete workers[i];
+//    }
+//    workers.clear();
+
+//    // Delete all firms and clear the list
+//    for (int i = 0; i < num_firms; i++)
+//    {
+//        delete firms[i];
+//    }
+//    firms.clear();
+//    firms.reserve(100);
+
+//    // Reset the Government, which will re-create the gov firm as the first
+//    // firm in the list
+//    gov()->reset();
+
+//    // Don't scale the number of startups internally, but must be scaled in
+//    // stats reporting
+//    for (int i = 0; i < _startups; i++)
+//    {
+//        createFirm();
+//    }
+}
+
+int MainWindow::getPeriod()
+{
+    return _period;
 }
 
 // This function is called on startup, to populate the behaviour list widget in
@@ -965,48 +1165,54 @@ int MainWindow::loadProfileList()
 // TODO: At present this function is called again after a behaviour is removed.
 // This must be changed in MainWindow::remove().
 
-int MainWindow::loadBehaviourList()
+int MainWindow::loadDomains()
 {
-    qDebug() << "MainWindow::loadBehaviourList(): opening Settings";
+//    qDebug() << "MainWindow::loadBehaviourList(): opening Settings";
 
-    QSettings settings;
+//    QSettings settings;
 
-    settings.beginGroup("Behaviours");
-    QStringList groups = settings.childGroups();    // e.g. EU, US, UK, etc
+//    settings.beginGroup("Behaviours");
+//    QStringList groups = settings.childGroups();
 
-    for (int i = 0; i < groups.size(); i++)
-    {
-        QString group = groups.at(i);
-        Behaviour *newBehaviour = new Behaviour(group);
+//    qDebug() << "MainWindow::loadBehaviourList(): " << groups.size() << "behaviours found";
 
-        behaviours.append(newBehaviour);
-        behaviourNames.append(group);
+//    for (int i = 0; i < groups.size(); i++)
+//    {
+//        QString group = groups.at(i);
+//        qDebug() << "MainWindow::loadBehaviourList(): loading behaviour" << group;
 
-        settings.beginGroup(group);
-        QStringList keys = settings.allKeys();  // e.g. boe-interest, loan-prob, etc
+//        Behaviour *newBehaviour = new Behaviour(group);
 
-        for (int j = 0; j < keys.size(); j++)
-        {
-            QString key = keys.at(j);
+//        behaviours.append(newBehaviour);
+//        behaviourNames.append(group);
 
-            newBehaviour->setProperty(
-                        key.toStdString().c_str(),
-                        settings.value(key)
-                        );
-        }
+//        settings.beginGroup(group);
+//        QStringList keys = settings.allKeys();  // e.g. boe-interest, loan-prob, etc
 
-        // Append new behaviour to the list
-        settings.endGroup();
-    }
-    settings.endGroup();
+//        for (int j = 0; j < keys.size(); j++)
+//        {
+//            QString key = keys.at(j);
 
-    // Populate the behaviourList widget
-    qDebug() << "MainWindow::loadBehaviourList(): clearing behaviourList";
-    behaviourList->clear();
-    qDebug() << "MainWindow::loadBehaviourList(): adding new items";
-    behaviourList->addItems(behaviourNames);
+//            qDebug() << "MainWindow::loadBehaviourList(): setting property" << key
+//                     << "for" << group;
 
-    return behaviourList->count();
+//            newBehaviour->setProperty(
+//                        key.toStdString().c_str(),
+//                        settings.value(key)
+//                        );
+//        }
+
+//        // Append new behaviour to the list
+//        settings.endGroup();
+//    }
+//    settings.endGroup();
+
+//    // Populate the behaviourList widget
+//    qDebug() << "MainWindow::loadBehaviourList(): populating the behaviourList widget";
+//    behaviourList->clear();
+//    behaviourList->addItems(behaviourNames);
+
+//    return behaviourList->count();
 }
 
 int MainWindow::loadDomainList()
@@ -1063,161 +1269,164 @@ void MainWindow::drawChartNormal()
 
 void MainWindow::drawChart(bool rerun, bool randomised)    // uses _current_model
 {
-    // ***
+
     // We are going to remove the chart altogether and replace it with a new
     // one to make sure we get a clean slate. However if we don't remove the
     // objects owned by the old chart the program eventually crashes. So far,
     // the following lines seem to fix that problem. This may all be overkill,
     // but I haven't found an alternative way of keeping the axes up to data.
-    // ***
 
-    QList<QAbstractSeries*> current_series = chart->series();
+//    QList<QAbstractSeries*> current_series = chart->series();
 
-    // We remove the series one by one because for some reason removeAllSeries
-    // causes the program to crash. I think it's after restart() is called, so
-    // perhaps it doesn't like it if there are no series to remove.
-    /*
-    chart->removeAllSeries();        // causes crash
-    */
+//    for (int i = 0; i < current_series.count(); i++)
+//    {
+//        chart->removeSeries(current_series[i]);
+//    }
 
-    for (int i = 0; i < current_series.count(); i++) {
-        chart->removeSeries(current_series[i]);
-    }
+//    if (chart->axisX() != nullptr)
+//    {
+//        chart->removeAxis(chart->axisX());
+//    }
 
-    if (chart->axisX() != nullptr) {
-        chart->removeAxis(chart->axisX());
-    }
-    if (chart->axisY() != nullptr) {
-        chart->removeAxis(chart->axisY());
-    }
+//    if (chart->axisY() != nullptr)
+//    {
+//        chart->removeAxis(chart->axisY());
+//    }
 
-    // Remove the existing chart and replace it with a new one.
-    delete chart;
-    createChart();
-    chart->legend()->setAlignment(Qt::AlignBottom);
+//    // Remove the existing chart and replace it with a new one.
+//    delete chart;
+//    createChart();
+//    chart->legend()->setAlignment(Qt::AlignBottom);
 
-    if (rerun)
-    {
-        _currentBehaviour->run(randomised);
-        statsDialog->hide();
-        if (property_selected) {
-            updateStatsDialog(propertyList->currentItem());
-        }
-    }
+//    if (rerun)
+//    {
+//        _currentBehaviour->run(randomised);
+//        statsDialog->hide();
+//        if (property_selected)
+//        {
+//            updateStatsDialog(propertyList->currentItem());
+//        }
+//    }
 
-    chart->legend()->show();
-    chart->setTitle("<h2 style=\"text-align:center;\">"
-                    + _currentBehaviour->name()
-                    + "</h2><p style=\"text-align:center;\">"
-                    + chartProfile
-                    + "</p>");
+//    chart->legend()->show();
+//    chart->setTitle("<h2 style=\"text-align:center;\">"
+//                    + _currentBehaviour->name()
+//                    + "</h2><p style=\"text-align:center;\">"
+//                    + chartProfile
+//                    + "</p>");
 
-    QLineSeries *anySeries = nullptr;
+//    QLineSeries *anySeries = nullptr;
 
-    int y_max = -INT_MAX, y_min = INT_MAX;
-    qDebug() << "MainWindow::drawChart(): resetting range y_min = " << y_min << "y_max" << y_max << "***";
+//    int y_max = -INT_MAX, y_min = INT_MAX;
+//    qDebug() << "MainWindow::drawChart(): resetting range y_min = " << y_min << "y_max" << y_max << "***";
 
-    for (int i = 0, n = propertyColours.count(); i < propertyList->count(); i++)
-    {
-        QListWidgetItem *item;
-        item = propertyList->item(i);
-        bool selected = item->checkState();
-        if (selected)
-        {
-            QString series_name = item->text();
-            Behaviour::Property prop = propertyMap[series_name];
-            QLineSeries *ser = _currentBehaviour->series[prop];
-            ser->setName(series_name);
-            chart->addSeries(ser);
+//    for (int i = 0, n = propertyColours.count(); i < propertyList->count(); i++)
+//    {
+//
+//        QListWidgetItem *item;
+//        item = propertyList->item(i);
+//        bool selected = item->checkState();
+//        if (selected)
+//        {
+//            QString series_name = item->text();
+//            Behaviour::Property prop = propertyMap[series_name];
+//            QLineSeries *ser = _currentBehaviour->series[prop];
+//            ser->setName(series_name);
+//            chart->addSeries(ser);
 
-            anySeries = ser;
+//            anySeries = ser;
 
-            // Set the line colour and type for this series
-            switch(prop)
-            {
-            case Behaviour::Property::zero:
-            case Behaviour::Property::hundred:
-                ser->setColor(Qt::black);
-                ser->setPen(QPen(Qt::DotLine));
-                break;
-            default:
-                if (propertyColours.contains(prop))
-                {
-                    ser->setColor(propertyColours[prop]);
-                }
-                else
-                {
-                    QColor colour = nextColour(n++);
-                    propertyColours[prop] = colour;
-                    ser->setColor(colour);
-                }
-                break;
-            }
+//            // Set the line colour and type for this series
+//            switch(prop)
+//            {
+//            case Domain::Property::zero:
+//            case Domain::Property::hundred:
+//                ser->setColor(Qt::black);
+//                ser->setPen(QPen(Qt::DotLine));
+//                break;
+//            default:
+//                if (propertyColours.contains(prop))
+//                {
+//                    ser->setColor(propertyColours[prop]);
+//                }
+//                else
+//                {
+//                    QColor colour = nextColour(n++);
+//                    propertyColours[prop] = colour;
+//                    ser->setColor(colour);
+//                }
+//                break;
+//            }
 
 
-            // Set values for y axis range
+//            // Set values for y axis range
 
-            // TODO: prop is an enum but max_value() and min_value() expect
-            // ints, so we have to do a static cast. Perhaps this should really
-            // be done in the functions themselves.
-            int ix = static_cast<int>(prop);
+//            // TODO: prop is an enum but max_value() and min_value() expect
+//            // ints, so we have to do a static cast. Perhaps this should really
+//            // be done in the functions themselves.
 
-            y_max = std::max(y_max, _currentBehaviour->max_value(ix));
-            y_min = std::min(y_min,_currentBehaviour->min_value(ix));
-            qDebug() << "MainWindow::drawChart(): series name" << series_name
-                     << "series max" << _currentBehaviour->max_value(ix)
-                     << "y_max" << y_max
-                     << "series min" << _currentBehaviour->min_value(ix)
-                     << "y_min" << y_min;
-        }
+//            /*
+//             * NB This will all go into Domain and _currentBehaviour will be redundant
+//             */
+//            int ix = static_cast<int>(prop);
 
-    }
+//            y_max = std::max(y_max, _currentBehaviour->max_value(ix));
+//            y_min = std::min(y_min,_currentBehaviour->min_value(ix));
+//            qDebug() << "MainWindow::drawChart(): series name" << series_name
+//                     << "series max" << _currentBehaviour->max_value(ix)
+//                     << "y_max" << y_max
+//                     << "series min" << _currentBehaviour->min_value(ix)
+//                     << "y_min" << y_min;
+//        }
 
-    int scale = magnitude(std::max(std::abs(y_max), std::abs(y_min)));
+//    }
 
-    qDebug() << "MainWindow::drawChart(): min" << y_min << "max" << y_max << "scale" << scale;
+//    int scale = magnitude(std::max(std::abs(y_max), std::abs(y_min)));
 
-    // Format the axis numbers to whole integers. This needs a series to have
-    // been selected, so avoid otherwise
-    if (anySeries != nullptr)
-    {
-        chart->createDefaultAxes();
-        QValueAxis *x_axis = static_cast<QValueAxis*>(chart->axisX(anySeries));
-        x_axis->setLabelFormat("%d");
-        QValueAxis *y_axis = static_cast<QValueAxis*>(chart->axisY(anySeries));
-        y_axis->setLabelFormat("%d");
+//    qDebug() << "MainWindow::drawChart(): min" << y_min << "max" << y_max << "scale" << scale;
 
-        int temp;
-        if (y_max > 0 && y_min >= 0) {
-            // Both positive: range from zero to y_max rounded up to power of 10
-            temp = std::pow(10, (scale + 1));
-            y_max = (temp >= y_max * 2 ? (temp >= y_max * 4 ? temp / 4 : temp / 2) : temp);
-            y_min = 0;
-        } else if (y_min < 0 && y_max <= 0) {
-            // Both negative: range y_min rounded down to power of 10, to zero
-            y_max = 0;
-            temp = -std::pow(10, (scale + 1));
-            y_min = (temp <= y_min * 2 ? (temp <= y_min * 4 ? temp / 4 : temp / 2) : temp);
-        } else {
-            // TODO: It would be nicer if the intervals were equally reflected
-            // about the x-axis but this isn't really very important
-            temp = std::pow(10, (scale + 1));
-            y_max = (temp >= y_max * 2 ? (temp >= y_max * 4 ? temp / 4: temp / 2) : temp);
-            temp = -std::pow(10, (scale + 1));
-            y_min = (temp <= y_min * 2 ? (temp <= y_min * 4 ? temp / 4 : temp / 2) : temp);
-        }
+//    // Format the axis numbers to whole integers. This needs a series to have
+//    // been selected, so avoid otherwise
+//    if (anySeries != nullptr)
+//    {
+//        chart->createDefaultAxes();
+//        QValueAxis *x_axis = static_cast<QValueAxis*>(chart->axisX(anySeries));
+//        x_axis->setLabelFormat("%d");
+//        QValueAxis *y_axis = static_cast<QValueAxis*>(chart->axisY(anySeries));
+//        y_axis->setLabelFormat("%d");
 
-        qDebug() << "MainWindow::drawChart(): Setting range from" << y_min << "to" << y_max;
-        y_axis->setRange(y_min, y_max);
-    }
+//        int temp;
+//        if (y_max > 0 && y_min >= 0) {
+//            // Both positive: range from zero to y_max rounded up to power of 10
+//            temp = std::pow(10, (scale + 1));
+//            y_max = (temp >= y_max * 2 ? (temp >= y_max * 4 ? temp / 4 : temp / 2) : temp);
+//            y_min = 0;
+//        } else if (y_min < 0 && y_max <= 0) {
+//            // Both negative: range y_min rounded down to power of 10, to zero
+//            y_max = 0;
+//            temp = -std::pow(10, (scale + 1));
+//            y_min = (temp <= y_min * 2 ? (temp <= y_min * 4 ? temp / 4 : temp / 2) : temp);
+//        } else {
+//            // TODO: It would be nicer if the intervals were equally reflected
+//            // about the x-axis but this isn't really very important
+//            temp = std::pow(10, (scale + 1));
+//            y_max = (temp >= y_max * 2 ? (temp >= y_max * 4 ? temp / 4: temp / 2) : temp);
+//            temp = -std::pow(10, (scale + 1));
+//            y_min = (temp <= y_min * 2 ? (temp <= y_min * 4 ? temp / 4 : temp / 2) : temp);
+//        }
 
-    double gini = _currentBehaviour->getGini();
-    double prod = _currentBehaviour->getProductivity();
+//        qDebug() << "MainWindow::drawChart(): Setting range from" << y_min << "to" << y_max;
+//        y_axis->setRange(y_min, y_max);
+//    }
 
-    inequalityLabel->setText(tr("Inequality: ") + QString::number(round(gini * 100)) + "%");
-    productivityLabel->setText(tr("Productivity: ") + QString::number(round(prod + 0.5)) + "%");
+//    double gini = _currentBehaviour->getGini();
+//    double prod = _currentBehaviour->getProductivity();
 
-    // emit drawingCompleted();
+//    inequalityLabel->setText(tr("Inequality: ") + QString::number(round(gini * 100)) + "%");
+//    productivityLabel->setText(tr("Productivity: ") + QString::number(round(prod + 0.5)) + "%");
+
+//    // emit drawingCompleted();
+
 }
 
 int MainWindow::magnitude(double y)
@@ -1229,27 +1438,27 @@ int MainWindow::magnitude(double y)
 
 void MainWindow::updateStatsDialog(QListWidgetItem *current)
 {
-    if (current == nullptr) {
-        return;
-    }
+//    if (current == nullptr) {
+//        return;
+//    }
 
-    statsAction->setEnabled(true);
+//    statsAction->setEnabled(true);
 
-    QSettings settings;
-    int range = settings.value("iterations", 100).toInt() + 1;
+//    QSettings settings;
+//    int range = settings.value("iterations", 100).toInt() + 1;
 
-    QListWidgetItem *it = current; //propertyList->currentItem();
-    QString key = it->text();
-    Behaviour::Property prop = propertyMap[key];
-    int ix = static_cast<int>(prop);
-    int min = _currentBehaviour->min_value(ix);
-    int max = _currentBehaviour->max_value(ix);
-    int total = _currentBehaviour->total(ix);
-    int mean = total / range;
+//    QListWidgetItem *it = current; //propertyList->currentItem();
+//    QString key = it->text();
+//    Behaviour::Property prop = propertyMap[key];
+//    int ix = static_cast<int>(prop);
+//    int min = _currentBehaviour->min_value(ix);
+//    int max = _currentBehaviour->max_value(ix);
+//    int total = _currentBehaviour->total(ix);
+//    int mean = total / range;
 
-    statsDialog->setLimits(key, min, max, mean);
+//    statsDialog->setLimits(key, min, max, mean);
 
-    property_selected = true;
+//    property_selected = true;
 }
 
 void MainWindow::changeProfile(QListWidgetItem *item)
@@ -1332,10 +1541,14 @@ void MainWindow::changeDomain(QListWidgetItem *item)
      * well just copy the relevant code into changeDomain.
      */
 
+
+ #if 0
+
     // Get the behaviour associated with the required domain and set it as current.
     Domain *dom = getDomain(domainName);
 
-    if (dom == nullptr) {
+    if (dom == nullptr)
+    {
         errorMessage("Cannot find the requested domain (" + item->text() + ")");    // exits
 
     }
@@ -1348,7 +1561,8 @@ void MainWindow::changeDomain(QListWidgetItem *item)
     qDebug() << "MainWindow::changeDomain(): _currentBehaviour set";
 
     // Check that it worked -- this can be removed after testing
-    if (_currentBehaviour == nullptr) {
+    if (_currentBehaviour == nullptr)
+    {
         errorMessage("Cannot find the requested behaviour (" + item->text() + ")");    // exits
     }
 
@@ -1385,40 +1599,41 @@ void MainWindow::changeDomain(QListWidgetItem *item)
     qDebug() << "MainWindow::changeDomain(): redrawing chart";
 
     drawChart(true, false);
+#endif
 }
 
 void MainWindow::changeBehaviour(QListWidgetItem *item)
 {
-    if (reloading) {
-        return;
-    }
+//    if (reloading) {
+//        return;
+//    }
 
-    selectedBehaviourItem = item;
-    changeAction->setDisabled(false);
-    saveCSVAction->setDisabled(false);
-    _currentBehaviour = Behaviour::getBehaviour(item->text());
+//    selectedBehaviourItem = item;
+//    changeAction->setDisabled(false);
+//    saveCSVAction->setDisabled(false);
+//    _currentBehaviour = Behaviour::getBehaviour(item->text());
 
-    if (_currentBehaviour == nullptr) {
-        errorMessage("Cannot find the requested behaviour (" + item->text() + ")");    // exits
-    }
+//    if (_currentBehaviour == nullptr) {
+//        errorMessage("Cannot find the requested behaviour (" + item->text() + ")");    // exits
+//    }
 
-    QSettings settings;
+//    QSettings settings;
 
-    double nominal_population = settings.value("nominal-population", 1000).toDouble();
-    double scale = nominal_population / 1000;
-    int startups = scale * settings.value("startups", 0).toInt();
+//    double nominal_population = settings.value("nominal-population", 1000).toDouble();
+//    double scale = nominal_population / 1000;
+//    int startups = scale * settings.value("startups", 0).toInt();
 
-    QString behaviourName = item->text();
-    infoLabel->setText(  tr("  Total population: ") + QString::number(nominal_population)
-                             + tr("  Government employees: ") + settings.value("government-employees", 200).toString()
-                             + tr("  Standard wage: ") + settings.value("unit-wage", 500).toString()
-                             + tr("  Private businesses at start: ") + QString::number(startups)
-                            );
+//    QString behaviourName = item->text();
+//    infoLabel->setText(  tr("  Total population: ") + QString::number(nominal_population)
+//                             + tr("  Government employees: ") + settings.value("government-employees", 200).toString()
+//                             + tr("  Standard wage: ") + settings.value("unit-wage", 500).toString()
+//                             + tr("  Private businesses at start: ") + QString::number(startups)
+//                            );
 
-    settings.setValue("current_model", behaviourName);
-    settings.beginGroup(behaviourName);
-    settings.endGroup();
+//    settings.setValue("current_model", behaviourName);
+//    settings.beginGroup(behaviourName);
+//    settings.endGroup();
 
-    drawChart(true, false);
+//    drawChart(true, false);
 }
 

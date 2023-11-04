@@ -3,8 +3,8 @@
 #include "createdomaindlg.h"
 #include "QtCore/qsettings.h"
 #include "QtWidgets/qpushbutton.h"
-#include "behaviour.h"
-#include "domain.h"
+//#include "behaviour.h"
+#include "account.h"
 #include "ui_createdomaindlg.h"
 
 CreateDomainDlg::CreateDomainDlg(QWidget *parent) :
@@ -12,34 +12,6 @@ CreateDomainDlg::CreateDomainDlg(QWidget *parent) :
     ui(new Ui::CreateDomainDlg)
 {
     ui->setupUi(this);
-    ui->cbBehaviour->insertItem(0, "Default");
-
-    int ixCurrent = 0;
-
-    /*
-     * This all needs rewriting
-     */
-
-//    QSettings settings;
-//    int count = settings.beginReadArray(
-//                "Behaviours"    // historical (Behaviour used to be Model)
-//                );
-//    if (count > 0)
-//    {
-//        for (int i = 0; i < count; ++i)
-//        {
-//            settings.setArrayIndex(i);
-//            QString name = settings.value("name").toString();
-//            if (name == Behaviour::currentBehaviour->name()) {
-//                ixCurrent = i;
-//            }
-//            ui->cbBehaviour->addItem(settings.value("name").toString());
-//        }
-//    }
-//    settings.endArray();
-
-//    ui->cbBehaviour->setCurrentIndex(ixCurrent);
-//    ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
 }
 
 CreateDomainDlg::~CreateDomainDlg()
@@ -50,11 +22,6 @@ CreateDomainDlg::~CreateDomainDlg()
 QString CreateDomainDlg::getDomainName()
 {
     return ui->leDomainName->text().simplified();
-}
-
-QString CreateDomainDlg::getBehaviourName()
-{
-    return ui->cbBehaviour->currentText().simplified();
 }
 
 QString CreateDomainDlg::getCurrency()

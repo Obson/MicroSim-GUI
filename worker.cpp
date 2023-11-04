@@ -1,7 +1,7 @@
 #include "account.h"
 #include <QDebug>
 
-Worker::Worker(Behaviour *model) : Account(model)
+Worker::Worker(Domain *domain) : Account(domain)
 {
     employer = nullptr;
     period_hired = -1;
@@ -50,8 +50,8 @@ void Worker::trigger(int period)
         last_triggered = period;
 
         double purch;
-        double thresh = behaviour()->getIncomeThreshold();
-        double prop_con = behaviour()->getPropCon();
+        double thresh = _domain->getIncomeThreshold();
+        double prop_con = _domain->getPropCon();
 
         if (balance <= thresh) {
             purch = balance;
@@ -60,7 +60,7 @@ void Worker::trigger(int period)
         }
 
         if (purch > 0) {
-            if (transferSafely(behaviour()->selectRandomFirm(), purch, this)) {
+            if (transferSafely(_domain->selectRandomFirm(), purch, this)) {
                 purchases += purch;
             }
         }
@@ -103,11 +103,15 @@ void Worker::credit(double amount, Account *creditor, bool)
         // receiving the payment in our capacity as Worker then it's probably
         // benefits or bonus. If not employed at all it must be bonus and we are
         // flagged for deletion. Surprising but perfectly possible.
-        double tax = amount * behaviour()->getIncTaxRate();
+        double tax = amount * _domain->getIncTaxRate();
 
         //qDebug() << "Worker::credit(): transferring tax" << tax << "to gov";
 
-        if (transferSafely(behaviour()->gov(), tax, this))
+        /*
+         * Sort this out by adding a government() function to Domain and
+         * making _gov private
+         */
+        if (transferSafely(_domain->government(), tax, this))
         {
             wages += amount;
             inc_tax += tax;
@@ -120,7 +124,7 @@ void Worker::credit(double amount, Account *creditor, bool)
             Q_ASSERT(false);
         }
     }
-    else if (creditor == behaviour()->gov())
+    else if (creditor == _domain->government())
     {
         // qDebug() << "Worker::credit(): benefits assumed";
         benefits += amount;
