@@ -1,6 +1,5 @@
 
 #include "mainwindow.h"
-#include "createdomaindlg.h"
 #include "account.h"
 #include "newbehaviourldlg.h"
 
@@ -21,30 +20,66 @@
 #include <QUrl>
 #include <QDebug>
 
-#include "optionsdialog.h"
 #include "removemodeldlg.h"
 #include "version.h"
 #include "saveprofiledialog.h"
 #include "statsdialog.h"
 #include "removeprofiledialog.h"
+#include "createdomaindlg.h"
 
 MainWindow::MainWindow()
 {
-    _currentDomain = nullptr;
+    QSettings settings;
+
+    qDebug() << "MainWindow()";
+
     first_time_shown = true;
 
     statsDialog = new StatsDialog(this);
     statsDialog->setWindowFlags(Qt::Tool);
 
-    // Set up list of property names.
+    qDebug() << "Settings are in" << settings.fileName();
 
-    // Qt Limitation: can only initialise a QMap from an initializer list if
-    // is declared as static. And of course this is no help when it has to
-    // point to instance members.
+    /*
+     * Make sure preference exist. We look for 'iterations' because 'General'
+     * seems to be a reserved word and a search for it always returns false.
+     * Perhaps I'm missing something...
+     */
+    if (!settings.contains("iterations"))
+    {
+        qDebug() << "No general settings -- saving defaults";
+        settings.setValue("iterations", 100);
+        settings.setValue("start-period", 0);
+        settings.setValue("startups", 10);
+        settings.setValue("nominal-population", 1000);
+        settings.setValue("unit-wage", 100);
+        settings.setValue("government-employees", 200); // approx tot pop / 5
 
-    // Note that Domain::Property is an enum, so in effect PropertyMap
-    // maps property names to indices that reference a chart series
+        //settings.setValue("sample-size", 10); // for moving averages -- adjust as necessary
+    }
 
+    /*
+     * It makes sense to compare the same profile on different domains, so
+     * the current chart profile applies regardless of the domain. However it
+     * is not necessary to save a profile and initially current-profile will
+     * be empty.
+     */
+    chartProfile = settings.value("current-profile", "").toString();
+
+    /*
+     * Allocate signals to menus
+     */
+    createActions();
+
+    /*
+     * Create the menus and the status bar
+     */
+    createMenus();
+    createStatusBar();
+
+    /*
+     * Map property names to domain properties
+     */
     propertyMap[tr("Current period")] = Domain::Property::current_period;
     propertyMap[tr("Population size")] = Domain::Property::pop_size;
     propertyMap[tr("Govt exp excl benefits")] = Domain::Property::gov_exp;
@@ -78,53 +113,25 @@ MainWindow::MainWindow()
     propertyMap[tr("Productivity")] = Domain::Property::productivity;
     propertyMap[tr("Productivity (relative)")] = Domain::Property::rel_productivity;
     propertyMap[tr("Govt direct support")] = Domain::Property::unbudgeted;
-    propertyMap[tr("Investment")] = Domain::Property::investment;
-    propertyMap[tr("GDP")] = Domain::Property::gdp;
-    propertyMap[tr("Profit")] = Domain::Property::profit;
     propertyMap[tr("Zero reference line")] = Domain::Property::zero;
 
-    // If non-zero, points to currently selected listwidget item
-    selectedBehaviourItem = nullptr;
-
-    // Make sure preferences exist
-    QSettings settings;
-    qDebug() << "Settings are in" << settings.fileName();
-
-    // If there are no global settings set up sensible defaults
-    if (!settings.contains("iterations"))
-    {
-        QMessageBox msgBox(this);
-        msgBox.setText(tr("Using default settings"));
-        msgBox.setInformativeText(tr("You have not yet customised the settings "
-                                     " for this application. To do so, please select "
-                                     "\"Preferences\" from the main menu."));
-        msgBox.setIcon(QMessageBox::Warning);
-        msgBox.setStandardButtons(QMessageBox::Ok);
-        msgBox.setDefaultButton(QMessageBox::Ok);
-        msgBox.exec();
-
-        settings.setValue("iterations", 100);
-        settings.setValue("start-period", 0);
-        settings.setValue("startups", 10);
-        settings.setValue("nominal-population", 1000);
-        settings.setValue("unit-wage", 100);
-        settings.setValue("government-employees", 200); // approx tot pop / 5
-
-        //settings.setValue("sample-size", 10); // for moving averages -- adjust as necessary
-    }
-
-    // The chart profile applies regardless of the domain or behaviour
-    chartProfile = settings.value("current-profile", "").toString();
-
-    createChart();          // this creates the chart but doesn't populate it
-    createActions();
-    createMenus();
-    createStatusBar();
-
-    // Create and populate the dock windows, instantiating domains and
-    // behaviours from the values in settings.
+    /*
+     * Create and populate the dock windows, instantiating domains from the
+     * values in settings
+     */
     createDockWindows();
 
+    /*
+     * Create an MDI area as central widget
+     */
+    mdi = new QMdiArea;
+    setCentralWidget(mdi);
+
+    setWindowTitle(tr("Stock-Flow Consistent Economic Model"));
+    setWindowIcon(QIcon(":/obson.icns"));
+    setUnifiedTitleAndToolBarOnMac(true);
+    setMinimumSize(1024, 768);
+    resize(1280, 800);
 
     /*
      * Restore existing domains from settings -- this should now be done in the
@@ -132,48 +139,6 @@ MainWindow::MainWindow()
      */
 
     Domain::restoreDomains();
-
-#if 0
-    settings.beginGroup("Domains");
-
-    for (int j = 0; j < domainList->count(); ++j)
-    {
-        QString domainName = domainList->item(j)->text();
-
-        qDebug() << "adding domain" << domainName;
-
-        settings.beginGroup(domainName);
-
-        // This assumes something has created the named domain. Currently
-        // this is only done when selecting a domain by name, and is stored in
-        // _currentDomain somewhere...
-        Domain *beh = Domain::getDomain(settings.value("Domain").toString());
-
-        Domain *dom = new Domain(
-                    domainName,
-                    // beh,
-                    settings.value("Currency").toString(),
-                    settings.value("Abbrev").toString()
-                    );
-        domains.append(dom);
-
-        connect(this, &MainWindow::clockTick, dom, &Domain::iterate);
-
-        settings.endGroup();
-    }
-#endif
-
-    setWindowTitle(tr("Obson Macro-Economic Modelling"));
-    setWindowIcon(QIcon(":/obson.icns"));
-    setUnifiedTitleAndToolBarOnMac(true);
-    setMinimumSize(1024, 768);
-    resize(1280, 800);
-
-    // The left margin is to prevent the control being right against the side
-    // of the window. May not really be a good idea. The border and padding
-    // definitely improve things though.
-    // setStyleSheet("QListWidget{margin-left: 2px; border: 0px; padding:12px;}");
-
 
     qDebug() << "*******";
 }
@@ -193,7 +158,11 @@ void MainWindow::show()
     QMainWindow::show();
     QApplication::processEvents();
 
-    if (domains.isEmpty())
+    /*
+     * Load any domains that created in previous run. (Note: we should allow
+     * 'projects, each of which has its own ini file. This can be added later.)
+     */
+    if (Domain::restoreDomains() == 0)
     {
         createDomain();
         wiz->exec();
@@ -214,6 +183,7 @@ void MainWindow::showWiki()
     QDesktopServices::openUrl(QUrl("https://github.com/Obson/MicroSim-GUI/wiki", QUrl::StrictMode));
 }
 
+/*
 void MainWindow::createChart()
 {
     chart = new QChart();
@@ -228,6 +198,7 @@ void MainWindow::createChart()
 
     setCentralWidget(chartView);
 }
+*/
 
 void MainWindow::createActions()
 {
@@ -235,7 +206,7 @@ void MainWindow::createActions()
     const QIcon csvIcon = QIcon(":/chart-2.icns");
     saveCSVAction = new QAction(csvIcon, tr("&Save as CSV file..."), this);
     saveCSVAction->setStatusTip(tr("Save current chart as a CSV file"));
-    saveCSVAction->setDisabled(!isBehaviourSelected());
+    // saveCSVAction->setDisabled(!isBehaviourSelected());
     connect(saveCSVAction, &QAction::triggered, this, &MainWindow::saveCSV);
 
     // Save profile
@@ -250,10 +221,10 @@ void MainWindow::createActions()
     removeProfileAction->setStatusTip(tr("Remove profile"));
     connect(removeProfileAction, &QAction::triggered, this, &MainWindow::removeProfile /* Change this */);
 
-    // Edit model parameters
+    // Edit domain parameters
     const QIcon setupIcon = QIcon(":/settings.icns");
-    changeAction = new QAction(setupIcon, tr("Edit &behaviour..."));
-    changeAction->setDisabled(!isBehaviourSelected());
+    changeAction = new QAction(setupIcon, tr("Edit domain &parameters..."));
+    // changeAction->setDisabled(!isBehaviourSelected());
     changeAction->setStatusTip(tr("Modify this behaviour definition"));
     connect(changeAction, &QAction::triggered, this, &MainWindow::editParameters);
 
@@ -270,8 +241,8 @@ void MainWindow::createActions()
     connect(newAction, &QAction::triggered, this, &MainWindow::createNewBehaviour);
 
     // New domain
-    const QIcon domainIcon = QIcon(":/world.icns");
-    domainAction = new QAction(domainIcon, tr("New &domain..."), this);
+    const QIcon domainListIcon(":/world.icns");
+    domainAction = new QAction(domainListIcon, tr("New &domain..."), this);
     domainAction->setStatusTip(tr("Create a new domain"));
     connect(domainAction, &QAction::triggered, this, &MainWindow::createDomain);
 
@@ -331,7 +302,10 @@ void MainWindow::createActions()
     closeAction->setStatusTip(tr("Quit Obson"));
     connect(closeAction, &QAction::triggered, this, &MainWindow::close);
 
-    connect(this, &MainWindow::windowLoaded, this, &MainWindow::restoreState);
+    /*
+     * CURRENTLY THIS CAUSES FAILURE BECAUSE restoreState NEEDS REWRITING
+     */
+    // connect(this, &MainWindow::windowLoaded, this, &MainWindow::restoreState);
 }
 
 
@@ -504,31 +478,33 @@ void MainWindow::closeEvent(QCloseEvent *event)
 {
     qDebug() << "MainWindow::closeEvent() called";
 
-    // Save current config to settings
+    /*
+     * Save current config to settings
+     */
+
     QSettings settings;
-    settings.beginGroup("State");
 
-    for (int i = 0; i < propertyList->count(); i++)
+    if (profile_changed)    // this doesn't seem to work -- investigate
     {
-        QListWidgetItem *item;
-        item = propertyList->item(i);
-        item->data(Qt::UserRole).clear();
-        QString text = item->text();
-        bool selected = item->checkState();
-        settings.setValue(text, selected ? true : false);
-    }
-
-    settings.endGroup();
-    if (profile_changed)
-    {
-        // Ask whether to save the new settings as the current profile
+        /*
+         * Check whether to save the new settings, either as the current
+         * profile or under a (possibly) new profile name
+         */
         SaveProfileDialog dlg(this);
         if (QDialog::Accepted == dlg.exec())
         {
             saveSettingsAsProfile(dlg.profileName());
         }
     }
+
+    /*
+     * Save the current profile (name) anyway
+     */
     settings.setValue("current-profile", chartProfile);
+
+    /*
+     * Now safe to close
+     */
     event->accept();
 }
 
@@ -558,7 +534,7 @@ void MainWindow::restoreState()
     }
     else
     {
-        QList<QListWidgetItem*> items = behaviourList->findItems(s, Qt::MatchExactly);
+        QList<QListWidgetItem*> items = domainList->findItems(s, Qt::MatchExactly);
         if (items.count() == 1) {
             items[0]->setSelected(true);
             changeBehaviour(items[0]);
@@ -714,25 +690,24 @@ void MainWindow::createNewBehaviour()
 }
 
 
-// This function creates a new domain using the information returned by the
-// CreateDomainDlg and appends it to QList<Domain*>::domains
+/*
+ * Call the static function in Domain to create a domain.
+ */
 void MainWindow::createDomain()
 {
-//    qDebug() << "MainWindow::createDomain(): calling CreateDomainDlg";
-//    CreateDomainDlg dlg(this);
-//    if (dlg.exec() == QDialog::Accepted)
-//    {
-//        Domain *newDomain = new Domain(
-//                    dlg.getDomainName(),
-//                    dlg.getCurrency(),
-//                    dlg.getCurrencyAbbrev()
-//                    );
+    qDebug() << "MainWindow::createDomain(): calling CreateDomainDlg";
+    CreateDomainDlg dlg(this);
+    if (dlg.exec() == QDialog::Accepted)
+    {
+        //qDebug() << "MainWindow::createDomain(): Calling parameterwizard";
+        //wiz->exec();
+        Domain::createDomain(
+                    dlg.getDomainName(),
+                    dlg.getCurrency(),
+                    dlg.getCurrencyAbbrev()
+                    );
 
-//        domains.append(newDomain);
-
-//        qDebug() << "MainWindow::createDomain(): Calling parameterwizard";
-//        wiz->exec();
-//    }
+    }
 }
 
 void MainWindow::remove()
@@ -741,12 +716,16 @@ void MainWindow::remove()
     dlg.exec();
 
     reloading = true;
-    loadDomains();
+    loadDomains(domainList);
     reloading = false;
 }
 
 void MainWindow::editParameters()
 {
+    /*
+     * This shoud all go in Domain
+     */
+#if 0
     Q_ASSERT(selectedBehaviourItem != nullptr);
     QString behaviourName = selectedBehaviourItem->text();
     qDebug() << "MainWindow::editParameters(): model_name =" << behaviourName;
@@ -758,6 +737,7 @@ void MainWindow::editParameters()
         // mod->run();
     }
     propertyChanged();
+#endif
 }
 
 void MainWindow::editModelDescription()
@@ -834,73 +814,110 @@ void MainWindow::selectProfile(QString text)
 
 void MainWindow::createDockWindows()
 {
-    // Create property list
+    /*
+     * Create a dockable widget for the property list
+     */
     QDockWidget *dock = new QDockWidget(tr("Properties"), this);
+
+    /*
+     * Allow it to be placed either side of the window
+     */
     dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+
+    /*
+     * Create an unpolulated list widget in the dock widget
+     */
     propertyList = new QListWidget(dock);
     //propertyList->setFixedWidth(220);
 
     // NEXT: Read the state here so it can be use to set the property
     // checkboxes
 
+    /*
+     * Populate the property list setting the text for each item according to
+     * property key with the same index, and its state to unchecked, selectable,
+     * checkeble and enabled.
+     */
 
-    // Populate the property list
+    qDebug() << "Reading propertyMap";
     QMap<QString,Domain::Property>::iterator i;
     for (i = propertyMap.begin(); i != propertyMap.end(); ++i)
     {
+        /*
+         * Create an item
+         */
         QListWidgetItem *item = new QListWidgetItem;
         item->setText(i.key());
+
+        qDebug() << "added item" << i.key();
+
         item->setCheckState(Qt::Unchecked);
         item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
+
+        /*
+         * Add it to the property list widget
+         */
         propertyList->addItem(item);
     }
+
+    /*
+     * When the selected property is changed signal the propertyChanged function
+     */
     connect(propertyList, &QListWidget::itemChanged, this, &MainWindow::propertyChanged);
+
+    /*
+     * When a property is clicked show the stats for that property
+     */
     connect(propertyList, &QListWidget::itemClicked, this, &MainWindow::updateStatsDialog);
 
-    // Add to dock
+    /*
+     * Add the property list widget to the dock
+     */
     dock->setWidget(propertyList);
-    addDockWidget(Qt::LeftDockWidgetArea, dock);
 
-    // Create the behaviour list
-    dock = new QDockWidget(tr("Behaviours"), this);
-    dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    behaviourList = new QListWidget(dock);
-
-    // Populate the behaviour list
-    loadDomains();
-
-    // Add to dock
-    dock->setWidget(behaviourList);
-    addDockWidget(Qt::LeftDockWidgetArea, dock);
+    /*
+     * Put the dock to the right of the window
+     */
+    addDockWidget(Qt::RightDockWidgetArea, dock);
 
     // Create the profile list
     dock = new QDockWidget(tr("Chart Profiles"), this);
     dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     profileList = new QListWidget(dock);
 
-    // Populate the profile list
+    /*
+     * Populate the profile list
+     */
     QSettings settings;
     settings.beginGroup("Profiles");
     profileList->addItems(settings.childGroups());
     settings.endGroup();
 
-    // Select the item corresponding to the current profile
-    if (!chartProfile.isEmpty()) {
-        selectProfile(chartProfile);
-    }
-
     // Add to dock
     dock->setWidget(profileList);
-    //dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
-    addDockWidget(Qt::LeftDockWidgetArea, dock);
+    addDockWidget(Qt::RightDockWidgetArea, dock);
 
-    // Create a default behaviour
-    // NOTE: It's probably unnecessary, but we store it in MainWindow as it's
-    // common to all domains so we have quick access to it from anywhere
-    // defaultBehaviour = Behaviour::createDefaultBehaviour();
+    // Select the properties corresponding to the current profile
+    if (!chartProfile.isEmpty())
+    {
+        QList<QListWidgetItem*> items = profileList->findItems(chartProfile, Qt::MatchExactly);
+        if (items.count() == 1)
+        {
+            changeProfile(items[0]);
+            profileList->setItemSelected(items[0], true);
+        }
+        else
+        {
+            qDebug() << "chartProfile from settings (" << chartProfile << ") not found";
+        }
+    }
+    else
+    {
+        qDebug() << "chartProfile is empty";
+    }
 
     // Create domain list
-    dock = new QDockWidget(tr("Domain"), this);
+    dock = new QDockWidget(tr("Domains"), this);
     dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     domainList = new QListWidget(dock);
 
@@ -909,9 +926,9 @@ void MainWindow::createDockWindows()
     domainList->addItems(settings.childGroups());
     settings.endGroup();
     dock->setWidget(domainList);
-    addDockWidget(Qt::LeftDockWidgetArea, dock);
+    addDockWidget(Qt::RightDockWidgetArea, dock);
 
-
+#if 0
     int count = settings.beginReadArray("Domains");
 
     // NEXT: update loadDomainList
@@ -929,7 +946,7 @@ void MainWindow::createDockWindows()
     {
     }
     settings.endArray();
-
+#endif
 
 
 
@@ -939,8 +956,8 @@ void MainWindow::createDockWindows()
     wiz->setModal(true);
 
     // Connect signals for changing selection and double-click
-    connect(behaviourList, &QListWidget::currentItemChanged, this, &MainWindow::changeBehaviour);
-    connect(behaviourList, &QListWidget::itemDoubleClicked, this, &MainWindow::editParameters);
+    connect(domainList, &QListWidget::currentItemChanged, this, &MainWindow::changeBehaviour);
+    connect(domainList, &QListWidget::itemDoubleClicked, this, &MainWindow::editParameters);
     connect(profileList, &QListWidget::currentItemChanged, this, &MainWindow::changeProfile);
     connect(domainList, &QListWidget::currentItemChanged, this, &MainWindow::changeDomain);
 }
@@ -1165,7 +1182,7 @@ int MainWindow::getPeriod()
 // TODO: At present this function is called again after a behaviour is removed.
 // This must be changed in MainWindow::remove().
 
-int MainWindow::loadDomains()
+int MainWindow::loadDomains(QListWidget *domainList)
 {
 //    qDebug() << "MainWindow::loadBehaviourList(): opening Settings";
 
@@ -1242,11 +1259,6 @@ int MainWindow::loadDomainList()
 
     */
 
-}
-
-bool MainWindow::isBehaviourSelected()
-{
-    return selectedBehaviourItem != nullptr;
 }
 
 QColor MainWindow::nextColour(int n)

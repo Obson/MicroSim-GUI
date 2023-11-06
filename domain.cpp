@@ -15,7 +15,6 @@
  */
 QList<Domain*> Domain::domains;
 
-
 /*
  * This function creates a new domain having the given name and currency, and
  * default parameters, and returns a pointer to it. If the domain already exists

@@ -65,7 +65,10 @@
 // #define VERSION "0.1.16"
 // Now allows minimum two startups per thousand, instead of ten per thousand
 
-#define VERSION "0.2.00"
+//#define VERSION "0.2.00"
 // Project resurrected late March 2022
+
+#define VERSION "0.2.02 (November 2023)"
+// Start of major rewrite to allow multiple domains
 
 #endif // VERSION_H

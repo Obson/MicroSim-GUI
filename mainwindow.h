@@ -14,10 +14,12 @@
 #include <QMenuBar>
 #include <QAction>
 #include <QLabel>
+#include <QMdiArea>
 
 //#include "account.h"
 //#include "behaviour.h"
 //#include "controlwidget.h"
+
 #include "statsdialog.h"
 
 namespace Ui {
@@ -37,8 +39,8 @@ class MainWindow;
 QT_CHARTS_USE_NAMESPACE
 
 static QList<Domain*> domains;
-static Domain *currentDomain = nullptr;
-static Domain *defaultDomain = nullptr;
+//static Domain *currentDomain = nullptr;
+//static Domain *defaultDomain = nullptr;
 
 class MainWindow : public QMainWindow
 {
@@ -80,26 +82,13 @@ protected:
 
     // Domain *getDomain(QString);
 
-    int loadDomains();
+    int loadDomains(QListWidget *domainList);
     int loadDomainList();
     int loadProfileList();
 
     int getIters();         // number of iterations (periods)
     int getPeriod();
 
-#if 0
-    int getPopSize();       // max available population size
-    int getActivePop();     // target size of economically active population
-    int getGovExpRate();    // government expenditure (currency units per period)
-    int getStdWage();       // standard wage (currency units per employee per period)
-    int getPropCon();       // propensity to consume (%)
-    int getIncTaxRate();    // income tax rate (%)
-    int getSalesTaxRate();  // sales tax rate (%)
-    int getFCP();           // firm creaton probability (%)
-    int getUBR();           // unemployment benefit rate (% of std wage)
-    int getPropInv();       // propensity to invest
-    int getReserve();       // funds kept in reserve for next period (%)
-#endif
     void saveCSV();
     void editParameters();
     void editModelDescription();
@@ -162,9 +151,7 @@ private:
     Ui::MainWindow *ui;
     ParameterWizard *wiz;
 
-    // Default and currently seleected behaviours
-    Domain *_currentDomain;
-    Domain *defaultDomain;
+    QMdiArea *mdi;   // *****
 
     QList<Domain*> domains;
     QStringList domainNames;        // for easy access
@@ -183,7 +170,7 @@ private:
 
     QMap<QString,Domain::Property> propertyMap;
 
-    void createChart();
+    //void createChart();
     void createActions();
     void createMenus();
     void createStatusBar();

@@ -103,7 +103,7 @@ public:
      * parameters.Must be public as the user wiil have to create domains
      * initially.
      */
-    Domain *createDomain(const QString &name,
+    static Domain *createDomain(const QString &name,
                                 const QString &currency,
                                 const QString &currencyAbbrev);
 
