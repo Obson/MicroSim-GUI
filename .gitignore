@@ -2,3 +2,5 @@
 *.user
 *.autosave
 .DS_Store
+behaviour.cpp
+behaviour.h
