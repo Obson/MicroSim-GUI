@@ -124,8 +124,8 @@ MainWindow::MainWindow()
     /*
      * Create an MDI area as central widget
      */
-    mdi = new QMdiArea;
-    setCentralWidget(mdi);
+    //mdi = new QMdiArea;
+    setCentralWidget(&mdi);
 
     setWindowTitle(tr("Stock-Flow Consistent Economic Model"));
     setWindowIcon(QIcon(":/obson.icns"));
@@ -150,8 +150,10 @@ MainWindow::~MainWindow()
 
 void MainWindow::show()
 {
-    // NOTE: I no longer remember why we have to override QMainWindow::show(),
-    // but if this is removed the window remains invisible. Investigate...
+    /*
+     * NOTE: I no longer remember why we have to override QMainWindow::show(),
+     * but if this is removed the window remains invisible. Investigate...
+     */
 
     qDebug() << "MainWindow::show()";
 
@@ -159,8 +161,8 @@ void MainWindow::show()
     QApplication::processEvents();
 
     /*
-     * Load any domains that created in previous run. (Note: we should allow
-     * 'projects, each of which has its own ini file. This can be added later.)
+     * Load any domains that were created previously. If there are none offer
+     * to create one.
      */
     if (Domain::restoreDomains() == 0)
     {
@@ -182,11 +184,9 @@ void MainWindow::showWiki()
 {
     QDesktopServices::openUrl(QUrl("https://github.com/Obson/MicroSim-GUI/wiki", QUrl::StrictMode));
 }
-
-/*
-void MainWindow::createChart()
+QChartView *MainWindow::createChart()
 {
-    chart = new QChart();
+    QChart *chart = new QChart();
     chart->legend()->setAlignment(Qt::AlignBottom);
     chartView = new QChartView(chart);
     chartView->setRenderHint(QPainter::Antialiasing);
@@ -196,9 +196,10 @@ void MainWindow::createChart()
             << Qt::darkBlue << Qt::darkMagenta << Qt::darkYellow
             << Qt::darkCyan;
 
-    setCentralWidget(chartView);
+    // setCentralWidget(chartView);
+    return chartView;
 }
-*/
+
 
 void MainWindow::createActions()
 {
@@ -316,6 +317,8 @@ void MainWindow::createMenus()
     applicationMenu = myMenuBar->addMenu(tr("&Obson"));
 
     fileMenu = myMenuBar->addMenu(tr("&File"));
+    fileMenu->addAction(runAction);
+    fileMenu->addSeparator();
     fileMenu->addAction(newAction);
     fileMenu->addAction(domainAction);
     fileMenu->addSeparator();
@@ -358,23 +361,6 @@ void MainWindow::createMenus()
     myToolBar->addAction(helpAction);
     myToolBar->addAction(closeAction);
 }
-
-
-// MainWindow shouldn't need access to specific domains
-//Domain *MainWindow::getDomain(QString domainName)
-//{
-//    // NEXT: COMPLETE THIS FUNCTION -- IMPORTANT!
-//    int numDomains = domains.count();
-//    for (int i = 0; i < numDomains; i++)
-//    {
-//        Domain *dom = domains.at(i);
-//        if (dom->getName() == domainName) {
-//            return dom;
-//        }
-//    }
-//    return nullptr;
-//}
-
 
 void MainWindow::reassignColours()
 {
@@ -512,7 +498,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 // MainWindow::createActions. I can't see any reason why the state can't be
 // read in as part of the setup (probably in createDockWindows), without
 // resorting to signals and slots. Investigate...
-
+#if 0
 void MainWindow::restoreState()
 {
     QSettings settings;
@@ -541,6 +527,7 @@ void MainWindow::restoreState()
         }
     }
 }
+#endif
 
 // #include "domain.h"
 
@@ -626,7 +613,7 @@ void MainWindow::removeProfile()
 }
 
 
-// NEXT: This function is no longer correct. Note that behaviourList here is
+// TODO: This function is no longer correct. Note that behaviourList here is
 // a QListWidget containing the behaviour names only. The behaviour parameters
 // are stored in settings independently (see Behaviour::createBehaviour()) and
 // only when the program is closed. This architecture will have to be changed.
@@ -716,7 +703,7 @@ void MainWindow::remove()
     dlg.exec();
 
     reloading = true;
-    loadDomains(domainList);
+    //loadDomains(domainList);
     reloading = false;
 }
 
@@ -830,9 +817,6 @@ void MainWindow::createDockWindows()
     propertyList = new QListWidget(dock);
     //propertyList->setFixedWidth(220);
 
-    // NEXT: Read the state here so it can be use to set the property
-    // checkboxes
-
     /*
      * Populate the property list setting the text for each item according to
      * property key with the same index, and its state to unchecked, selectable,
@@ -916,53 +900,57 @@ void MainWindow::createDockWindows()
         qDebug() << "chartProfile is empty";
     }
 
-    // Create domain list
-    dock = new QDockWidget(tr("Domains"), this);
-    dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    domainList = new QListWidget(dock);
-
-    // Populate the domain list
+    /*
+     * Populate the list of domains from settings
+     */
+    qDebug() << "Creating list of domains";
     settings.beginGroup("Domains");
-    domainList->addItems(settings.childGroups());
+    domainNameList.append(settings.childGroups());
     settings.endGroup();
-    dock->setWidget(domainList);
-    addDockWidget(Qt::RightDockWidgetArea, dock);
 
-#if 0
-    int count = settings.beginReadArray("Domains");
+    Domain::restoreDomains();
 
-    // NEXT: update loadDomainList
-
-    qDebug() << "MainWindow::loadDomainList():" << count << "domains found in settings";
-    if (count > 0)
+    /*
+     * Create an MDI window for each domain listed
+     */
+    qDebug() << "Creating MDI subwindows";
+    for (int i = 0; i < domainNameList.count(); i++)
     {
-        for (int i = 0; i < count; ++i)
-        {
-            QString domainName = settings.value("name").toString();
-            domainList->addItem(domainName);
-            domainNames.append(domainName);
-        }
-    } else
-    {
+        qDebug() << "setting up domain" << domainNameList.at(i);
+
+        QString title = domainNameList.at(i);
+
+        /*
+         * Create a subwindow for this domain
+         */
+        qDebug() << "Creating an MDI subwindow";
+        QMdiSubWindow *w = new QMdiSubWindow();
+        w->setWindowTitle(title); // ->item(i)->text());
+        w->resize(470, 370);
+
+        /*
+         * Add the subwindow to the MDI area
+         */
+        mdi.addSubWindow(w);
+
+        QChartView *chartView = createChart();
+        w->setWidget(chartView);
+
+        Domain *dom = Domain::getDomain(title);
+        dom->setChertView(chartView);
+
     }
-    settings.endArray();
-#endif
-
-
 
     // Create the parameter wizard
     wiz = new ParameterWizard(this);
-    // wiz->setProperties(propertyMap); (should be associated with specific behaviour)
+    // wiz->setProperties(propertyMap); (should be associated with specific domain)
     wiz->setModal(true);
 
-    // Connect signals for changing selection and double-click
-    connect(domainList, &QListWidget::currentItemChanged, this, &MainWindow::changeBehaviour);
-    connect(domainList, &QListWidget::itemDoubleClicked, this, &MainWindow::editParameters);
+    /*
+     * Connect signals for changing selection and double-click
+     */
     connect(profileList, &QListWidget::currentItemChanged, this, &MainWindow::changeProfile);
-    connect(domainList, &QListWidget::currentItemChanged, this, &MainWindow::changeDomain);
 }
-
-
 
 void MainWindow::showStatistics()
 {
@@ -1172,6 +1160,11 @@ int MainWindow::getPeriod()
     return _period;
 }
 
+
+/*
+ * MAJOR REWRITE...
+ */
+
 // This function is called on startup, to populate the behaviour list widget in
 // the dock. It interrogates the settings and not only populates the widget but
 // also creates the defined behaviour objects, which it stores (as pointers)
@@ -1232,6 +1225,7 @@ int MainWindow::loadDomains(QListWidget *domainList)
 //    return behaviourList->count();
 }
 
+#if 0
 int MainWindow::loadDomainList()
 {
     qDebug() << "MainWindow::loadDomainList(): opening Settings";
@@ -1260,6 +1254,7 @@ int MainWindow::loadDomainList()
     */
 
 }
+#endif
 
 QColor MainWindow::nextColour(int n)
 {
@@ -1515,7 +1510,7 @@ void MainWindow::changeProfile(QListWidgetItem *item)
     drawChart(true, false);
 }
 
-// NEXT: COMPLETE THIS FUNCTION (changeDomain())
+// TODO: COMPLETE THIS FUNCTION (changeDomain())
 void MainWindow::changeDomain(QListWidgetItem *item)
 {
     QString domainName = item->text();

@@ -145,7 +145,6 @@ Domain::Domain(const QString &name,
     settings.endGroup();
 
     settings.endGroup();
-
 }
 
 /*
@@ -153,7 +152,9 @@ Domain::Domain(const QString &name,
  */
 int Domain::restoreDomains()
 {
-    /* ADD CODE HERE */
+    // NEXT: ***** ADD CODE HERE *****
+
+    Q_ASSERT(false);
 }
 
 Firm *Domain::createFirm(bool state_supported)
@@ -182,7 +183,8 @@ Firm *Domain::selectRandomFirm(Firm *exclude)
     if (n < 2)
     {
         res = nullptr;
-    } else
+    }
+    else
     {
         while ( (res = firms[ (qrand() % (firms.size() - 1)) ]) == exclude );
     }
@@ -467,6 +469,11 @@ double Domain::getProductivity()
     return res;
 }
 
+
+void Domain::setChertView(QChartView *chartView)
+{
+    _chartView = chartView;
+}
 
 void Domain::readParameters()
 {

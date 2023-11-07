@@ -38,7 +38,7 @@ class MainWindow;
 // This makes references to QCharts and related classes simpler.
 QT_CHARTS_USE_NAMESPACE
 
-static QList<Domain*> domains;
+//static QList<Domain*> domains;
 //static Domain *currentDomain = nullptr;
 //static Domain *defaultDomain = nullptr;
 
@@ -83,7 +83,7 @@ protected:
     // Domain *getDomain(QString);
 
     int loadDomains(QListWidget *domainList);
-    int loadDomainList();
+    // int loadDomainList();
     int loadProfileList();
 
     int getIters();         // number of iterations (periods)
@@ -114,7 +114,7 @@ protected:
     void updateStatsDialog(QListWidgetItem *current/*, QListWidgetItem *previous*/);
 
     void closeEvent(QCloseEvent *event) override;
-    void restoreState();
+    //void restoreState();
 
     void propertyChanged();
 
@@ -151,10 +151,10 @@ private:
     Ui::MainWindow *ui;
     ParameterWizard *wiz;
 
-    QMdiArea *mdi;   // *****
+    QMdiArea mdi;   // *****
+    QList<QMdiSubWindow*> mdiWindowList;
 
     QList<Domain*> domains;
-    QStringList domainNames;        // for easy access
 
     QString chartProfile;
 
@@ -170,7 +170,8 @@ private:
 
     QMap<QString,Domain::Property> propertyMap;
 
-    //void createChart();
+    QChartView *createChart();
+
     void createActions();
     void createMenus();
     void createStatusBar();
@@ -198,7 +199,8 @@ private:
     QListWidget *behaviourList;
     QListWidget *profileList;
     QListWidget *propertyList;
-    QListWidget *domainList;
+
+    QList<QString> domainNameList;
 
     QtCharts::QLineSeries period;
     QtCharts::QLineSeries gov_exp;

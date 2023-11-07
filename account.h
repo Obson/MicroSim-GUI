@@ -1,6 +1,7 @@
 #ifndef ACCOUNT_H
 #define ACCOUNT_H
 
+#include "QtCharts/qchartview.h"
 #include <QObject>
 #include <iostream>
 #include <list>
@@ -307,6 +308,11 @@ public:
     void readParameters();
 
     /*
+     * Set the chartview
+     */
+    void setChertView(QChartView *chartView);
+
+    /*
      * Return the gini coefficient based on the wages of all the workers.
      */
     double gini();
@@ -385,6 +391,7 @@ private:
            const QString &currencyAbbrev,
            bool restore = false);
 
+    QChartView *_chartView;
 
 protected:
 
