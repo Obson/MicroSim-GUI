@@ -69,12 +69,15 @@ MainWindow::MainWindow()
     /*
      * Allocate signals to menus
      */
+    qDebug() << "Creating actions";
     createActions();
 
     /*
      * Create the menus and the status bar
      */
+    qDebug() << "Creating menus";
     createMenus();
+    qDebug() << "Creating statusbar";
     createStatusBar();
 
     /*
@@ -122,9 +125,14 @@ MainWindow::MainWindow()
     createDockWindows();
 
     /*
-     * Create an MDI area as central widget
+     * Create the subwindows that will contain the charts and the MdiArea they
+     * will be contained by
      */
-    //mdi = new QMdiArea;
+    createSubWindows();
+
+    /*
+     * Set the MDI area as central widget
+     */
     setCentralWidget(&mdi);
 
     setWindowTitle(tr("Stock-Flow Consistent Economic Model"));
@@ -133,14 +141,7 @@ MainWindow::MainWindow()
     setMinimumSize(1024, 768);
     resize(1280, 800);
 
-    /*
-     * Restore existing domains from settings -- this should now be done in the
-     * Domain class, using static functions
-     */
-
-    Domain::restoreDomains();
-
-    qDebug() << "*******";
+    Domain::drawCharts();
 }
 
 MainWindow::~MainWindow()
@@ -160,16 +161,6 @@ void MainWindow::show()
     QMainWindow::show();
     QApplication::processEvents();
 
-    /*
-     * Load any domains that were created previously. If there are none offer
-     * to create one.
-     */
-    if (Domain::restoreDomains() == 0)
-    {
-        createDomain();
-        wiz->exec();
-    }
-
     // This isn't connected to anything and seems to be redundant
     // emit windowShown();
 
@@ -184,6 +175,7 @@ void MainWindow::showWiki()
 {
     QDesktopServices::openUrl(QUrl("https://github.com/Obson/MicroSim-GUI/wiki", QUrl::StrictMode));
 }
+
 QChartView *MainWindow::createChart()
 {
     QChart *chart = new QChart();
@@ -196,7 +188,6 @@ QChartView *MainWindow::createChart()
             << Qt::darkBlue << Qt::darkMagenta << Qt::darkYellow
             << Qt::darkCyan;
 
-    // setCentralWidget(chartView);
     return chartView;
 }
 
@@ -292,10 +283,10 @@ void MainWindow::createActions()
     connect(runAction, &QAction::triggered, this, &MainWindow::drawChartNormal);
 
     // Run randomised
-    const QIcon randomIcon = QIcon(":/rerun.icns");
-    randomAction = new QAction(randomIcon, tr("&Randomise"), this);
-    randomAction->setStatusTip(tr("Randomise chart"));
-    connect(randomAction, &QAction::triggered, this, &MainWindow::drawChartRandomised);
+//    const QIcon randomIcon = QIcon(":/rerun.icns");
+//    randomAction = new QAction(randomIcon, tr("&Randomise"), this);
+//    randomAction->setStatusTip(tr("Randomise chart"));
+//    connect(randomAction, &QAction::triggered, this, &MainWindow::drawChartRandomised);
 
     // Close
     const QIcon closeIcon = QIcon(":/exit.icns");
@@ -316,6 +307,7 @@ void MainWindow::createMenus()
 
     applicationMenu = myMenuBar->addMenu(tr("&Obson"));
 
+    qDebug() << "Adding File menu";
     fileMenu = myMenuBar->addMenu(tr("&File"));
     fileMenu->addAction(runAction);
     fileMenu->addSeparator();
@@ -327,20 +319,24 @@ void MainWindow::createMenus()
     fileMenu->addAction(saveCSVAction);
     fileMenu->addAction(saveProfileAction);
 
+    qDebug() << "Adding Edit menu";
     editMenu = myMenuBar->addMenu(tr("&Edit"));
     editMenu->addAction(changeAction);
     setOptionsAction->setMenuRole(QAction::ApplicationSpecificRole);
     editMenu->addAction(setOptionsAction);
     editMenu->addAction(notesAction);
 
+    qDebug() << "Adding View menu";
     viewMenu = myMenuBar->addMenu(tr("&View"));
     viewMenu->addAction(coloursAction);
 
+    qDebug() << "Adding Help menu";
     helpMenu = myMenuBar->addMenu(tr("&Help"));
     applicationMenu->addAction(aboutAction);
     helpMenu->addAction(aboutQtAction);
     helpMenu->addAction(helpAction);
 
+    qDebug() << "Setting menu bar";
     setMenuBar(myMenuBar);
 
     QToolBar *myToolBar = new QToolBar(this);
@@ -355,17 +351,19 @@ void MainWindow::createMenus()
     myToolBar->addAction(saveProfileAction);
     myToolBar->addAction(removeProfileAction);
     myToolBar->addAction(runAction);
-    myToolBar->addAction(randomAction);
     myToolBar->addAction(coloursAction);
     myToolBar->addAction(statsAction);
     myToolBar->addAction(helpAction);
     myToolBar->addAction(closeAction);
+
+    qDebug() << "Menus and tools created";
 }
 
 void MainWindow::reassignColours()
 {
+    qDebug() << "MainWindow::reassignColours() called";
     propertyColours.clear();
-    drawChart(true, false);
+    drawChartNormal();
 }
 
 void MainWindow::saveCSV()
@@ -802,13 +800,10 @@ void MainWindow::selectProfile(QString text)
 void MainWindow::createDockWindows()
 {
     /*
-     * Create a dockable widget for the property list
+     * Create a dockable widget for the property list and allow it to be placed
+     * either side of the window
      */
     QDockWidget *dock = new QDockWidget(tr("Properties"), this);
-
-    /*
-     * Allow it to be placed either side of the window
-     */
     dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
 
     /*
@@ -818,70 +813,57 @@ void MainWindow::createDockWindows()
     //propertyList->setFixedWidth(220);
 
     /*
-     * Populate the property list setting the text for each item according to
+     * Populate the property list, setting the text for each item according to
      * property key with the same index, and its state to unchecked, selectable,
      * checkeble and enabled.
      */
-
     qDebug() << "Reading propertyMap";
     QMap<QString,Domain::Property>::iterator i;
     for (i = propertyMap.begin(); i != propertyMap.end(); ++i)
     {
-        /*
-         * Create an item
-         */
         QListWidgetItem *item = new QListWidgetItem;
+
         item->setText(i.key());
-
-        qDebug() << "added item" << i.key();
-
         item->setCheckState(Qt::Unchecked);
         item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
 
-        /*
-         * Add it to the property list widget
-         */
         propertyList->addItem(item);
     }
 
     /*
-     * When the selected property is changed signal the propertyChanged function
+     * When the  property is selected signal the propertyChanged function. When
+     * a property is clicked show its stats.
      */
     connect(propertyList, &QListWidget::itemChanged, this, &MainWindow::propertyChanged);
-
-    /*
-     * When a property is clicked show the stats for that property
-     */
     connect(propertyList, &QListWidget::itemClicked, this, &MainWindow::updateStatsDialog);
 
     /*
-     * Add the property list widget to the dock
+     * Add the property list widget to the dock and put the dock on the right
+     * of the window
      */
     dock->setWidget(propertyList);
-
-    /*
-     * Put the dock to the right of the window
-     */
     addDockWidget(Qt::RightDockWidgetArea, dock);
 
-    // Create the profile list
+    /*
+     * Create the profile list
+     */
     dock = new QDockWidget(tr("Chart Profiles"), this);
     dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     profileList = new QListWidget(dock);
 
     /*
-     * Populate the profile list
+     * Populate the profile list and add it to the dock
      */
     QSettings settings;
     settings.beginGroup("Profiles");
     profileList->addItems(settings.childGroups());
     settings.endGroup();
-
-    // Add to dock
     dock->setWidget(profileList);
     addDockWidget(Qt::RightDockWidgetArea, dock);
 
-    // Select the properties corresponding to the current profile
+    /*
+     * Select the  current profile
+     */
     if (!chartProfile.isEmpty())
     {
         QList<QListWidgetItem*> items = profileList->findItems(chartProfile, Qt::MatchExactly);
@@ -899,57 +881,60 @@ void MainWindow::createDockWindows()
     {
         qDebug() << "chartProfile is empty";
     }
+}
 
+int MainWindow::createSubWindows()
+{
     /*
      * Populate the list of domains from settings
      */
+    QSettings settings;
     qDebug() << "Creating list of domains";
     settings.beginGroup("Domains");
     domainNameList.append(settings.childGroups());
     settings.endGroup();
 
-    Domain::restoreDomains();
-
     /*
-     * Create an MDI window for each domain listed
+     * Create the domains and a window for each one, inserting a chartview into
+     * each window and linking it to the associated domain.
      */
-    qDebug() << "Creating MDI subwindows";
-    for (int i = 0; i < domainNameList.count(); i++)
+    if (domainNameList.count() > 0)
     {
-        qDebug() << "setting up domain" << domainNameList.at(i);
-
-        QString title = domainNameList.at(i);
-
-        /*
-         * Create a subwindow for this domain
-         */
-        qDebug() << "Creating an MDI subwindow";
-        QMdiSubWindow *w = new QMdiSubWindow();
-        w->setWindowTitle(title); // ->item(i)->text());
-        w->resize(470, 370);
+        Domain::restoreDomains(domainNameList);
+        Q_ASSERT(Domain::domains.count() == domainNameList.count());  // just checking
 
         /*
-         * Add the subwindow to the MDI area
+         * Create an MDI (sub)window for each domain listed, Add the subwindow
+         * to the MDI area, create a QChart and assign it to a new QChartView,
+         * and set the chartview as the chartview for each domain
          */
-        mdi.addSubWindow(w);
-
-        QChartView *chartView = createChart();
-        w->setWidget(chartView);
-
-        Domain *dom = Domain::getDomain(title);
-        dom->setChertView(chartView);
-
+        qDebug() << "Creating MDI subwindows";
+        foreach(Domain *dom, Domain::domains){
+            QString title = dom->getName();
+            qDebug() << "setting up domain" << dom->getName();
+            qDebug() << "Creating an MDI subwindow";
+            QMdiSubWindow *w = new QMdiSubWindow();
+            w->setWindowTitle(title);
+            w->resize(470, 370);
+            mdi.addSubWindow(w);
+            QChartView *chartView = createChart();
+            w->setWidget(chartView);
+            dom->setChartView(chartView);
+        }
     }
-
-    // Create the parameter wizard
-    wiz = new ParameterWizard(this);
-    // wiz->setProperties(propertyMap); (should be associated with specific domain)
-    wiz->setModal(true);
+    else
+    {
+        QMessageBox msgBox;
+        msgBox.setText("No domains found");
+        msgBox.exec();
+    }
 
     /*
      * Connect signals for changing selection and double-click
      */
     connect(profileList, &QListWidget::currentItemChanged, this, &MainWindow::changeProfile);
+
+    return domainNameList.count();
 }
 
 void MainWindow::showStatistics()
@@ -1261,6 +1246,7 @@ QColor MainWindow::nextColour(int n)
     return colours[n % colours.count()];
 }
 
+#if 0
 void MainWindow::drawChartRandomised()
 {
     int seed = QTime(0,0,0).secsTo(QTime::currentTime());
@@ -1268,14 +1254,18 @@ void MainWindow::drawChartRandomised()
     qsrand(seed);
     drawChart(true, true);
 }
+#endif
 
 void MainWindow::drawChartNormal()
 {
-    drawChart(true, false);
+    Domain::drawCharts();
 }
+
+#if 0
 
 void MainWindow::drawChart(bool rerun, bool randomised)    // uses _current_model
 {
+    qDebug() << "MainWindow::drawChart(...) called";
 
     // We are going to remove the chart altogether and replace it with a new
     // one to make sure we get a clean slate. However if we don't remove the
@@ -1436,6 +1426,8 @@ void MainWindow::drawChart(bool rerun, bool randomised)    // uses _current_mode
 
 }
 
+#endif
+
 int MainWindow::magnitude(double y)
 {
     int x = (y == 0.0 ? -INT_MAX : (static_cast<int>(log10(abs(y)))));
@@ -1507,7 +1499,7 @@ void MainWindow::changeProfile(QListWidgetItem *item)
 
     reloading = false;
 
-    drawChart(true, false);
+    drawChartNormal();
 }
 
 // TODO: COMPLETE THIS FUNCTION (changeDomain())

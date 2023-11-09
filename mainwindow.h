@@ -154,7 +154,7 @@ private:
     QMdiArea mdi;   // *****
     QList<QMdiSubWindow*> mdiWindowList;
 
-    QList<Domain*> domains;
+    // QList<Domain*> domains;
 
     QString chartProfile;
 
@@ -176,8 +176,13 @@ private:
     void createMenus();
     void createStatusBar();
     void createDockWindows();
+
+    int createSubWindows();
+
+    /*
     void drawChart(bool rerun, bool randomised = true);
     void drawChartRandomised();
+    */
     void drawChartNormal();
 
     QColor nextColour(int n);
@@ -200,7 +205,8 @@ private:
     QListWidget *profileList;
     QListWidget *propertyList;
 
-    QList<QString> domainNameList;
+    QStringList domainNameList;
+    // QList<QString> domainNameList;
 
     QtCharts::QLineSeries period;
     QtCharts::QLineSeries gov_exp;

@@ -15,6 +15,25 @@
  */
 QList<Domain*> Domain::domains;
 
+const QMap<ParamType,QString> Domain::parameterKeys
+{
+    {ParamType::procurement, "govt-procurement"},
+    {ParamType::emp_rate, "employment-rate"},
+    {ParamType::prop_con, "propensity-to-consume"},
+    {ParamType::inc_tax_rate, "income-tax-rate"},
+    {ParamType::inc_thresh, "income-threshold"},
+    {ParamType::sales_tax_rate, "sales-tax-rate"},
+    {ParamType::firm_creation_prob, "firm-creation-prob"},
+    {ParamType::dedns, "pre-tax-dedns-rate"},
+    {ParamType::unemp_ben_rate, "unempl-benefit-rate"},
+    {ParamType::distrib, "reserve-rate"},
+    {ParamType::prop_inv, "prop-invest"},
+    {ParamType::boe_int, "boe-interest"},
+    {ParamType::bus_int, "bus-interest"},
+    {ParamType::loan_prob, "loan-prob"},
+    {ParamType::recoup, "capex-recoup-periods"},
+};
+
 /*
  * This function creates a new domain having the given name and currency, and
  * default parameters, and returns a pointer to it. If the domain already exists
@@ -28,13 +47,16 @@ Domain *Domain::createDomain(
 {
     Domain *dom = nullptr;
 
+    qDebug() << "Domain::createDomain("
+             << name << "," << currency << "," << currencyAbbrev
+             << ")";
+
     if (getDomain(name) == nullptr)
     {
         // A domain with given name is not in list. Create a new domain having
         // the required name and currency, and default parameters, and add it
         // to the end of the list
         dom = new Domain(name, currency, currencyAbbrev);
-        domains.append(dom);
     }
 
     // Return a pointer to the domain or nullptr if it already exists
@@ -63,8 +85,7 @@ Domain *Domain::getDomain(const QString &name)
  */
 Domain::Domain(const QString &name,
         const QString &currency,
-        const QString &currencyAbbrev,
-               bool restore)
+        const QString &currencyAbbrev)
 {
     qDebug() << "Domain::Domain("
              << name
@@ -82,79 +103,83 @@ Domain::Domain(const QString &name,
     _abbrev = currencyAbbrev;
 
     /*
+     * Add this domain to the list of domains
+     */
+    qDebug() << "Adding domain" << name << "to domains";
+    domains.append(this);
+    qDebug() << "There are now" << domains.count() << "domains on the list";
+
+
+    /*
      * Create an arbitrary number of banks
      */
     for (int i = 0; i < NUMBER_OF_BANKS; i++)
     {
         banks.append(new Bank(this));
     }
-
-    /*
-     * Recover the parameter values from settings if required; otherwise set
-     * their default values
-     */
-    if (restore)
-    {
-
-    }
-    else
-    {
-
-    }
-
-    /*
-     * Update settings for this domain. We do this even if we have just restored
-     * it from settings, because if any parameters were not restored (file was
-     * corrupted, new parameters were added, whatever) the changes should be
-     * preserved for consistency.
-     */
-
-    QSettings settings;
-
-    settings.beginGroup("Domains");
-
-    settings.beginGroup(name);
-    settings.setValue("Currency", currency);
-    settings.setValue("Abbrev", currencyAbbrev);
-
-    // Set up default parameters
-    settings.setValue(parameterKeys[ParamType::procurement],        0);
-    settings.setValue(parameterKeys[ParamType::emp_rate],          95);
-    settings.setValue(parameterKeys[ParamType::prop_con],          80);
-    settings.setValue(parameterKeys[ParamType::inc_tax_rate],      10);
-    settings.setValue(parameterKeys[ParamType::inc_thresh],        50);
-    settings.setValue(parameterKeys[ParamType::sales_tax_rate],     0);
-    settings.setValue(parameterKeys[ParamType::firm_creation_prob], 0);
-    settings.setValue(parameterKeys[ParamType::dedns],              0);
-    settings.setValue(parameterKeys[ParamType::unemp_ben_rate],    60);
-
-    // This setting is not currently used and should not be confused with the
-    // emp_rate property. active_pop was intended to allow a distinction to be
-    // made between the population as a whole and the part of it that was
-    // actually active. In practice this hasn't been needed as we have
-    // assumed that the whole population is active (or equivalently that the
-    // nominal population size refers only to the active population).
-    // settings.setValue(parameterKeys[ParamType::active_pop],        60);
-
-    settings.setValue(parameterKeys[ParamType::distrib],           50);
-    settings.setValue(parameterKeys[ParamType::prop_inv],           2);
-    settings.setValue(parameterKeys[ParamType::boe_int],            1);
-    settings.setValue(parameterKeys[ParamType::bus_int],            3);
-    settings.setValue(parameterKeys[ParamType::loan_prob],          0);
-    settings.setValue(parameterKeys[ParamType::recoup],            10);
-    settings.endGroup();
-
-    settings.endGroup();
 }
 
 /*
  * Restore all domains from settings
  */
-int Domain::restoreDomains()
+int Domain::restoreDomains(QStringList &domainNameList)
 {
-    // NEXT: ***** ADD CODE HERE *****
+    qDebug() << "Domain::restoreDomains(); There are currently" << domains.count() << "domains";
 
-    Q_ASSERT(false);
+    QSettings settings;
+
+    settings.beginGroup("Domains");
+
+    foreach (QString name, domainNameList)
+    {
+        qDebug() << "restoring domain" << name;
+        settings.beginGroup(name);
+
+        QString currency = settings.value("Currency", "Units").toString();
+        QString abbrev = settings.value("Abbrev", "CU").toString();
+
+        Domain *dom = createDomain(name, currency, abbrev);
+        if (dom == nullptr)
+        {
+            qDebug() << "could not create domain" << name;
+        }
+
+        /*
+         * Note that this is driven by the parameters we expect (i.e. that are
+         * listed in parameterKeys), If a key is missing from settings we leave
+         * the default value that was set up in the constructor intact.
+         */
+        foreach (ParamType p, parameterKeys.keys())
+        {
+            QString key_string = parameterKeys.value(p);
+            if (settings.contains(key_string))
+            {
+                dom->params[p] =  settings.value(key_string).toInt();
+            }
+            else
+            {
+                qWarning() << "Parameter" << key_string
+                           << "is missing from settings for"
+                           << dom->getName();
+            }
+        }
+        settings.endGroup();
+    }
+
+    settings.endGroup();    // end Domains group
+
+    qDebug() << domains.count() << "domains created";
+    return domains.count();
+}
+
+void Domain::drawCharts()
+{
+    qDebug() << "Domain::drawCharts() called";
+    foreach(Domain *dom, domains)
+    {
+        qDebug() << "About to draw chart for domain" << dom->getName();
+        dom->drawChart();
+    }
 }
 
 Firm *Domain::createFirm(bool state_supported)
@@ -470,206 +495,329 @@ double Domain::getProductivity()
 }
 
 
-void Domain::setChertView(QChartView *chartView)
+void Domain::setChartView(QChartView *chartView)
 {
     _chartView = chartView;
+    chart = chartView->chart();
 }
 
-void Domain::readParameters()
+int Domain::magnitude(double y)
 {
-    // Get parameters for this Domain from settings.
+    int x = (y == 0.0 ? -INT_MAX : (static_cast<int>(log10(abs(y)))));
+    qDebug() << "Domain::magnitude(): magnitude of" << y << "is" << x;
+    return x;
+}
 
-    QSettings settings;
 
-//    qDebug() << "Domain::readParameters(): file is" << settings.fileName();
-
-    // TODO: Global settings (these should be read by, and stored in MainWindow)
-
-//    _iterations = settings.value("iterations", 100).toInt();
-//    _startups = settings.value("startups", 10).toInt();
-//    _first_period = settings.value("start-period", 1).toInt();
-//    _scale = settings.value("nominal-population", 1000).toDouble() / 1000;
-//    _std_wage = settings.value("unit-wage", 100).toInt();
-//    _population = 1000;
-
-    // Select parameters for this Domain
-    settings.beginGroup("Domain");
-    settings.beginGroup(_name);
+void Domain::drawChart()
+{
+    qDebug() << "Domain::drawChart(...) called";
 
     /*
-     * Before reading the default parameters we must get the currency and
-     * currency abbreviation for the domain. These don't count as default
-     * parameters as they can't be overridden by conditional parameters.
+     * NEXT
+     *
+     * MainWindow looks after the charts as berfore, but has to create one for
+     * each Domain (so wghen domains have allbeen created, emit a signal to
+     * let MainWindow know it can create the charts). Althogh mainwindow looks
+     * after the charts, Domain builds the series it uses.
      */
 
-    //
-    // ************* TO BE ADDED HERE *******************
-    //
 
-    /*
-     * We allow default and conditional parameters. Every domain will have a
-     * defaukt set, which will be applied in the absence of any specified
-     * conditions.
-     */
-    settings.beginGroup(_name + "/default");
+    // We are going to remove the chart altogether and replace it with a new
+    // one to make sure we get a clean slate. However if we don't remove the
+    // objects owned by the old chart the program eventually crashes. So far,
+    // the following lines seem to fix that problem. This may all be overkill,
+    // but I haven't found an alternative way of keeping the axes up to data.
 
-    // For the default parameter set we only care about the val component of
-    // each pair (and that's all that will have been stored for default
-    // parameters). For conditional parameters we will have to read in both
-    // elements of the pair.
+    QList<QAbstractSeries*> current_series = chart->series();
 
-    Params *p = new Params;     // default parameter set
-
-    p->procurement.val        = settings.value(parameterKeys[ParamType::procurement], 0).toInt();
-    p->emp_rate.val           = settings.value(parameterKeys[ParamType::emp_rate], 95).toInt();
-    p->prop_con.val           = settings.value(parameterKeys[ParamType::prop_con], 80).toInt();
-    p->inc_tax_rate.val       = settings.value(parameterKeys[ParamType::inc_tax_rate], 10).toInt();
-    p->inc_thresh.val         = settings.value(parameterKeys[ParamType::inc_thresh], 50).toInt();
-    p->sales_tax_rate.val     = settings.value(parameterKeys[ParamType::sales_tax_rate], 0).toInt();
-    p->firm_creation_prob.val = settings.value(parameterKeys[ParamType::firm_creation_prob], 0).toInt();
-    p->dedns.val              = settings.value(parameterKeys[ParamType::dedns], 0).toInt();
-    p->unemp_ben_rate.val     = settings.value(parameterKeys[ParamType::unemp_ben_rate], 100).toInt();
-    p->active_pop.val         = settings.value(parameterKeys[ParamType::active_pop], 60).toInt();
-    p->distrib.val            = settings.value(parameterKeys[ParamType::distrib], 90).toInt();
-    p->prop_inv.val           = settings.value(parameterKeys[ParamType::prop_inv], 20).toInt();
-    p->boe_int.val            = settings.value(parameterKeys[ParamType::boe_int], 2).toInt();
-    p->bus_int.val            = settings.value(parameterKeys[ParamType::bus_int], 3).toInt();
-    p->loan_prob.val          = settings.value(parameterKeys[ParamType::loan_prob], 4).toInt();
-    p->recoup.val             = settings.value(parameterKeys[ParamType::recoup], 10).toInt();
-
-    settings.endGroup();        // end defaults
-
-    parameterSets.clear();     // TODO: it would be better to do this after appending
-    parameterSets.append(p);   // append the defaults we just read
-
-    // How many conditional parameter sets...
-    numParameterSets = settings.value("pages", 1).toInt();
-
-    qDebug() << "Domain::readParameters():  Domain"
-             << _name
-             << "has"
-             << numParameterSets
-             << "pages";
-
-    for (int page = 1; page < numParameterSets; page++)
+    for (int i = 0; i < current_series.count(); i++)
     {
-        p = new Params;         // conditional parameter set
-
-        // Start conditional settings
-        settings.beginGroup("condition-" + QString::number(page));
-
-        // Conditions are relations between properties and integer values
-        p->condition.property = getProperty(settings.value("property").toInt());
-
-        // relations are encoded as integers
-        int rel = settings.value("rel").toInt();
-        switch (rel)
-        {
-        case 0:
-            p->condition.opr = Opr::eq;
-            break;
-        case 1:
-            p->condition.opr = Opr::neq;
-            break;
-        case 2:
-            p->condition.opr = Opr::lt;
-            break;
-        case 3:
-            p->condition.opr = Opr::gt;
-            break;
-        case 4:
-            p->condition.opr = Opr::leq;
-            break;
-        case 5:
-            p->condition.opr = Opr::geq;
-            break;
-        default:
-            p->condition.opr = Opr::invalid_op;
-            break;
-        }
-
-        // Set the value
-        p->condition.val = settings.value("value").toInt();
-
-
-        // Get the parameter values to be applied if the codition is met. Where
-        // is_set is false the value will be ignored and the existing value --
-        // either default or from a previous condition -- used instead
-        QString attrib;
-
-        attrib = parameterKeys[ParamType::procurement];
-        p->procurement.is_set     = settings.value(attrib + "/isset").toBool();
-        p->procurement.val        = settings.value(attrib + "/value").toInt();
-
-        attrib = parameterKeys[ParamType::emp_rate];
-        p->emp_rate.is_set        = settings.value(attrib + "/isset").toBool();
-        p->emp_rate.val           = settings.value(attrib + "/value").toInt();
-
-        attrib = parameterKeys[ParamType::prop_con];
-        p->prop_con.is_set        = settings.value(attrib + "/isset").toBool();
-        p->prop_con.val           = settings.value(attrib + "/value").toInt();
-
-        attrib = parameterKeys[ParamType::inc_tax_rate];
-        p->inc_tax_rate.is_set    = settings.value(attrib + "/isset").toBool();
-        p->inc_tax_rate.val       = settings.value(attrib + "/value").toInt();
-
-        attrib = parameterKeys[ParamType::inc_thresh];
-        p->inc_thresh.is_set      = settings.value(attrib + "/isset").toBool();
-        p->inc_thresh.val         = settings.value(attrib + "/value").toInt();
-
-        attrib = parameterKeys[ParamType::sales_tax_rate];
-        p->sales_tax_rate.is_set  = settings.value(attrib + "/isset").toBool();
-        p->sales_tax_rate.val     = settings.value(attrib + "/value").toInt();
-
-        attrib = parameterKeys[ParamType::firm_creation_prob];
-        p->firm_creation_prob.is_set = settings.value(attrib + "/isset").toBool();
-        p->firm_creation_prob.val = settings.value(attrib + "/value").toInt();
-
-        attrib = parameterKeys[ParamType::dedns];
-        p->dedns.is_set           = settings.value(attrib + "/isset").toBool();
-        p->dedns.val              = settings.value(attrib + "/value").toInt();
-
-        attrib = parameterKeys[ParamType::unemp_ben_rate];
-        p->unemp_ben_rate.is_set  = settings.value(attrib + "/isset").toBool();
-        p->unemp_ben_rate.val     = settings.value(attrib + "/value").toInt();
-
-        attrib = parameterKeys[ParamType::active_pop];
-        p->active_pop.is_set      = settings.value(attrib + "/isset").toBool();
-        p->active_pop.val         = settings.value(attrib + "/value").toInt();
-
-        attrib = parameterKeys[ParamType::distrib];
-        p->distrib.is_set         = settings.value(attrib + "/isset").toBool();
-        p->distrib.val            = settings.value(attrib + "/value").toInt();
-
-        attrib = parameterKeys[ParamType::prop_inv];
-        p->prop_inv.is_set        = settings.value(attrib + "/isset").toBool();
-        p->prop_inv.val           = settings.value(attrib + "/value").toInt();
-
-        attrib = parameterKeys[ParamType::boe_int];
-        p->boe_int.is_set         = settings.value(attrib + "/isset").toBool();
-        p->boe_int.val            = settings.value(attrib + "/value").toInt();
-
-        attrib = parameterKeys[ParamType::bus_int];
-        p->bus_int.is_set         = settings.value(attrib + "/isset").toBool();
-        p->bus_int.val            = settings.value(attrib + "/value").toInt();
-
-        attrib = parameterKeys[ParamType::loan_prob];
-        p->loan_prob.is_set       = settings.value(attrib + "/isset").toBool();
-        p->loan_prob.val          = settings.value(attrib + "/value").toInt();
-
-        attrib = parameterKeys[ParamType::recoup];
-        p->recoup.is_set          = settings.value(attrib + "/isset").toBool();
-        p->recoup.val             = settings.value(attrib + "/value").toInt();
-
-        // End settings for this condition
-        settings.endGroup();
-
-        parameterSets.append(p);
+        chart->removeSeries(current_series[i]);
     }
 
-    settings.endGroup();        // end Domains group
+    if (chart->axisX() != nullptr)
+    {
+        chart->removeAxis(chart->axisX());
+    }
 
-    qDebug() << "Domain::readParameters(): completed OK";
+    if (chart->axisY() != nullptr)
+    {
+        chart->removeAxis(chart->axisY());
+    }
+
+    // Remove the existing chart and replace it with a new one.
+    // delete chart;
+    // createChart();
+    chart->legend()->setAlignment(Qt::AlignTop);
+
+
+
+//    if (rerun)
+//    {
+//        _currentBehaviour->run(randomised);
+//        statsDialog->hide();
+//        if (property_selected)
+//        {
+//            updateStatsDialog(propertyList->currentItem());
+//        }
+//    }
+
+    chart->legend()->show();
+    chart->setTitle("<h2 style=\"text-align:center;\">"
+                    + getName()
+                    + "</h2>");
+
+    QLineSeries *anySeries = nullptr;
+
+    int y_max = -INT_MAX, y_min = INT_MAX;
+    qDebug() << "MainWindow::drawChart(): resetting range y_min = " << y_min << "y_max" << y_max << "***";
+
+    for (int i = 0; i < int(Property::num_properties); i++)
+    {
+//
+//        QListWidgetItem *item;
+//        item = propertyList->item(i);
+//        bool selected = item->checkState();
+//        if (selected)
+//        {
+//            QString series_name = item->text();
+//            Behaviour::Property prop = propertyMap[series_name];
+//            QLineSeries *ser = _currentBehaviour->series[prop];
+//            ser->setName(series_name);
+//            chart->addSeries(ser);
+
+//            anySeries = ser;
+
+//            // Set the line colour and type for this series
+//            switch(prop)
+//            {
+//            case Domain::Property::zero:
+//            case Domain::Property::hundred:
+//                ser->setColor(Qt::black);
+//                ser->setPen(QPen(Qt::DotLine));
+//                break;
+//            default:
+//                if (propertyColours.contains(prop))
+//                {
+//                    ser->setColor(propertyColours[prop]);
+//                }
+//                else
+//                {
+//                    QColor colour = nextColour(n++);
+//                    propertyColours[prop] = colour;
+//                    ser->setColor(colour);
+//                }
+//                break;
+//            }
+
+
+//            // Set values for y axis range
+
+//            // TODO: prop is an enum but max_value() and min_value() expect
+//            // ints, so we have to do a static cast. Perhaps this should really
+//            // be done in the functions themselves.
+
+//            /*
+//             * NB This will all go into Domain and _currentBehaviour will be redundant
+//             */
+//            int ix = static_cast<int>(prop);
+
+//            y_max = std::max(y_max, _currentBehaviour->max_value(ix));
+//            y_min = std::min(y_min,_currentBehaviour->min_value(ix));
+//            qDebug() << "MainWindow::drawChart(): series name" << series_name
+//                     << "series max" << _currentBehaviour->max_value(ix)
+//                     << "y_max" << y_max
+//                     << "series min" << _currentBehaviour->min_value(ix)
+//                     << "y_min" << y_min;
+//        }
+
+    }
+
+//    int scale = magnitude(std::max(std::abs(y_max), std::abs(y_min)));
+
+//    qDebug() << "MainWindow::drawChart(): min" << y_min << "max" << y_max << "scale" << scale;
+
+//    // Format the axis numbers to whole integers. This needs a series to have
+//    // been selected, so avoid otherwise
+//    if (anySeries != nullptr)
+//    {
+//        chart->createDefaultAxes();
+//        QValueAxis *x_axis = static_cast<QValueAxis*>(chart->axisX(anySeries));
+//        x_axis->setLabelFormat("%d");
+//        QValueAxis *y_axis = static_cast<QValueAxis*>(chart->axisY(anySeries));
+//        y_axis->setLabelFormat("%d");
+
+//        int temp;
+//        if (y_max > 0 && y_min >= 0) {
+//            // Both positive: range from zero to y_max rounded up to power of 10
+//            temp = std::pow(10, (scale + 1));
+//            y_max = (temp >= y_max * 2 ? (temp >= y_max * 4 ? temp / 4 : temp / 2) : temp);
+//            y_min = 0;
+//        } else if (y_min < 0 && y_max <= 0) {
+//            // Both negative: range y_min rounded down to power of 10, to zero
+//            y_max = 0;
+//            temp = -std::pow(10, (scale + 1));
+//            y_min = (temp <= y_min * 2 ? (temp <= y_min * 4 ? temp / 4 : temp / 2) : temp);
+//        } else {
+//            // TODO: It would be nicer if the intervals were equally reflected
+//            // about the x-axis but this isn't really very important
+//            temp = std::pow(10, (scale + 1));
+//            y_max = (temp >= y_max * 2 ? (temp >= y_max * 4 ? temp / 4: temp / 2) : temp);
+//            temp = -std::pow(10, (scale + 1));
+//            y_min = (temp <= y_min * 2 ? (temp <= y_min * 4 ? temp / 4 : temp / 2) : temp);
+//        }
+
+//        qDebug() << "MainWindow::drawChart(): Setting range from" << y_min << "to" << y_max;
+//        y_axis->setRange(y_min, y_max);
+//    }
+
+//    double gini = _currentBehaviour->getGini();
+//    double prod = _currentBehaviour->getProductivity();
+
+//    inequalityLabel->setText(tr("Inequality: ") + QString::number(round(gini * 100)) + "%");
+//    productivityLabel->setText(tr("Productivity: ") + QString::number(round(prod + 0.5)) + "%");
+
+//    // emit drawingCompleted();
+
+}
+
+void Domain::run()
+{
+    qDebug() << "Domain::run()";
+
+//    restart();
+
+//    // ***
+//    // Seed the pseudo-random number generator.
+//    // We need reproducibility so we always seed with the same number.
+//    // This makes inter-model comparisons more valid.
+//    // ***
+
+//    if (!randomised) {
+//        qDebug() << "Behaviour::run(): using fixed seed (42)";
+//        qsrand(42);
+//    }
+
+//    for (_period = 0; _period <= _iterations + _first_period; _period++)
+//    {
+//        /*
+//         *  Signal domains to go on to the next period. _period==0 should
+//         *   trigger initialisation
+//         */
+//        emit(clockTick(_period));
+
+//        // -------------------------------------------
+//        // Initialise objects ready for next iteration
+//        // -------------------------------------------
+
+//        _dedns = 0;         // deductions are tracked by the model object and are
+//                            // accumulated within but not across periods
+
+//        // _gov shuld be a member of Domain
+//        _gov->init();
+
+//        int num_workers = workers.count();
+//        int num_firms = firms.count();
+
+//        for (int i = 0; i < num_firms; i++) {
+//            firms[i]->init();
+//        }
+
+//        for (int i = 0; i < num_workers; i++) {
+//            workers[i]->init();
+//        }
+
+//        // Reset counters
+
+//        num_hired = 0;
+//        num_fired = 0;
+//        num_just_fired = 0;
+
+//        // -------------------------------------------
+//        // Trigger objects
+//        // -------------------------------------------
+
+//        // Triggering government will direct payments to firms and benefits to
+//        //  workers before they are triggered
+//        _gov->trigger(_period);
+
+//        // Triggering firms will pay deductions to government and wages to
+//        // workers. Firms will also fire any workers they can't afford to pay.
+//        // Workers receiving payment will pay income tax to the government
+//        for (int i = 0; i < num_firms; i++) {
+//            firms[i]->trigger(_period);
+//        }
+
+//        // Trigger workers to make purchases
+//        for (int i = 0; i < num_workers; i++) {
+//            workers[i]->trigger(_period);
+//        }
+
+//        // -------------------------------------------
+//        // Post-trigger (epilogue) phase
+//        // -------------------------------------------
+
+//        // Post-trigger for firms so they can pay tax on sales just made, pay
+//        // bonuses, and hire more employees (investment)
+//        for (int i = 0, c = firms.count(); i < c; i++) {
+//            firms[i]->epilogue(_period);
+//        }
+
+//        // Same for workers so they can keep rolling averages up to date
+//        for (int i = 0, c = workers.count(); i < c; i++) {
+//            workers[i]->epilogue(_period);
+//        }
+
+//        // -------------------------------------------
+//        // Stats
+//        // -------------------------------------------
+
+//        // Append the values from this iteration to the series
+//        if (_period >= _first_period)
+//        {
+//            for (int i = 0; i < _num_properties/*static_cast<int>(Property::num_properties)*/; i++)
+//            {
+//                Property prop = prop_list[i];
+//                double val = scale(prop);
+//                series[prop]->append(_period, val);
+
+//                int j = static_cast<int> (prop);
+
+//                if (_period == _first_period)
+//                {
+//                    max_val[j] = val;
+//                    min_val[j] = val;
+//                    sum[j] = val;
+//                }
+//                else
+//                {
+//                    if (val > max_val[j])
+//                    {
+//                        max_val[j] = val;
+//                    }
+//                    else if (val < min_val[j])
+//                    {
+//                        min_val[j] = val;
+//                    }
+
+//                    sum[j] += val;
+//                }
+//            }
+//        }
+
+//        // -------------------------------------------
+//        // Exogenous changes
+//        // -------------------------------------------
+
+//        // Create a new firm, possibly
+//        if (qrand() % 100 < getFCP()) {
+//            createFirm();
+//        }
+//    }
+
+
+//    qDebug() << "Behaviour::run(): _name =" << _name << "  gini =" << gini();
 }
 
 
@@ -1019,6 +1167,8 @@ double Domain::getInvestment()
 
 int Domain::getParameterVal(ParamType type)
 {
+    // REWRITE
+    /*
     Pair p;
     for (int i = 0; i < numParameterSets; i++)
     {
@@ -1035,7 +1185,6 @@ int Domain::getParameterVal(ParamType type)
                      : ((type == ParamType::firm_creation_prob) ? parameterSets[i]->firm_creation_prob
                      : ((type == ParamType::dedns) ? parameterSets[i]->dedns
                      : ((type == ParamType::unemp_ben_rate) ? parameterSets[i]->unemp_ben_rate
-                     : ((type == ParamType::active_pop) ? parameterSets[i]->active_pop
                      : ((type == ParamType::distrib) ? parameterSets[i]->distrib
                      : ((type == ParamType::prop_inv) ? parameterSets[i]->prop_inv
                      : ((type == ParamType::boe_int) ? parameterSets[i]->boe_int
@@ -1050,10 +1199,13 @@ int Domain::getParameterVal(ParamType type)
     }
 
     return p.val;
+    */
 }
 
 bool Domain::isParamSet(ParamType t, int n)
 {
+    // REWRITE
+    /*
     if (n == 0) {
         return true;
     }
@@ -1066,7 +1218,6 @@ bool Domain::isParamSet(ParamType t, int n)
          : ((t == ParamType::firm_creation_prob) ? parameterSets[n]->firm_creation_prob.is_set
          : ((t == ParamType::dedns) ? parameterSets[n]->dedns.is_set
          : ((t == ParamType::unemp_ben_rate) ? parameterSets[n]->unemp_ben_rate.is_set
-         : ((t == ParamType::active_pop) ? parameterSets[n]->active_pop.is_set
          : ((t == ParamType::distrib) ? parameterSets[n]->distrib.is_set
          : ((t == ParamType::prop_inv) ? parameterSets[n]->prop_inv.is_set
          : ((t == ParamType::boe_int) ? parameterSets[n]->boe_int.is_set
@@ -1076,6 +1227,7 @@ bool Domain::isParamSet(ParamType t, int n)
          : ((t == ParamType::recoup) ? parameterSets[n]->recoup.is_set
          : parameterSets[n]->invalid.is_set
          )))))))))))))));
+    */
 }
 
 /*
@@ -1162,28 +1314,10 @@ double Domain::getLoanProb()
     return double(getParameterVal(ParamType::loan_prob)) / 100;
 }
 
-/**
- * Discontinued, but the formula might be useful some time
-int Domain::getGovExpRate(int target_pop)
-{
-    // TODO: Consider re-instating this...
-
-    // We calculate govt. expenditure using the formula:
-    // population * target employment rate * average wage * tax rate.
-    // Tax rate here is the 'effective tax rate' taking into account all taxes.
-    // If we assume only income tax is applied then this is the income tax
-    // rate. Otherwise it's quite complicated -- we should probably look into
-    // this later.
-    int target_emp = (target_pop > 0 ? target_pop : (population() * getTargetEmpRate()) / 100);
-    int basic_wage = target_emp * getStdWage();
-    return (basic_wage * getIncTaxRate()) / 100;
-}
-*/
-
+#if 0
 /*
  * Condition processing
  */
-
 bool Domain::applies(Condition condition)
 {
     // Property::zero is always zero and can be used as a marker for the end of
@@ -1225,12 +1359,4 @@ bool Domain::compare(int lhs, int rhs, Opr opr)
     }
 }
 
-
-
-
-
-int Domain::getActivePop()
-{
-    return getParameterVal(ParamType::active_pop);
-}
-
+#endif

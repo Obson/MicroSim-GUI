@@ -44,7 +44,6 @@ enum class ParamType {
     loan_prob,
 };
 
-
 enum class Reason {
     for_benefits,
     for_bonus
@@ -71,32 +70,14 @@ class Domain : public QObject
 
 public:
 
-    const QMap<ParamType,QString> parameterKeys
-    {
-        {ParamType::procurement, "govt-procurement"},
-        {ParamType::emp_rate, "employment-rate"},
-        {ParamType::prop_con, "propensity-to-consume"},
-        {ParamType::inc_tax_rate, "income-tax-rate"},
-        {ParamType::inc_thresh, "income-threshold"},
-        {ParamType::sales_tax_rate, "sales-tax-rate"},
-        {ParamType::firm_creation_prob, "firm-creation-prob"},
-        {ParamType::dedns, "pre-tax-dedns-rate"},
-        {ParamType::unemp_ben_rate, "unempl-benefit-rate"},
-        {ParamType::active_pop, "active-population-rate"},
-        {ParamType::distrib, "reserve-rate"},
-        {ParamType::prop_inv, "prop-invest"},
-        {ParamType::boe_int, "boe-interest"},
-        {ParamType::bus_int, "bus-interest"},
-        {ParamType::loan_prob, "loan-prob"},
-        {ParamType::recoup, "capex-recoup-periods"},
-    };
+    static const QMap<ParamType,QString> parameterKeys;
 
     /*
-     * Restore all domains from Settings, storing their pointers in domains amd
-     * returning the number of domains restored. Must be public so it can be
-     * called from mainwindow
+     * Restore all listed domains from Settings, storing their pointers in
+     * domains amd returning the number of domains restored. Must be public so
+     * it can be called from mainwindow
      */
-    static int restoreDomains();
+    static int restoreDomains(QStringList &domainNameList);
 
     /*
      * Create a new domain under the given name, with the given currency and
@@ -114,6 +95,15 @@ public:
      */
     static QList<Domain*> domains;
 
+    /*
+     * Draw all charts
+     */
+    static void drawCharts();
+
+    /*
+     * For calculating chart axes
+     */
+    int magnitude(double);
 
 
 
@@ -258,47 +248,21 @@ public:
         int val;
     };
 
-    struct Params
-    {
-        Condition condition;
-        Pair procurement;
-        Pair iters;
-        Pair count;
-        Pair emp_rate;
-        Pair prop_con;
-        Pair inc_tax_rate;
-        Pair inc_thresh;
-        Pair sales_tax_rate;
-        Pair firm_creation_prob;
-        Pair dedns;
-        Pair unemp_ben_rate;
-        Pair active_pop;
-        Pair distrib;
-        Pair prop_inv;
-        Pair boe_int;
-        Pair bus_int;
-        Pair loan_prob;
-        Pair recoup;
-        Pair invalid;           // Just a marker -- value immaterial
-    };
+    /*
+     * The previous version had default and conditional parameters (known as
+     * ParameterSets. This has been temporarily suspended so now we just have
+     * a single set of parameters, which will have to be defined as a QMap
+     * with the ParamType as key. The value is always (I think) an integer.
+     */
+    QMap<ParamType,int> params;
 
     enum class Reason {
         for_benefits,
         for_bonus
     };
 
-
     bool applies(Condition);
     bool compare(int lhs, int rhs, Opr op);
-
-    QVector<Params*> parameterSets;
-
-    int numParameterSets;
-
-    // static QMap<ParamType,QString> parameterKeys;
-
-    // Params *default_parameters;
-
     int getParameterVal(ParamType type);
     bool isParamSet(ParamType t, int n);
 
@@ -310,7 +274,7 @@ public:
     /*
      * Set the chartview
      */
-    void setChertView(QChartView *chartView);
+    void setChartView(QChartView *chartView);
 
     /*
      * Return the gini coefficient based on the wages of all the workers.
@@ -378,7 +342,6 @@ public:
 
 private:
 
-
     /*
      * This constructor creates a bare-bones domain having the required name,
      * currency and currency abbreviation. If the restore argument has the
@@ -388,10 +351,15 @@ private:
      * restored.
      */
     Domain(const QString &name, const QString &currency,
-           const QString &currencyAbbrev,
-           bool restore = false);
+           const QString &currencyAbbrev);
 
     QChartView *_chartView;
+    QChart *chart;
+
+    void drawChart();
+    //QChartView *createChart();
+
+    void run();
 
 protected:
 
@@ -448,6 +416,9 @@ protected:
      */
     void fire(Worker *w);
 
+
+
+
      /*
      * The government associated with this domain. It might have been possible
      * to conflate the two classes (Government and Domain) but it seems clearer
@@ -482,6 +453,10 @@ protected:
             _bonuses, _dedns, _inc_tax, _sales_tax, _dom_bal, _loan_prob,
             _amount_owed, _deficit, _pc_active, _bus_size, _proc_exp,
             _productivity, _rel_productivity, _investment, _gdp, _profit;
+
+signals:
+
+    void domainsRestored();
 
 };
 
@@ -580,7 +555,6 @@ protected:
      * will be distributed to (bank) workers designated as staff, and
      * shareholders of the bank.
      */
-
     virtual bool transferSafely(Account *recipient, double amount, Account *creditor);
 
 private:
