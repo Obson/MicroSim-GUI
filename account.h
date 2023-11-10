@@ -6,6 +6,7 @@
 #include <iostream>
 #include <list>
 #include <QList>
+#include <QListWidgetItem>
 #include <QDebug>
 
 class Statistics;
@@ -49,6 +50,49 @@ enum class Reason {
     for_bonus
 };
 
+static enum class Property
+{
+    current_period,
+    pop_size,           // actually constant
+    gov_exp,
+    bens_paid,
+    gov_exp_plus,
+    gov_recpts,
+    deficit,
+    deficit_pc,
+    gov_bal,
+    num_firms,
+    num_emps,
+    pc_emps,
+    num_unemps,
+    pc_unemps,
+    pc_active,
+    num_gov_emps,
+    num_hired,
+    num_fired,
+    prod_bal,
+    wages,
+    consumption,
+    bonuses,
+    dedns,
+    inc_tax,
+    sales_tax,
+    dom_bal,
+    amount_owed,
+    bus_size,
+    hundred,
+    zero,
+    procurement,
+    productivity,
+    rel_productivity,
+    unbudgeted,
+    investment,
+    gdp,
+    profit,
+    num_properties
+} properties;
+
+
 class Bank;
 class Worker;
 class Firm;
@@ -71,6 +115,14 @@ class Domain : public QObject
 public:
 
     static const QMap<ParamType,QString> parameterKeys;
+    static QMap<QString,Property> propertyMap;  // can't be const as we have to initialise it
+
+    /*
+     * Initialising a static QMap is either clunky or obscure. This is the
+     * clunky but effective method. It can be called before the Domain
+     * constructor.
+     */
+    static void initialisePropertyMap();
 
     /*
      * Restore all listed domains from Settings, storing their pointers in
@@ -98,7 +150,7 @@ public:
     /*
      * Draw all charts
      */
-    static void drawCharts();
+    static void drawCharts(QListWidget *propertyList);
 
     /*
      * For calculating chart axes
@@ -168,57 +220,10 @@ public:
      */
     void iterate(int duration);
 
+    Property getProperty(QString propertyName);
 
-    /*
-     * Properties and pseudo-properties. A property is a value that can be
-     * included on a graph
-     */
+    // QList<Property> prop_list;          // to simplify iterations
 
-    enum class Property
-    {
-        current_period,
-        pop_size,           // although constant, we treat this as a property
-                            // as it's sometimes useful to show it on a graph
-        gov_exp,
-        bens_paid,
-        gov_exp_plus,
-        gov_recpts,
-        deficit,
-        deficit_pc,
-        gov_bal,
-        num_firms,
-        num_emps,
-        pc_emps,
-        num_unemps,
-        pc_unemps,
-        pc_active,
-        num_gov_emps,
-        num_hired,
-        num_fired,
-        prod_bal,
-        wages,
-        consumption,
-        bonuses,
-        dedns,
-        inc_tax,
-        sales_tax,
-        dom_bal,
-        amount_owed,
-        bus_size,
-        hundred,
-        zero,
-        procurement,
-        productivity,
-        rel_productivity,
-        unbudgeted,
-        investment,
-        gdp,
-        profit,
-        num_properties
-    };
-
-    Property getProperty(int);          // return the property by index
-    QList<Property> prop_list;          // to simplify iterations
     double scale(Property p);
 
     enum class Opr
@@ -356,7 +361,7 @@ private:
     QChartView *_chartView;
     QChart *chart;
 
-    void drawChart();
+    void drawChart(QListWidget *propertyList);
     //QChartView *createChart();
 
     void run();
@@ -415,9 +420,6 @@ protected:
      * employer is set to nullptr.
      */
     void fire(Worker *w);
-
-
-
 
      /*
      * The government associated with this domain. It might have been possible

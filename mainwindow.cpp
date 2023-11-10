@@ -81,44 +81,6 @@ MainWindow::MainWindow()
     createStatusBar();
 
     /*
-     * Map property names to domain properties
-     */
-    propertyMap[tr("Current period")] = Domain::Property::current_period;
-    propertyMap[tr("Population size")] = Domain::Property::pop_size;
-    propertyMap[tr("Govt exp excl benefits")] = Domain::Property::gov_exp;
-    propertyMap[tr("Govt exp incl benefits")] = Domain::Property::gov_exp_plus;
-    propertyMap[tr("Benefits paid")] = Domain::Property::bens_paid;
-    propertyMap[tr("Government receipts")] = Domain::Property::gov_recpts;
-    propertyMap[tr("Deficit (absolute)")] = Domain::Property::deficit;
-    propertyMap[tr("Deficit as % GDP")] = Domain::Property::deficit_pc;
-    propertyMap[tr("National Debt")] = Domain::Property::gov_bal;
-    propertyMap[tr("Number of businesses")] = Domain::Property::num_firms;
-    propertyMap[tr("Number employed")] = Domain::Property::num_emps;
-    propertyMap[tr("Number of govt employees")] = Domain::Property::num_gov_emps;
-    propertyMap[tr("Percent employed")] = Domain::Property::pc_emps;
-    propertyMap[tr("Number unemployed")] = Domain::Property::num_unemps;
-    propertyMap[tr("Percent unemployed")] = Domain::Property::pc_unemps;
-    propertyMap[tr("Percent active")] = Domain::Property::pc_active;
-    propertyMap[tr("Number of new hires")] = Domain::Property::num_hired;
-    propertyMap[tr("Number of new fires")] = Domain::Property::num_fired;
-    propertyMap[tr("Businesses balance")] = Domain::Property::prod_bal;
-    propertyMap[tr("Wages paid")] = Domain::Property::wages;
-    propertyMap[tr("Consumption")] = Domain::Property::consumption;
-    propertyMap[tr("Bonuses paid")] = Domain::Property::bonuses;
-    propertyMap[tr("Pre-tax deductions")] = Domain::Property::dedns;
-    propertyMap[tr("Income tax paid")] = Domain::Property::inc_tax;
-    propertyMap[tr("Sales tax paid")] = Domain::Property::sales_tax;
-    propertyMap[tr("Households balance")] = Domain::Property::dom_bal;
-    propertyMap[tr("Bank loans")] = Domain::Property::amount_owed;
-    propertyMap[tr("Average business size")] = Domain::Property::bus_size;
-    propertyMap[tr("100 reference line")] = Domain::Property::hundred;
-    propertyMap[tr("Procurement expenditure")] = Domain::Property::procurement;
-    propertyMap[tr("Productivity")] = Domain::Property::productivity;
-    propertyMap[tr("Productivity (relative)")] = Domain::Property::rel_productivity;
-    propertyMap[tr("Govt direct support")] = Domain::Property::unbudgeted;
-    propertyMap[tr("Zero reference line")] = Domain::Property::zero;
-
-    /*
      * Create and populate the dock windows, instantiating domains from the
      * values in settings
      */
@@ -141,7 +103,11 @@ MainWindow::MainWindow()
     setMinimumSize(1024, 768);
     resize(1280, 800);
 
-    Domain::drawCharts();
+    /*
+     * All domains use the same propertyList, which was set up in
+     * createDockWindows()
+     */
+    Domain::drawCharts(propertyList);
 }
 
 MainWindow::~MainWindow()
@@ -818,8 +784,8 @@ void MainWindow::createDockWindows()
      * checkeble and enabled.
      */
     qDebug() << "Reading propertyMap";
-    QMap<QString,Domain::Property>::iterator i;
-    for (i = propertyMap.begin(); i != propertyMap.end(); ++i)
+    QMap<QString,Property>::iterator i;
+    for (i = Domain::propertyMap.begin(); i != Domain::propertyMap.end(); ++i)
     {
         QListWidgetItem *item = new QListWidgetItem;
 
@@ -1258,7 +1224,7 @@ void MainWindow::drawChartRandomised()
 
 void MainWindow::drawChartNormal()
 {
-    Domain::drawCharts();
+    Domain::drawCharts(propertyList);
 }
 
 #if 0

@@ -31,7 +31,7 @@ public:
 
     void setCurrentDomain(QString domainName);
     void importFrom(QString domainName);
-    void setProperties(QMap<QString, Domain::Property> map);
+    void setProperties(QMap<QString, Property> map);
 
     void done(int result) override;
     int nextId() const override;
@@ -47,7 +47,7 @@ protected:
     QStringList propertyNames;
     QStringList rels;
 
-    QMap<QString,Domain::Property> propertyMap;
+    QMap<QString,Property> propertyMap;
 
     QString currentBehaviour;
     QString importDomain;    // Behaviour to import settings from or empty

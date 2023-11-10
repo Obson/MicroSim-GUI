@@ -6,6 +6,7 @@
 #include <math.h>
 #include "QtCore/qdebug.h"
 #include <QSettings>
+#include <QListWidgetItem>
 
 #define NUMBER_OF_BANKS 3
 #define CLEARING_FREQUENCY 10
@@ -13,9 +14,9 @@
 /*
  * Statics
  */
-QList<Domain*> Domain::domains;
+QList<Domain*> Domain::domains;                         // static
 
-const QMap<ParamType,QString> Domain::parameterKeys
+const QMap<ParamType,QString> Domain::parameterKeys     // static
 {
     {ParamType::procurement, "govt-procurement"},
     {ParamType::emp_rate, "employment-rate"},
@@ -33,6 +34,53 @@ const QMap<ParamType,QString> Domain::parameterKeys
     {ParamType::loan_prob, "loan-prob"},
     {ParamType::recoup, "capex-recoup-periods"},
 };
+
+QMap<QString,Property> Domain::propertyMap;  // can't be const as we have to initialise it
+
+void Domain::initialisePropertyMap()                    // static
+{
+    static bool is_initialised = false;
+
+    if (!is_initialised)
+    {
+        propertyMap[tr("Current period")] = Property::current_period;
+        propertyMap[tr("Population size")] = Property::pop_size;
+        propertyMap[tr("Govt exp excl benefits")] = Property::gov_exp;
+        propertyMap[tr("Govt exp incl benefits")] = Property::gov_exp_plus;
+        propertyMap[tr("Benefits paid")] = Property::bens_paid;
+        propertyMap[tr("Government receipts")] = Property::gov_recpts;
+        propertyMap[tr("Deficit (absolute)")] = Property::deficit;
+        propertyMap[tr("Deficit as % GDP")] = Property::deficit_pc;
+        propertyMap[tr("National Debt")] = Property::gov_bal;
+        propertyMap[tr("Number of businesses")] = Property::num_firms;
+        propertyMap[tr("Number employed")] = Property::num_emps;
+        propertyMap[tr("Number of govt employees")] = Property::num_gov_emps;
+        propertyMap[tr("Percent employed")] = Property::pc_emps;
+        propertyMap[tr("Number unemployed")] = Property::num_unemps;
+        propertyMap[tr("Percent unemployed")] = Property::pc_unemps;
+        propertyMap[tr("Percent active")] = Property::pc_active;
+        propertyMap[tr("Number of new hires")] = Property::num_hired;
+        propertyMap[tr("Number of new fires")] = Property::num_fired;
+        propertyMap[tr("Businesses balance")] = Property::prod_bal;
+        propertyMap[tr("Wages paid")] = Property::wages;
+        propertyMap[tr("Consumption")] = Property::consumption;
+        propertyMap[tr("Bonuses paid")] = Property::bonuses;
+        propertyMap[tr("Pre-tax deductions")] = Property::dedns;
+        propertyMap[tr("Income tax paid")] = Property::inc_tax;
+        propertyMap[tr("Sales tax paid")] = Property::sales_tax;
+        propertyMap[tr("Households balance")] = Property::dom_bal;
+        propertyMap[tr("Bank loans")] = Property::amount_owed;
+        propertyMap[tr("Average business size")] = Property::bus_size;
+        propertyMap[tr("100 reference line")] = Property::hundred;
+        propertyMap[tr("Procurement expenditure")] = Property::procurement;
+        propertyMap[tr("Productivity")] = Property::productivity;
+        propertyMap[tr("Productivity (relative)")] = Property::rel_productivity;
+        propertyMap[tr("Govt direct support")] = Property::unbudgeted;
+        propertyMap[tr("Zero reference line")] = Property::zero;
+
+        is_initialised = true;
+    }
+}
 
 /*
  * This function creates a new domain having the given name and currency, and
@@ -172,15 +220,19 @@ int Domain::restoreDomains(QStringList &domainNameList)
     return domains.count();
 }
 
-void Domain::drawCharts()
+void Domain::drawCharts(QListWidget *propertyList)
 {
     qDebug() << "Domain::drawCharts() called";
     foreach(Domain *dom, domains)
     {
         qDebug() << "About to draw chart for domain" << dom->getName();
-        dom->drawChart();
+        dom->drawChart(propertyList);
     }
 }
+
+// ---------- End of statics -----------
+
+
 
 Firm *Domain::createFirm(bool state_supported)
 {
@@ -279,19 +331,17 @@ double Domain::scale(Property p)
     }
 }
 
-Domain::Property Domain::getProperty(int n)
+/*
+ * This function takes the name of the property as listed in the dock widget
+ * and returns the atual property (i.e. the enum)
+ */
+Property Domain::getProperty(QString propertyName)
 {
-    Property p;
-    foreach(p, prop_list)
-    {
-        if (n == static_cast<int>(p))
-        {
-            return p;
-        }
-    }
+    QMap<QString,Property>::const_iterator it = propertyMap.find(propertyName);
 
-    Q_ASSERT(false);
-    return Property::zero;  // prevent compiler warning
+    Q_ASSERT(it != propertyMap.end());
+
+    return it.value();
 }
 
 /*∫
@@ -509,19 +559,9 @@ int Domain::magnitude(double y)
 }
 
 
-void Domain::drawChart()
+void Domain::drawChart(QListWidget *propertyList)
 {
     qDebug() << "Domain::drawChart(...) called";
-
-    /*
-     * NEXT
-     *
-     * MainWindow looks after the charts as berfore, but has to create one for
-     * each Domain (so wghen domains have allbeen created, emit a signal to
-     * let MainWindow know it can create the charts). Althogh mainwindow looks
-     * after the charts, Domain builds the series it uses.
-     */
-
 
     // We are going to remove the chart altogether and replace it with a new
     // one to make sure we get a clean slate. However if we don't remove the
@@ -571,18 +611,28 @@ void Domain::drawChart()
     QLineSeries *anySeries = nullptr;
 
     int y_max = -INT_MAX, y_min = INT_MAX;
-    qDebug() << "MainWindow::drawChart(): resetting range y_min = " << y_min << "y_max" << y_max << "***";
+    qDebug() << "Domain::drawChart(): resetting range y_min = " << y_min << "y_max" << y_max << "***";
+
+
+    // NEXT: CRASHES AFTER THIS...
+
 
     for (int i = 0; i < int(Property::num_properties); i++)
     {
-//
-//        QListWidgetItem *item;
-//        item = propertyList->item(i);
-//        bool selected = item->checkState();
-//        if (selected)
-//        {
-//            QString series_name = item->text();
-//            Behaviour::Property prop = propertyMap[series_name];
+
+        QListWidgetItem *item;
+        item = propertyList->item(i);
+        bool selected = item->checkState();
+        if (selected)
+        {
+            QString series_name = item->text();
+            qDebug() << "Adding series for" << series_name;
+            Property prop = getProperty(series_name);     // TODO: check that this gets the right property
+
+
+
+
+
 //            QLineSeries *ser = _currentBehaviour->series[prop];
 //            ser->setName(series_name);
 //            chart->addSeries(ser);
@@ -630,7 +680,7 @@ void Domain::drawChart()
 //                     << "y_max" << y_max
 //                     << "series min" << _currentBehaviour->min_value(ix)
 //                     << "y_min" << y_min;
-//        }
+        }
 
     }
 
@@ -932,7 +982,7 @@ void Domain::iterate(int duration)
         // Append the values from this iteration to the series
         for (int i = 0; i < static_cast<int>(Property::num_properties); i++)
         {
-            Property prop = prop_list[i];
+            Property prop = static_cast<Property>(i);   // convert i to a Property
             double val = scale(prop);
             series[prop]->append(period, val);
 

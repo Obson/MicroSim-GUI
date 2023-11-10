@@ -34,7 +34,7 @@ ParameterWizard::ParameterWizard(QWidget *parent) : QWizard(parent)
     connect(this, &QWizard::customButtonClicked, this, &ParameterWizard::createNewPage);
 }
 
-void ParameterWizard::setProperties(QMap<QString,Domain::Property> map)
+void ParameterWizard::setProperties(QMap<QString, Property> map)
 {
     // NOTE: This includes the preudo-series 'Zero reference line' and
     // 'Hundred reference line'. These serve no useful purpose here and
@@ -485,10 +485,10 @@ QString ExtraPage::readCondSetting(QString behaviourName, QString key)
 QString ExtraPage::getPropertyName(int prop)
 {
     // Convert the int to a property
-    Domain::Property p = static_cast<Domain::Property>(prop);
+    Property p = static_cast<Property>(prop);
 
     // and look it up in the property map
-    QMapIterator<QString, Domain::Property> it(wiz->propertyMap);
+    QMapIterator<QString,Property> it(wiz->propertyMap);
     while (it.hasNext())
     {
         it.next();
@@ -589,10 +589,10 @@ bool ExtraPage::validatePage()
     QSettings settings;
     bool ok;
 
-    // We need to store an actual property (Behaviour::Property enum) here, but we
-    // have to convert it to an int first
+    // We need to store an actual property (Property enum) here, but we have
+    // to convert it to an int first
     QString selected_text = cb_property->currentText();
-    Domain::Property prop = wiz->propertyMap.value(selected_text);
+    Property prop = wiz->propertyMap.value(selected_text);
     settings.setValue(key + "property", static_cast<int>(prop));
 
     settings.setValue(key + "rel", cb_rel->currentIndex());

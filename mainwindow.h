@@ -168,7 +168,7 @@ private:
     bool updatingProfileList = false;
     bool property_selected = false;
 
-    QMap<QString,Domain::Property> propertyMap;
+    //QMap<QString,Domain::Property> propertyMap;
 
     QChartView *createChart();
 
@@ -193,7 +193,7 @@ private:
     void changeDomain(QListWidgetItem*);
 
     QList<QColor> colours;
-    QMap<Domain::Property,QColor> propertyColours;
+    QMap<Property,QColor> propertyColours;
 
     QListWidgetItem *selectedBehaviourItem;
 
@@ -249,7 +249,7 @@ private:
 
     struct Condition
     {
-        Domain::Property property = Domain::Property::zero;
+        Property property = Property::zero;
         Opr opr;
         int val;            // possibly extend to allow expressions later
     };
