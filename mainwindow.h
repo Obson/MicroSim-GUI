@@ -22,6 +22,8 @@
 
 #include "statsdialog.h"
 
+#define QT_DEBUG
+
 namespace Ui {
 class MainWindow;
 }
@@ -66,12 +68,7 @@ signals:
 
 protected:
 
-    // These functions have been moved from the Behaviour class as they should
-    // be global
-
-
-    void run(bool randomised = false);
-    void restart();
+    //void run(bool randomised = false);
     int getStartPeriod();
 
     // Much of this should be transferred to Domain
@@ -91,9 +88,6 @@ protected:
 
     void saveCSV();
     void editParameters();
-    void editModelDescription();
-    //void createDefaultBehaviour();
-    void createNewBehaviour();
     void createDomain();
     void createProfile();
     void removeProfile();
@@ -130,11 +124,7 @@ protected:
     QAction *saveProfileAction;
     QAction *removeProfileAction;
     QAction *changeAction;
-    QAction *coloursAction;
-    QAction *newAction;
     QAction *domainAction;
-    QAction *removeAction;
-    QAction *notesAction;
     QAction *aboutAction;
     QAction *aboutQtAction;
     QAction *setOptionsAction;
@@ -184,15 +174,11 @@ private:
     void drawChartRandomised();
     */
     void drawChartNormal();
-
-    QColor nextColour(int n);
     void selectProfile(QString text);
-
-    void changeBehaviour(QListWidgetItem*);
+    //void changeBehaviour(QListWidgetItem*);
     void changeProfile(QListWidgetItem*);
-    void changeDomain(QListWidgetItem*);
+    //void changeDomain(QListWidgetItem*);
 
-    QList<QColor> colours;
     QMap<Property,QColor> propertyColours;
 
     QListWidgetItem *selectedBehaviourItem;
@@ -206,31 +192,6 @@ private:
     QListWidget *propertyList;
 
     QStringList domainNameList;
-    // QList<QString> domainNameList;
-
-    QtCharts::QLineSeries period;
-    QtCharts::QLineSeries gov_exp;
-    QtCharts::QLineSeries bens_paid;
-    QtCharts::QLineSeries gov_recpts;
-    QtCharts::QLineSeries deficit;
-    QtCharts::QLineSeries gov_bal;
-    QtCharts::QLineSeries num_firms;
-    QtCharts::QLineSeries num_emps;
-    QtCharts::QLineSeries num_unemps;
-    QtCharts::QLineSeries num_gov_emps;
-    QtCharts::QLineSeries num_hired;
-    QtCharts::QLineSeries num_fired;
-    QtCharts::QLineSeries prod_bal;
-    QtCharts::QLineSeries wages;
-    QtCharts::QLineSeries consumption;
-    QtCharts::QLineSeries bonuses;
-    QtCharts::QLineSeries dedns;
-    QtCharts::QLineSeries inc_tax;
-    QtCharts::QLineSeries sales_tax;
-    QtCharts::QLineSeries dom_bal;
-
-    QValueAxis *axisX = nullptr;
-    QValueAxis *axisY = nullptr;
 
     QLabel *productivityLabel;
     QLabel *inequalityLabel;

@@ -35,7 +35,7 @@ const QMap<ParamType,QString> Domain::parameterKeys     // static
     {ParamType::recoup, "capex-recoup-periods"},
 };
 
-QMap<QString,Property> Domain::propertyMap;  // can't be const as we have to initialise it
+QMap<QString,Property> Domain::propertyMap;  // static, can't be const as we have to initialise it
 
 void Domain::initialisePropertyMap()                    // static
 {
@@ -43,39 +43,38 @@ void Domain::initialisePropertyMap()                    // static
 
     if (!is_initialised)
     {
-        propertyMap[tr("Current period")] = Property::current_period;
-        propertyMap[tr("Population size")] = Property::pop_size;
-        propertyMap[tr("Govt exp excl benefits")] = Property::gov_exp;
-        propertyMap[tr("Govt exp incl benefits")] = Property::gov_exp_plus;
+        propertyMap[tr("100 reference line")] = Property::hundred;
+        propertyMap[tr("Average business size")] = Property::bus_size;
+        propertyMap[tr("Bank loans")] = Property::amount_owed;
         propertyMap[tr("Benefits paid")] = Property::bens_paid;
-        propertyMap[tr("Government receipts")] = Property::gov_recpts;
+        propertyMap[tr("Bonuses paid")] = Property::bonuses;
+        propertyMap[tr("Businesses balance")] = Property::prod_bal;
+        propertyMap[tr("Consumption")] = Property::consumption;
         propertyMap[tr("Deficit (absolute)")] = Property::deficit;
         propertyMap[tr("Deficit as % GDP")] = Property::deficit_pc;
+        propertyMap[tr("Government receipts")] = Property::gov_recpts;
+        propertyMap[tr("Govt direct support")] = Property::unbudgeted;
+        propertyMap[tr("Govt exp excl benefits")] = Property::gov_exp;
+        propertyMap[tr("Govt exp incl benefits")] = Property::gov_exp_plus;
+        propertyMap[tr("Households balance")] = Property::dom_bal;
+        propertyMap[tr("Income tax paid")] = Property::inc_tax;
         propertyMap[tr("National Debt")] = Property::gov_bal;
-        propertyMap[tr("Number of businesses")] = Property::num_firms;
         propertyMap[tr("Number employed")] = Property::num_emps;
+        propertyMap[tr("Number of businesses")] = Property::num_firms;
         propertyMap[tr("Number of govt employees")] = Property::num_gov_emps;
-        propertyMap[tr("Percent employed")] = Property::pc_emps;
-        propertyMap[tr("Number unemployed")] = Property::num_unemps;
-        propertyMap[tr("Percent unemployed")] = Property::pc_unemps;
-        propertyMap[tr("Percent active")] = Property::pc_active;
         propertyMap[tr("Number of new hires")] = Property::num_hired;
         propertyMap[tr("Number of new fires")] = Property::num_fired;
-        propertyMap[tr("Businesses balance")] = Property::prod_bal;
-        propertyMap[tr("Wages paid")] = Property::wages;
-        propertyMap[tr("Consumption")] = Property::consumption;
-        propertyMap[tr("Bonuses paid")] = Property::bonuses;
+        propertyMap[tr("Number unemployed")] = Property::num_unemps;
+        propertyMap[tr("Percent active")] = Property::pc_active;
+        propertyMap[tr("Percent employed")] = Property::pc_emps;
+        propertyMap[tr("Percent unemployed")] = Property::pc_unemps;
+        propertyMap[tr("Population size")] = Property::pop_size;
         propertyMap[tr("Pre-tax deductions")] = Property::dedns;
-        propertyMap[tr("Income tax paid")] = Property::inc_tax;
-        propertyMap[tr("Sales tax paid")] = Property::sales_tax;
-        propertyMap[tr("Households balance")] = Property::dom_bal;
-        propertyMap[tr("Bank loans")] = Property::amount_owed;
-        propertyMap[tr("Average business size")] = Property::bus_size;
-        propertyMap[tr("100 reference line")] = Property::hundred;
         propertyMap[tr("Procurement expenditure")] = Property::procurement;
         propertyMap[tr("Productivity")] = Property::productivity;
         propertyMap[tr("Productivity (relative)")] = Property::rel_productivity;
-        propertyMap[tr("Govt direct support")] = Property::unbudgeted;
+        propertyMap[tr("Sales tax paid")] = Property::sales_tax;
+        propertyMap[tr("Wages paid")] = Property::wages;
         propertyMap[tr("Zero reference line")] = Property::zero;
 
         is_initialised = true;
@@ -127,6 +126,26 @@ Domain *Domain::getDomain(const QString &name)
     return nullptr;
 }
 
+
+void Domain::initialise()
+{
+    qDebug() << "Initialising domain" << getName();
+    last_period = -1;
+    foreach(Firm *firm, firms)
+    {
+        firm->init();
+    }
+
+    /*
+    foreach(Worker *w, workers)
+    {
+        w->init();
+    }
+
+    workers.clear();
+    */
+}
+
 /*
  * This constructor is private and is only called via createDomain, which
  * handles all associated admin.
@@ -151,12 +170,24 @@ Domain::Domain(const QString &name,
     _abbrev = currencyAbbrev;
 
     /*
+     * Create a government
+     */
+    _gov = new Government(this);
+
+    /*
+     * Add firms
+     */
+    QSettings settings;
+    int n = settings.value("start-ups", 10).toInt();
+    for (int i = 0; i < n; i++)
+    {
+        firms.append(new Firm(this));
+    }
+
+    /*
      * Add this domain to the list of domains
      */
-    qDebug() << "Adding domain" << name << "to domains";
     domains.append(this);
-    qDebug() << "There are now" << domains.count() << "domains on the list";
-
 
     /*
      * Create an arbitrary number of banks
@@ -165,6 +196,12 @@ Domain::Domain(const QString &name,
     {
         banks.append(new Bank(this));
     }
+
+    initialise();
+
+    qDebug() << "Domain" << getName() << "has" << firms.count()
+             << "firms and" << banks.count() << "banks";
+
 }
 
 /*
@@ -200,8 +237,11 @@ int Domain::restoreDomains(QStringList &domainNameList)
         foreach (ParamType p, parameterKeys.keys())
         {
             QString key_string = parameterKeys.value(p);
+            qDebug() << "reading parameter" << key_string << "from settings";
             if (settings.contains(key_string))
             {
+                if (key_string == "reserve-rate")
+                    qDebug() << "setting reserve-rate (distribution) to" << settings.value(key_string).toInt();
                 dom->params[p] =  settings.value(key_string).toInt();
             }
             else
@@ -211,6 +251,14 @@ int Domain::restoreDomains(QStringList &domainNameList)
                            << dom->getName();
             }
         }
+        /*
+         * TODO: (Ignore compiler error message)
+         * Error msg from compiler can be ignored. Domain *domain is  added to
+         * the domains list by the constructor, ensuring that a domain cannot
+         * be created without adding it to the list. However, for tidyness,
+         * when the program closes and the domains list is destroyed, we should
+         * destroy the listed domains explicitly.
+         */
         settings.endGroup();
     }
 
@@ -222,17 +270,73 @@ int Domain::restoreDomains(QStringList &domainNameList)
 
 void Domain::drawCharts(QListWidget *propertyList)
 {
-    qDebug() << "Domain::drawCharts() called";
+    qDebug() << "Domain::drawCharts() called. propertyList contains"
+             << propertyList->count() << "properties";
+
+    /*
+     * Draw an unpopulated chart for each domain, with series attached
+     */
     foreach(Domain *dom, domains)
     {
         qDebug() << "About to draw chart for domain" << dom->getName();
+        dom->initialise();
         dom->drawChart(propertyList);
     }
+
+    /*
+     * Iterate for the required number of periods, populating the series
+     */
+    QSettings settings;
+    int iterations = settings.value("iterations", 100).toInt();
+    for (int period = 0; period <= iterations; period++)
+    {
+        /*
+         * Iterate each domain
+         */
+        foreach(Domain *dom, domains)
+        {
+            qDebug() << "About to iterate domain" << dom->getName() << ", period" << period;
+            dom->iterate(period);
+        }
+    }
+
+    /*
+     * Now we need to add the populated series to the charts...
+     */
+    foreach(Domain *dom, domains)
+    {
+        // NB we have the series in QMap *series somewhere. Make
+        // sure it's global
+        dom->addSeriesToChart();
+    }
+
 }
 
 // ---------- End of statics -----------
 
+void Domain::addSeriesToChart()
+{
+    auto it = series.begin();
+    while (it != series.end())
+    {
+        qDebug() << "Adding series to chart for" << getName();
+        chart->addSeries(it.value());
+        ++it;
+    }
+    chart->createDefaultAxes();
 
+    /*
+     * And add some stats to the status bar
+     */
+    double gini = getGini();
+    double prod = getProductivity();
+
+    // We will need to re-instate these labels on the status bars
+//    inequalityLabel->setText(tr("Inequality: ") + QString::number(round(gini * 100)) + "%");
+//    productivityLabel->setText(tr("Productivity: ") + QString::number(round(prod + 0.5)) + "%");
+
+    // emit drawingCompleted();
+}
 
 Firm *Domain::createFirm(bool state_supported)
 {
@@ -287,7 +391,6 @@ double Domain::scale(Property p)
 
     switch(p)
     {
-    case Property::current_period:
     case Property::pc_emps:
     case Property::pc_unemps:
     case Property::pc_active:
@@ -324,9 +427,13 @@ double Domain::scale(Property p)
     case Property::amount_owed:
     case Property::bus_size:
     case Property::procurement:
-    case Property::investment:
-    case Property::gdp:
-    case Property::profit:
+
+    // These are missing from Property -- may need re-instating
+    //
+    // case Property::investment:
+    // case Property::gdp:
+    // case Property::profit:
+
         return val * _scale;
     }
 }
@@ -344,7 +451,7 @@ Property Domain::getProperty(QString propertyName)
     return it.value();
 }
 
-/*∫
+/*
  * Properties are domain values that are liable to change at each iteration.
  * This function returns the current value of each property. Note that is is
  * important for the order of properties inside the switch to ne maintained
@@ -355,14 +462,7 @@ double Domain::getPropertyVal(Property p)
     switch(p)
     {
     case Property::num_gov_emps:
-        /*
-         * This is not currently handled
-         */
-        Q_ASSERT(false);
-        return 0;
-
-    case Property::current_period:
-        return getPeriod();
+        return _gov->getNumEmployees();
 
     case Property::pop_size:
         _pop_size = getPopulation();
@@ -388,18 +488,19 @@ double Domain::getPropertyVal(Property p)
         return _deficit;
 
     case Property::gov_bal:
-        // We are displaying this as a positive debt rather than a negative
-        // balance just so we can avoid displaying negative quamtities (with
-        // exception of negative deficits) and keep the x-axis at the bottom
-        // as there's no simple provision for displaying it at y = 0.
-        _gov_bal = -(_gov->getBalance());
+        /*
+         * This will always be negative as the government is never in receipt
+         * of its own currency. It amounts to the sum of all government
+         * expenditures in the currency of account. It will always (numerically)
+         * exceed the National Debt as it ignores tax receipts -- conventionally
+         * taken as offsetting expenditure. To find the 'deficit' (see above)
+         * you have to add tax receipts.
+         */
+        _gov_bal = _gov->getBalance();
         return _gov_bal;
 
     case Property::num_firms:
-        // num_firms is (must be) only used for stats as it doesn't include
-        // the government-owned firm. For the actual number (unscaled) use
-        // firms.count().
-        _num_firms = firms.count() - 1;
+        _num_firms = firms.count();
         return double(_num_firms);
 
     case Property::num_emps:
@@ -435,11 +536,11 @@ double Domain::getPropertyVal(Property p)
                                                 // to include banks
 
     case Property::wages:
-        _wages = getWagesPaid();                // not cumulative
+        _wages = getWagesPaid();                // not cumulative -- consider adding cumulative amount
         return _wages;
 
     case Property::consumption:
-        _consumption = getPurchasesMade();      // not cumulative
+        _consumption = getPurchasesMade();      // not cumulative -- consider adding cumulative amount
         return _consumption;
 
     case Property::deficit_pc:
@@ -489,20 +590,23 @@ double Domain::getPropertyVal(Property p)
         return _productivity;
 
     case Property::rel_productivity:
-        if (_num_emps == 0)
-        {
-            Q_ASSERT(_rel_productivity != 0.0);
-            _rel_productivity = 1.0;  // default
-        }
-        else
-        {
-           _rel_productivity = (_productivity * _pop_size) / _num_emps;
-        }
-        return _rel_productivity;
+      if (_num_emps == 0) {
+        Q_ASSERT(_rel_productivity != 0.0);
+        _rel_productivity = 1.0; // default
+      } else {
+        _rel_productivity = (_productivity * _pop_size) / _num_emps;
+      }
+      return _rel_productivity;
 
     case Property::unbudgeted:
         return _gov->getUnbudgetedExp();
 
+
+    /*
+     * The following properties may need reinstating
+     */
+
+#if 0
     case Property::investment:
         _investment = getInvestment();
         return _investment;
@@ -516,6 +620,7 @@ double Domain::getPropertyVal(Property p)
         // ***** I don't think we should be subtracting income tax here!
         _profit = _gdp - _wages - _inc_tax - _sales_tax;
         return _profit;
+#endif
 
     case Property::num_properties:
         Q_ASSERT(false);
@@ -538,7 +643,7 @@ double Domain::getProductivity()
     for (int i = 0; i < count; i++)
     {
         Firm *f = firms[i];
-        tot += f->getNumEmployees() * f->getProductivity();
+        tot += double(f->getNumEmployees()) * f->getProductivity();
     }
     double res = count == 0 ? 0 : (tot * 100) / _pop_size;
     return res;
@@ -551,331 +656,66 @@ void Domain::setChartView(QChartView *chartView)
     chart = chartView->chart();
 }
 
-int Domain::magnitude(double y)
-{
-    int x = (y == 0.0 ? -INT_MAX : (static_cast<int>(log10(abs(y)))));
-    qDebug() << "Domain::magnitude(): magnitude of" << y << "is" << x;
-    return x;
-}
-
-
+/*
+ * drawChart() simply sets up a chart but doesn't populate it. See drawCharts...
+ */
 void Domain::drawChart(QListWidget *propertyList)
 {
     qDebug() << "Domain::drawChart(...) called";
 
-    // We are going to remove the chart altogether and replace it with a new
-    // one to make sure we get a clean slate. However if we don't remove the
-    // objects owned by the old chart the program eventually crashes. So far,
-    // the following lines seem to fix that problem. This may all be overkill,
-    // but I haven't found an alternative way of keeping the axes up to data.
+    /*
+     * Since we may be redrawing the chart we must clear existing series (and
+     * axes?)
+     */
 
-    QList<QAbstractSeries*> current_series = chart->series();
+    chart->removeAllSeries();   // built-in chart series
+    series.clear();             // our global copy, used to hold generated data points
 
-    for (int i = 0; i < current_series.count(); i++)
-    {
-        chart->removeSeries(current_series[i]);
-    }
-
-    if (chart->axisX() != nullptr)
-    {
-        chart->removeAxis(chart->axisX());
-    }
-
-    if (chart->axisY() != nullptr)
-    {
-        chart->removeAxis(chart->axisY());
-    }
-
-    // Remove the existing chart and replace it with a new one.
-    // delete chart;
-    // createChart();
     chart->legend()->setAlignment(Qt::AlignTop);
-
-
-
-//    if (rerun)
-//    {
-//        _currentBehaviour->run(randomised);
-//        statsDialog->hide();
-//        if (property_selected)
-//        {
-//            updateStatsDialog(propertyList->currentItem());
-//        }
-//    }
-
     chart->legend()->show();
-    chart->setTitle("<h2 style=\"text-align:center;\">"
-                    + getName()
-                    + "</h2>");
 
-    QLineSeries *anySeries = nullptr;
+    chart->setTitle("<h2 style=\"text-align:center;\">" + getName() + "</h2>");
 
-    int y_max = -INT_MAX, y_min = INT_MAX;
-    qDebug() << "Domain::drawChart(): resetting range y_min = " << y_min << "y_max" << y_max << "***";
+    qDebug() << "Creating line series";
 
-
-    // NEXT: CRASHES AFTER THIS...
-
+    Q_ASSERT(propertyList->count() > 0);
 
     for (int i = 0; i < int(Property::num_properties); i++)
     {
+        /*
+         * We need to construct a line series for each selected property. We
+         * will let Qt look after values on axes
+         */
 
         QListWidgetItem *item;
         item = propertyList->item(i);
         bool selected = item->checkState();
+
         if (selected)
         {
             QString series_name = item->text();
-            qDebug() << "Adding series for" << series_name;
-            Property prop = getProperty(series_name);     // TODO: check that this gets the right property
-
-
-
-
-
-//            QLineSeries *ser = _currentBehaviour->series[prop];
-//            ser->setName(series_name);
-//            chart->addSeries(ser);
-
-//            anySeries = ser;
-
-//            // Set the line colour and type for this series
-//            switch(prop)
-//            {
-//            case Domain::Property::zero:
-//            case Domain::Property::hundred:
-//                ser->setColor(Qt::black);
-//                ser->setPen(QPen(Qt::DotLine));
-//                break;
-//            default:
-//                if (propertyColours.contains(prop))
-//                {
-//                    ser->setColor(propertyColours[prop]);
-//                }
-//                else
-//                {
-//                    QColor colour = nextColour(n++);
-//                    propertyColours[prop] = colour;
-//                    ser->setColor(colour);
-//                }
-//                break;
-//            }
-
-
-//            // Set values for y axis range
-
-//            // TODO: prop is an enum but max_value() and min_value() expect
-//            // ints, so we have to do a static cast. Perhaps this should really
-//            // be done in the functions themselves.
-
-//            /*
-//             * NB This will all go into Domain and _currentBehaviour will be redundant
-//             */
-//            int ix = static_cast<int>(prop);
-
-//            y_max = std::max(y_max, _currentBehaviour->max_value(ix));
-//            y_min = std::min(y_min,_currentBehaviour->min_value(ix));
-//            qDebug() << "MainWindow::drawChart(): series name" << series_name
-//                     << "series max" << _currentBehaviour->max_value(ix)
-//                     << "y_max" << y_max
-//                     << "series min" << _currentBehaviour->min_value(ix)
-//                     << "y_min" << y_min;
+            QLineSeries *ser = new QLineSeries();
+            ser->setName(series_name);
+            series.insert(static_cast<Property>(i), ser);
         }
-
     }
 
-//    int scale = magnitude(std::max(std::abs(y_max), std::abs(y_min)));
 
-//    qDebug() << "MainWindow::drawChart(): min" << y_min << "max" << y_max << "scale" << scale;
+#if 0
+    double gini = getGini();
+    double prod = getProductivity();
+    inequalityLabel->setText(tr("Inequality: ") + QString::number(round(gini * 100)) + "%");
+    productivityLabel->setText(tr("Productivity: ") + QString::number(round(prod + 0.5)) + "%");
 
-//    // Format the axis numbers to whole integers. This needs a series to have
-//    // been selected, so avoid otherwise
-//    if (anySeries != nullptr)
-//    {
-//        chart->createDefaultAxes();
-//        QValueAxis *x_axis = static_cast<QValueAxis*>(chart->axisX(anySeries));
-//        x_axis->setLabelFormat("%d");
-//        QValueAxis *y_axis = static_cast<QValueAxis*>(chart->axisY(anySeries));
-//        y_axis->setLabelFormat("%d");
-
-//        int temp;
-//        if (y_max > 0 && y_min >= 0) {
-//            // Both positive: range from zero to y_max rounded up to power of 10
-//            temp = std::pow(10, (scale + 1));
-//            y_max = (temp >= y_max * 2 ? (temp >= y_max * 4 ? temp / 4 : temp / 2) : temp);
-//            y_min = 0;
-//        } else if (y_min < 0 && y_max <= 0) {
-//            // Both negative: range y_min rounded down to power of 10, to zero
-//            y_max = 0;
-//            temp = -std::pow(10, (scale + 1));
-//            y_min = (temp <= y_min * 2 ? (temp <= y_min * 4 ? temp / 4 : temp / 2) : temp);
-//        } else {
-//            // TODO: It would be nicer if the intervals were equally reflected
-//            // about the x-axis but this isn't really very important
-//            temp = std::pow(10, (scale + 1));
-//            y_max = (temp >= y_max * 2 ? (temp >= y_max * 4 ? temp / 4: temp / 2) : temp);
-//            temp = -std::pow(10, (scale + 1));
-//            y_min = (temp <= y_min * 2 ? (temp <= y_min * 4 ? temp / 4 : temp / 2) : temp);
-//        }
-
-//        qDebug() << "MainWindow::drawChart(): Setting range from" << y_min << "to" << y_max;
-//        y_axis->setRange(y_min, y_max);
-//    }
-
-//    double gini = _currentBehaviour->getGini();
-//    double prod = _currentBehaviour->getProductivity();
-
-//    inequalityLabel->setText(tr("Inequality: ") + QString::number(round(gini * 100)) + "%");
-//    productivityLabel->setText(tr("Productivity: ") + QString::number(round(prod + 0.5)) + "%");
-
-//    // emit drawingCompleted();
-
+    emit drawingCompleted();
+#endif
 }
-
-void Domain::run()
-{
-    qDebug() << "Domain::run()";
-
-//    restart();
-
-//    // ***
-//    // Seed the pseudo-random number generator.
-//    // We need reproducibility so we always seed with the same number.
-//    // This makes inter-model comparisons more valid.
-//    // ***
-
-//    if (!randomised) {
-//        qDebug() << "Behaviour::run(): using fixed seed (42)";
-//        qsrand(42);
-//    }
-
-//    for (_period = 0; _period <= _iterations + _first_period; _period++)
-//    {
-//        /*
-//         *  Signal domains to go on to the next period. _period==0 should
-//         *   trigger initialisation
-//         */
-//        emit(clockTick(_period));
-
-//        // -------------------------------------------
-//        // Initialise objects ready for next iteration
-//        // -------------------------------------------
-
-//        _dedns = 0;         // deductions are tracked by the model object and are
-//                            // accumulated within but not across periods
-
-//        // _gov shuld be a member of Domain
-//        _gov->init();
-
-//        int num_workers = workers.count();
-//        int num_firms = firms.count();
-
-//        for (int i = 0; i < num_firms; i++) {
-//            firms[i]->init();
-//        }
-
-//        for (int i = 0; i < num_workers; i++) {
-//            workers[i]->init();
-//        }
-
-//        // Reset counters
-
-//        num_hired = 0;
-//        num_fired = 0;
-//        num_just_fired = 0;
-
-//        // -------------------------------------------
-//        // Trigger objects
-//        // -------------------------------------------
-
-//        // Triggering government will direct payments to firms and benefits to
-//        //  workers before they are triggered
-//        _gov->trigger(_period);
-
-//        // Triggering firms will pay deductions to government and wages to
-//        // workers. Firms will also fire any workers they can't afford to pay.
-//        // Workers receiving payment will pay income tax to the government
-//        for (int i = 0; i < num_firms; i++) {
-//            firms[i]->trigger(_period);
-//        }
-
-//        // Trigger workers to make purchases
-//        for (int i = 0; i < num_workers; i++) {
-//            workers[i]->trigger(_period);
-//        }
-
-//        // -------------------------------------------
-//        // Post-trigger (epilogue) phase
-//        // -------------------------------------------
-
-//        // Post-trigger for firms so they can pay tax on sales just made, pay
-//        // bonuses, and hire more employees (investment)
-//        for (int i = 0, c = firms.count(); i < c; i++) {
-//            firms[i]->epilogue(_period);
-//        }
-
-//        // Same for workers so they can keep rolling averages up to date
-//        for (int i = 0, c = workers.count(); i < c; i++) {
-//            workers[i]->epilogue(_period);
-//        }
-
-//        // -------------------------------------------
-//        // Stats
-//        // -------------------------------------------
-
-//        // Append the values from this iteration to the series
-//        if (_period >= _first_period)
-//        {
-//            for (int i = 0; i < _num_properties/*static_cast<int>(Property::num_properties)*/; i++)
-//            {
-//                Property prop = prop_list[i];
-//                double val = scale(prop);
-//                series[prop]->append(_period, val);
-
-//                int j = static_cast<int> (prop);
-
-//                if (_period == _first_period)
-//                {
-//                    max_val[j] = val;
-//                    min_val[j] = val;
-//                    sum[j] = val;
-//                }
-//                else
-//                {
-//                    if (val > max_val[j])
-//                    {
-//                        max_val[j] = val;
-//                    }
-//                    else if (val < min_val[j])
-//                    {
-//                        min_val[j] = val;
-//                    }
-
-//                    sum[j] += val;
-//                }
-//            }
-//        }
-
-//        // -------------------------------------------
-//        // Exogenous changes
-//        // -------------------------------------------
-
-//        // Create a new firm, possibly
-//        if (qrand() % 100 < getFCP()) {
-//            createFirm();
-//        }
-//    }
-
-
-//    qDebug() << "Behaviour::run(): _name =" << _name << "  gini =" << gini();
-}
-
 
 /*
  * This returns the Gini coefficient for the population based on each worker's
  * average wage
  */
-double Domain::gini()
+double Domain::getGini()
 {
     int pop = workers.count();
 
@@ -915,119 +755,158 @@ double Domain::gini()
     return _gini;
 }
 
-void Domain::iterate(int duration)
+
+// NEXT: IN PROGRESS...
+
+void Domain::iterate(int period)
 {
-    for (period = 0; period < duration; period++)
+    qDebug() << "Starting iteration for period" << period
+             << "for domain" << getName();
+
+    Q_ASSERT(period > last_period);
+
+    last_period = period;
+
+    if (period == 0)
     {
-        if (period == 0)
-        {
-            // ...
-        }
-
-        // deductions are accumulated within but not across periods
-        _dedns = 0;
-
-        _gov->init();
-
-        // Reset counters
-
-        _num_hired = 0;
-        _num_fired = 0;
-
-        // -------------------------------------------
-        // Trigger objects
-        // -------------------------------------------
-
-        // Triggering government will direct payments to firms and benefits to
-        //  workers before they are triggered
-        _gov->trigger(period);
-
-        // Triggering firms will pay deductions to government and wages to
-        // workers. Firms will also fire any workers they can't afford to pay.
-        // Workers receiving payment will pay income tax to the government
-        for (int i = 0; i < firms.count(); i++)
-        {
-            firms[i]->init();
-            firms[i]->trigger(period);
-        }
-
-        // Trigger workers to make purchases
-        for (int i = 0; i < workers.count(); i++)
-        {
-            workers[i]->init();
-            workers[i]->trigger(period);
-        }
-
-        // -------------------------------------------
-        // Post-trigger (epilogue) phase
-        // -------------------------------------------
-
-        // Post-trigger for firms so they can pay tax on sales just made, pay
-        // bonuses, and hire more employees (investment)
-        for (int i = 0, c = firms.count(); i < c; i++)
-        {
-            firms[i]->epilogue();
-        }
-
-        // Same for workers so they can keep rolling averages up to date
-        for (int i = 0, c = workers.count(); i < c; i++)
-        {
-            workers[i]->epilogue(period);
-        }
-
-        // -------------------------------------------
-        // Stats
-        // -------------------------------------------
-
-        // Append the values from this iteration to the series
-        for (int i = 0; i < static_cast<int>(Property::num_properties); i++)
-        {
-            Property prop = static_cast<Property>(i);   // convert i to a Property
-            double val = scale(prop);
-            series[prop]->append(period, val);
-
-            int j = static_cast<int> (prop);
-
-            if (i == 0)
-            {
-                max_val[j] = val;
-                min_val[j] = val;
-                sum[j] = val;
-            }
-            else
-            {
-                if (val > max_val[j])
-                {
-                    max_val[j] = val;
-                }
-                else if (val < min_val[j])
-                {
-                    min_val[j] = val;
-                }
-
-                sum[j] += val;
-            }
-        }
-
-        // -------------------------------------------
-        // Exogenous changes
-        // -------------------------------------------
-
-        // Create a new firm, possibly
-        if (qrand() % 100 < getFCP())
-        {
-            createFirm();
-        }
-
-
-        qDebug() << "Domain::iterate(): _name =" << _name << "  gini =" << gini();
+        /*
+         * Do any initialisation here
+         */
+        _gov->reset();
+        qDebug() << "Government reset";
     }
 
-}
+    // deductions are accumulated within but not across periods
+    _dedns = 0;
 
-int Domain::getPeriod()
-{
-    return period;
+    // Reset counters
+
+    _num_hired = 0;
+    _num_fired = 0;
+
+    // -------------------------------------------
+    // Trigger phase
+    // -------------------------------------------
+
+    // Triggering government will direct payments to firms and benefits to
+    //  workers before they are triggered
+    _gov->trigger(period);
+
+    // Triggered firms will pay deductions to government and wages to
+    // workers. Firms will also fire any workers they can't afford to pay.
+    // Workers receiving payment will pay income tax to the government
+    for (int i = 0; i < firms.count(); i++)
+    {
+        firms[i]->init();
+        firms[i]->trigger(period);  // FIX: _gov is a firm, so this will trigger it again
+        // if trigger is virtual (I don't think it is) or if _gov has been added to the
+        // list of firms.
+    }
+
+    // Trigger workers to make purchases
+    for (int i = 0; i < workers.count(); i++)
+    {
+        workers[i]->init();
+        workers[i]->trigger(period);
+    }
+
+
+    // -------------------------------------------
+    // Post-trigger (epilogue) phase
+    // -------------------------------------------
+
+    // Post-trigger for firms so they can pay tax on sales just made, pay
+    // bonuses, and hire more employees (investment)
+    for (int i = 0, c = firms.count(); i < c; i++)
+    {
+        firms[i]->epilogue();
+    }
+
+    // Same for workers so they can keep rolling averages up to date
+    for (int i = 0, c = workers.count(); i < c; i++)
+    {
+        workers[i]->epilogue(period);
+    }
+
+
+    // -------------------------------------------
+    // Stats
+    // -------------------------------------------
+
+    // Append the values from this iteration to the series
+    for (int i = 0; i < static_cast<int>(Property::num_properties); i++)
+    {
+        qDebug() << "Updating chart for" << getName() << ", property" << i;
+
+        /*
+         * For active properties (only) we must get the current value and
+         * append it to the appropriate series against the current period
+         */
+
+        for (auto it = series.begin(); it != series.end(); ++it)
+        {
+            Property p = it.key();
+            QLineSeries *s = series[p];
+            qDebug() << "Calling getPropertyValue" << static_cast<int>(p);
+            double value = getPropertyVal(p);
+            qDebug() << "getPropertyValue() returns" << value;
+            s->append(period, value);
+
+
+            qDebug() << "Appending (" << period << ","
+                     << static_cast<int>(value) << "to series"
+                     << static_cast<int>(p);
+        }
+
+
+
+        return; // TEMPORARY, FOR TESTING
+
+
+
+
+        Property prop = static_cast<Property>(i);   // convert i to a Property
+        double val = scale(prop);
+        series[prop]->append(period, val);
+        qDebug() << "property value is" << val;
+
+        if (i == 0)
+        {
+            max_val[i] = val;
+            min_val[i] = val;
+            sum[i] = val;
+        }
+        else
+        {
+            if (val > max_val[i])
+            {
+                max_val[i] = val;
+            }
+            else if (val < min_val[i])
+            {
+                min_val[i] = val;
+            }
+
+            sum[i] += val;
+        }
+    }
+
+
+    //return; // TEMPORARY, FOR TESTING
+
+    // -------------------------------------------
+    // Exogenous changes
+    // -------------------------------------------
+
+    // Create a new firm, possibly
+    if (qrand() % 100 < getFCP())
+    {
+        createFirm();
+    }
+
+
+    qDebug() << "Domain::iterate(): _name =" << _name << "  gini =" << getGini();
+
 }
 
 Government *Domain::government()
@@ -1215,69 +1094,10 @@ double Domain::getInvestment()
     return tot;
 }
 
+// TODO Replace getParameterVal(type) with params[type] throughout
 int Domain::getParameterVal(ParamType type)
 {
-    // REWRITE
-    /*
-    Pair p;
-    for (int i = 0; i < numParameterSets; i++)
-    {
-        if (i == 0 || applies(parameterSets[i]->condition))
-        {
-            // TODO: p doesn't have to be a Pair as we now only use the val component
-            if (isParamSet(type, i))
-            {
-                p =    (type == ParamType::procurement) ? parameterSets[i]->procurement
-                     : ((type == ParamType::emp_rate) ? parameterSets[i]->emp_rate
-                     : ((type == ParamType::prop_con) ? parameterSets[i]->prop_con
-                     : ((type == ParamType::inc_tax_rate) ? parameterSets[i]->inc_tax_rate
-                     : ((type == ParamType::sales_tax_rate) ? parameterSets[i]->sales_tax_rate
-                     : ((type == ParamType::firm_creation_prob) ? parameterSets[i]->firm_creation_prob
-                     : ((type == ParamType::dedns) ? parameterSets[i]->dedns
-                     : ((type == ParamType::unemp_ben_rate) ? parameterSets[i]->unemp_ben_rate
-                     : ((type == ParamType::distrib) ? parameterSets[i]->distrib
-                     : ((type == ParamType::prop_inv) ? parameterSets[i]->prop_inv
-                     : ((type == ParamType::boe_int) ? parameterSets[i]->boe_int
-                     : ((type == ParamType::bus_int) ? parameterSets[i]->bus_int
-                     : ((type == ParamType::loan_prob) ? parameterSets[i]->loan_prob
-                     : ((type == ParamType::inc_thresh) ? parameterSets[i]->inc_thresh
-                     : ((type == ParamType::recoup) ? parameterSets[i]->recoup
-                     : parameterSets[i]->invalid
-                     )))))))))))))));
-            }
-        }
-    }
-
-    return p.val;
-    */
-}
-
-bool Domain::isParamSet(ParamType t, int n)
-{
-    // REWRITE
-    /*
-    if (n == 0) {
-        return true;
-    }
-
-    return  (t == ParamType::procurement) ? parameterSets[n]->procurement.is_set
-         : ((t == ParamType::emp_rate) ? parameterSets[n]->emp_rate.is_set
-         : ((t == ParamType::prop_con) ? parameterSets[n]->prop_con.is_set
-         : ((t == ParamType::inc_tax_rate) ? parameterSets[n]->inc_tax_rate.is_set
-         : ((t == ParamType::sales_tax_rate) ? parameterSets[n]->sales_tax_rate.is_set
-         : ((t == ParamType::firm_creation_prob) ? parameterSets[n]->firm_creation_prob.is_set
-         : ((t == ParamType::dedns) ? parameterSets[n]->dedns.is_set
-         : ((t == ParamType::unemp_ben_rate) ? parameterSets[n]->unemp_ben_rate.is_set
-         : ((t == ParamType::distrib) ? parameterSets[n]->distrib.is_set
-         : ((t == ParamType::prop_inv) ? parameterSets[n]->prop_inv.is_set
-         : ((t == ParamType::boe_int) ? parameterSets[n]->boe_int.is_set
-         : ((t == ParamType::bus_int) ? parameterSets[n]->bus_int.is_set
-         : ((t == ParamType::loan_prob) ? parameterSets[n]->loan_prob.is_set
-         : ((t == ParamType::inc_thresh) ? parameterSets[n]->inc_thresh.is_set
-         : ((t == ParamType::recoup) ? parameterSets[n]->recoup.is_set
-         : parameterSets[n]->invalid.is_set
-         )))))))))))))));
-    */
+    return params[type];
 }
 
 /*
@@ -1339,9 +1159,12 @@ double Domain::getUBR()
     return double(getParameterVal(ParamType::unemp_ben_rate)) / 100;
 }
 
+/*
+ * Distribution rate is a percentage
+ */
 double Domain::getDistributionRate()
 {
-    return double(getParameterVal(ParamType::distrib)) / 100;
+    return params[ParamType::distrib];
 }
 
 double Domain::getPropInv()

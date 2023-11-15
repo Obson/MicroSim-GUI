@@ -2,21 +2,19 @@
 #include "account.h"
 #include <QDebug>
 
-void Government::init()
+void Government::reset()
 {
+    qDebug() << "Government::reset() called";
+
+    _isGovernment = true;
+
     exp = 0;
     unbudgeted = 0;
     rec = 0;
     ben = 0;
     proc = 0;
     last_triggered = -1;
-}
-
-void Government::reset()
-{
-    init();
     balance = 0;
-    // _gov_firm = _domain->createFirm(true);
 }
 
 Government::Government(Domain *domain) : Bank(domain)
@@ -32,6 +30,9 @@ Government::Government(Domain *domain) : Bank(domain)
      * would conventionally trigger borrowing and we may choose to model this
      * for demo purposes later on.
      */
+
+    qDebug() << "Government::Government(...) called";
+    reset();
 }
 
 double Government::getExpenditure()
@@ -71,46 +72,40 @@ double Government::debit(Account *requester, double amount)
     return amount;
 }
 
+// NEXT: THIS IS SERIOUSLY OUT OF DATE...
+
 void Government::trigger(int period)
 {
-    // ***
-    // This code originally allowed for government-supported industries to
-    // receive a grant that was designed to cover the expected number of
-    // employees. This has now been superseded and government-supported
-    // industries are now allocated a user-defined number of employees and can
-    // claim the necessary funds to pay them as and when required. However, it
-    // makes sense to retain the grant mechanism in case it is needed in
-    // future. Change and uncomment as required...
-    // ***
+    qDebug() << "last_triggered =" << last_triggered << ", period =" << period;
 
-    /* Government grants (incl support of gov-owned businesses)
-    QSettings settings;
-    int amt = settings.value("government-employees").toInt() * model()->getStdWage();
-    _gov_firm->grant(amt);
-    balance -= amt;
-    exp += amt;
-    */
+    Q_ASSERT(period > last_triggered);
 
-    if (period > last_triggered)    // to prevent double counting
-    {
-        last_triggered = period;
+    last_triggered = period;
 
-        // Direct purchases (procurement), adjusts balance automatically
-        double amt = _domain->getDistributionRate();
-        transferSafely(_domain->selectRandomFirm(), amt, this);
-        proc += amt;
-        exp += amt;     // include in expenditure not as a separate item as
-                        // less confusing
+    // Direct purchases (procurement), adjusts balance automatically
+    double amt = _domain->getProcurement();
+    qDebug() << "Transferring" << amt << "to random firm";
+    transferSafely(_domain->selectRandomFirm(), amt, this);
+    proc += amt;
+    exp += amt;     // include in expenditure not as a separate item as
+    // less confusing
 
-        // Benefits payments to all unemployed workers (doesn't adjust balance,
-        // so we must do this on return)
-        ben += payWorkers(_domain->getStdWage() * _domain->getUBR(),    // amount
-                               this,                                    // source
-                               Reason::for_benefits                     // reason
-                               );
-        balance -= ben;
-    }
+    // Benefits payments to all unemployed workers (doesn't adjust balance,
+    // so we must do this on return)
+    qDebug() << "Transferring" << _domain->getStdWage() * _domain->getUBR() << "to all workers";
+    ben += payWorkers(_domain->getStdWage() * _domain->getUBR(),    // amount
+                      this,                                    // source
+                      Reason::for_benefits                     // reason
+                      );
+    balance -= ben;
 }
+
+/*
+size_t Government::getNumEmployees()
+{
+    return Bank::getNumEmployees();
+}
+*/
 
 bool Government::transferSafely(Account *recipient, double amount, Account *)
 {
@@ -119,6 +114,7 @@ bool Government::transferSafely(Account *recipient, double amount, Account *)
      * automatically taxable. This may need changing.
      */
     if (recipient != nullptr) {
+        qDebug() << "crediting" << amount;
         recipient->credit(amount, this, true);
         balance -= amount;
     }
@@ -132,8 +128,9 @@ bool Government::transferSafely(Account *recipient, double amount, Account *)
 // record as well. However we don't distinguish between income tax, sales
 // tax, and 'pre-tax deductions'. These are all accounted for elsewhere.
 // Obviously, the government doesn't pay tax.
-void Government::credit(double amount, Account*, bool)
+void Government::credit(double amount, Account*creditor, bool)
 {
+    qDebug() << "Government::credit(" << amount;
     Account::credit(amount);
     rec += amount;
 }

@@ -16,6 +16,7 @@ class Government;
 #include <map>
 #include <QVector>
 #include <QtCharts/QLineSeries>
+#include <QLineSeries>
 #include <QSettings>
 #include <QMap>
 
@@ -52,44 +53,48 @@ enum class Reason {
 
 static enum class Property
 {
-    current_period,
-    pop_size,           // actually constant
-    gov_exp,
+    hundred,
+    bus_size,
+    amount_owed,
     bens_paid,
-    gov_exp_plus,
-    gov_recpts,
+    bonuses,
+    prod_bal,
+    consumption,
     deficit,
     deficit_pc,
+    gov_recpts,
+    unbudgeted,
+    gov_exp,
+    gov_exp_plus,
+    dom_bal,
+    inc_tax,
     gov_bal,
-    num_firms,
     num_emps,
-    pc_emps,
-    num_unemps,
-    pc_unemps,
-    pc_active,
+    num_firms,
     num_gov_emps,
     num_hired,
     num_fired,
-    prod_bal,
-    wages,
-    consumption,
-    bonuses,
+    num_unemps,
+    pc_active,
+    pc_emps,
+    pc_unemps,
+    pop_size,           // actually constant
     dedns,
-    inc_tax,
-    sales_tax,
-    dom_bal,
-    amount_owed,
-    bus_size,
-    hundred,
-    zero,
     procurement,
     productivity,
     rel_productivity,
-    unbudgeted,
-    investment,
-    gdp,
-    profit,
+    sales_tax,
+    wages,
+    zero,
     num_properties
+
+
+// These seem to have gone missing...
+//
+//    investment,
+//    gdp,
+//    profit,
+
 } properties;
 
 
@@ -115,7 +120,12 @@ class Domain : public QObject
 public:
 
     static const QMap<ParamType,QString> parameterKeys;
-    static QMap<QString,Property> propertyMap;  // can't be const as we have to initialise it
+
+    /*
+     * propertyMap has to be initialised explicitly (see initialisePropertyMap)
+     * and so cannot be const
+     */
+    static QMap<QString,Property> propertyMap;
 
     /*
      * Initialising a static QMap is either clunky or obscure. This is the
@@ -143,7 +153,7 @@ public:
 
     /*
      * List of all domains. When a new domain is created or restored it is
-     *  automatically added to this list.
+     * automatically added to this list.
      */
     static QList<Domain*> domains;
 
@@ -151,12 +161,6 @@ public:
      * Draw all charts
      */
     static void drawCharts(QListWidget *propertyList);
-
-    /*
-     * For calculating chart axes
-     */
-    int magnitude(double);
-
 
 
     /*********************************************************
@@ -171,6 +175,8 @@ public:
      */
     static Domain *getDomain(const QString &name);
 
+    void initialise();
+
     Firm *createFirm(bool state_supported = false);
     Firm *selectRandomFirm(Firm *exclude = nullptr);
 
@@ -181,7 +187,7 @@ public:
     /*
      * Get the current period (iteration)
      */
-    int getPeriod();
+    //int getPeriod();
 
     int getPopulation();
     int getActivePop();             // target size of economically active population [active_pop]
@@ -218,7 +224,7 @@ public:
     /*
      * This is the main driver function
      */
-    void iterate(int duration);
+    void iterate(int period);
 
     Property getProperty(QString propertyName);
 
@@ -269,7 +275,6 @@ public:
     bool applies(Condition);
     bool compare(int lhs, int rhs, Opr op);
     int getParameterVal(ParamType type);
-    bool isParamSet(ParamType t, int n);
 
     /*
      * Read the parameters for this domain from settings
@@ -284,16 +289,7 @@ public:
     /*
      * Return the gini coefficient based on the wages of all the workers.
      */
-    double gini();
-
-    /*
-     * This gives us a set of pointers to line series, ordered by the Properties
-     * they are associated with. E.g., when iterating, the series for bens_paid
-     * will be encountered before the series for gov_recpts. Order is
-     * significant as it allows us to store values and use them in later
-     * composite properties (e,g, deficit).
-     */
-    QMap<Property, QLineSeries*> series;
+    double getGini();
 
     /*
      * Internally we assume a population of 1000 workers but for presentation we
@@ -347,6 +343,38 @@ public:
 
 private:
 
+    int last_period = -1;
+
+    QString _name;
+    QString _currency;
+    QString _abbrev;
+
+    QString _notes; // This isn't used at present
+
+    int _population;
+
+    // TODO: Sort out which properties are cumulative and which are reset on
+    // each iteration
+
+    int _startups;
+    int _num_hired;     // per iteration
+    int _num_fired;     // per itertion
+    int _num_firms;
+    int _num_emps;
+    int _num_unemps;
+    int _num_gov_emps;
+    int _pop_size;
+
+    double _scale;
+    double _std_wage;
+    double _gini;
+
+    double  _exp, _bens, _rcpts, _gov_bal, _prod_bal, _wages, _consumption,
+            _bonuses, _dedns, _inc_tax, _sales_tax, _dom_bal, _loan_prob,
+            _amount_owed, _deficit, _pc_active, _bus_size, _proc_exp,
+            _productivity, _rel_productivity, _investment, _gdp, _profit;
+
+
     /*
      * This constructor creates a bare-bones domain having the required name,
      * currency and currency abbreviation. If the restore argument has the
@@ -361,16 +389,29 @@ private:
     QChartView *_chartView;
     QChart *chart;
 
+    /*
+     * This gives us a set of pointers to line series, ordered by the Properties
+     * they are associated with. E.g., when iterating, the series for bens_paid
+     * will be encountered before the series for gov_recpts. Order is
+     * significant as it allows us to store values and use them in later
+     * composite properties (e,g, deficit).
+     */
+
+    // NOTE: I have changed the order of the properties to alphabetical by
+    // plain-text name -- possibly not a good idea. The order in which the
+    // properties are calculated will need to be reviewed to make sure it still
+    // works.
+    QMap<Property, QLineSeries*> series;
+
+    /*
+     * drawChart just sets up the chart with a title and a set of empty series.
+     * It doesn't run the model.
+     */
     void drawChart(QListWidget *propertyList);
-    //QChartView *createChart();
 
-    void run();
+    void addSeriesToChart();
 
-protected:
-
-    QString _name;
-    QString _currency;
-    QString _abbrev;
+    //static void run();
 
     /*
      * Each domain contains a small number of 'clearing banks'. Every worker
@@ -384,8 +425,6 @@ protected:
      * as required.
      */
     QList<Bank*> banks;
-
-    int _population;
 
     /*
      * List of firms. The number of firms at the start will be determined by
@@ -428,34 +467,6 @@ protected:
      */
     Government *_gov;
 
-    double _gini;
-    int period;
-
-    /*
-     * Constants
-     */
-
-    QString _notes; // This isn't used at present
-
-    int _startups;
-
-    double _scale;
-    double _std_wage;
-
-    // See getPropertyValue
-    int _num_firms, _num_emps, _num_unemps, _num_gov_emps, _pop_size;
-
-    /*
-     * Numbers hired and fired in the current period. Must be reset on each
-     * iteration
-     */
-    int _num_hired, _num_fired;
-
-    double  _exp, _bens, _rcpts, _gov_bal, _prod_bal, _wages, _consumption,
-            _bonuses, _dedns, _inc_tax, _sales_tax, _dom_bal, _loan_prob,
-            _amount_owed, _deficit, _pc_active, _bus_size, _proc_exp,
-            _productivity, _rel_productivity, _investment, _gdp, _profit;
-
 signals:
 
     void domainsRestored();
@@ -485,6 +496,14 @@ public:
 
     Account(Domain *domain);
 
+    /*
+     * init() may be called at the start of each period
+     */
+    virtual void init() {
+        qDebug() << "***** Account::init() *****";
+        last_triggered = -1;
+    }
+
     virtual bool isBank() { return _isBank; }
     virtual bool isGovernment() { return _isGovernment; }
 
@@ -492,10 +511,11 @@ public:
     virtual double getAmountOwed();
 
     /*
-     * This function is declared as virtual to allow derived class to add
+     * This function is declared as virtual to allow derived classes to add
      * functionality, e.g. diagnostics
      */
-    virtual void credit(double amount, Account *creditor = nullptr, bool force = false);
+    virtual void credit(double amount, Account *creditor = nullptr,
+                        bool force = false);
 
     virtual void loan(double amount, double rate, Account *creditor);
 
@@ -529,14 +549,19 @@ protected:
 
     /*
      * The bank at which this account is held. If this account IS a bank the
-     * account is held at the central bank/government. If this entry is nullptr
-     * the account is not recorded at any bank and therefore is, in a sense, a
-     * bank itself in that it can only be paid HPM. It is unlike a bank though
-     * in that it cannot create currency of account or make risk-free loans
-     * not supported by reserves.
+     * account is held at the central bank/government. If this is the central
+     * bank (i.e. is owned by the government) this entry is a nullptr as it
+     * does not itself have a bank. Clearing banks (i.e. banks that are not the
+     * central bank) must maintain a separate 'account' called 'reserves' that
+     * is used for clearing only. Reserves are HPM and can only be paid into
+     * (or from) other banks reserve accounts or the central bank. The central
+     * bank does not have to maintain a separate reserve account because it
+     * only deals with HPM. (Payments to its employees are made via the
+     * emloyees' clearing banks.)
      *
-     * For this to work properly Government must be derived from Bank, not
-     * directly from Account. This Is Quite Neat.
+     * It follows that Government is a (and must be derived from) Bank, i.e.
+     * the central bank, and does not have (or need) an account at a clearing
+     * bank. This is rather confusing but is also Quite Neat.
      */
     Bank *_bank;
 
@@ -549,15 +574,8 @@ protected:
 
     int last_triggered = -1;
 
-    /*
-     * If this account is a bank, the bank loan refers to its account at the
-     * central bank, AKA the government. Banks will simply draw on funds from
-     * the government, and will repay them at an interest rate that is
-     * (normally) lower than that charged to its customers. The difference
-     * will be distributed to (bank) workers designated as staff, and
-     * shareholders of the bank.
-     */
-    virtual bool transferSafely(Account *recipient, double amount, Account *creditor);
+    virtual bool transferSafely(Account *recipient, double amount,
+                                Account *creditor);
 
 private:
 
@@ -608,7 +626,7 @@ protected:
 
     Government *gov;
 
-    void init();
+    void init() override;
 
     void setEmployer(Firm*);
     void setPeriodHired(int period);
@@ -624,7 +642,8 @@ public:
     bool isNewHire(int period);
 
     // Overrides
-    void credit(double amount, Account *creditor = nullptr, bool force = false) override;
+    void credit(double amount, Account *creditor = nullptr,
+                bool force = false) override;
     void trigger(int period) override;
 
     void epilogue(int period);
@@ -674,7 +693,7 @@ protected:
 
     QList<Worker*> employees;
 
-    void init();
+    void init() override;
 
 public:
 
@@ -749,7 +768,7 @@ public:
  * model is one in which there are several banks.
  */
 
-class Bank: public Account
+class Bank: public Firm
 {
     Q_OBJECT
 
@@ -777,6 +796,8 @@ private:
      * List of accounts held at this bank
      */
     QList<Account*> accounts;
+
+    double reserves;    // HPM, only used for cleaing
 
 };
 
@@ -816,7 +837,6 @@ protected:
             double amount, Account *creditor = nullptr, bool force = false
             ) override;
 
-    void init();
     void reset();
 
 public:
@@ -837,7 +857,6 @@ public:
 
     double debit(Account *requester, double amount);
 
-    size_t getNumEmployees();  // Number of government employees
 };
 
 #endif // ACCOUNT_H

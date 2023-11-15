@@ -3,15 +3,16 @@
 
 Worker::Worker(Domain *domain) : Account(domain)
 {
-    employer = nullptr;
-    period_hired = -1;
-    period_fired = 0;
-    average_wages = 0;
     init();
 }
 
 void Worker::init()
 {
+    employer = nullptr;
+    period_hired = -1;
+    period_fired = 0;
+    average_wages = 0;
+
     wages = 0;
     benefits = 0;
     purchases = 0;

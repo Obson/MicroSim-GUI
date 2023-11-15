@@ -12,8 +12,8 @@ Account::Account(Domain *domain)
 {
     _domain = domain;
     id = nextId();
-    //balance = 0;
-    //owed_to_bank = 0;
+    balance = 0;
+    owed_to_bank = 0;
 }
 
 double Account::getBalance()
@@ -45,6 +45,7 @@ bool Account::transferSafely(Account *recipient, double amount, Account *credito
     }
     else
     {
+        qDebug() << "crediting" << amount;
         recipient->credit(amount, creditor);
         balance -= amount;
         return true;

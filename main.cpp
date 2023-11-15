@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <QIcon>
 
-#ifdef QT_DEBUG
 void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
     QByteArray localMsg = msg.toLocal8Bit();
@@ -26,7 +25,7 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
         abort();
     }
 }
-#else
+#if 0
 void myMessageOutput(QtMsgType type, const QMessageLogContext&, const QString&msg)
 {
     QByteArray localMsg = msg.toLocal8Bit();
@@ -88,6 +87,8 @@ int main(int argc, char *argv[])
 
     QSettings settings;
     settings.setFallbacksEnabled(false);
+
+    qDebug() << "Just testing";
 
     MainWindow mainwindow;
     //mainwindow.setWindowIcon(QIcon(":/obson.icns"));

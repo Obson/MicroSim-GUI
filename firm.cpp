@@ -38,6 +38,10 @@ Firm::Firm(Domain *domain, bool state_supported) : Account(domain)
 
 void Firm::init()
 {
+    /*
+     * Reset non-cumulatibe variables
+     */
+    /*
     wages_paid = 0;
     sales_tax_paid = 0;
     sales_receipts = 0;
@@ -45,6 +49,7 @@ void Firm::init()
     num_fired = 0;
     bonuses_paid = 0;
     investment= 0;
+    */
 }
 
 bool Firm::isGovernmentSupported()
@@ -76,7 +81,7 @@ void Firm::trigger(int period)
                 //qDebug() << "Firm::trigger(): paying loan interest of" << interest;
                 if (!transferSafely(_bank, interest, this))
                 {
-                        qDebug() << "Firm::trigger(): failed to transfer interest to bank";
+                    qDebug() << "Firm::trigger(): failed to transfer interest to bank";
                 }
             }
             else if (interest < 1.0 && owed_to_bank > 0)
@@ -88,7 +93,9 @@ void Firm::trigger(int period)
             }
         }
 
-        // Important: wages_paid is not cumulative!
+        /*
+         * wages_paid is not cumulative, but balance, of course, is
+         */
         wages_paid = payWages();
         balance -= wages_paid;
     }
@@ -137,6 +144,7 @@ double Firm::payWages()
                 _domain->government()->debit(this, shortfall);
 
                 // Transfer the funds to the firm
+                qDebug() << "crediting" << shortfall;
                 credit(shortfall, this);
 
                 ok_to_pay = true;
@@ -166,11 +174,13 @@ double Firm::payWages()
             /*
              * Pay the full amount of wages to the employee
              */
+            qDebug() << "crediting" << wage_due;
             employees[i]->credit(wage_due, this);
 
             /*
              * Pay deductions straight back to the government.
              */
+            qDebug() << "crediting" << dedns;
             _domain->government()->credit(dedns, this);
 
             amt_paid += wage_due + dedns;
@@ -178,19 +188,9 @@ double Firm::payWages()
         }
         else
         {
-            if (isGovernmentSupported())
-            {
-                /*
-                 * This should never happen as govt-suptd firm can
-                 * always get required funds from government
-                 */
-                Q_ASSERT(false);
-            }
-            else
-            {
-                // Not able to pay this worker so fire instead
-                fire(i);
-            }
+            Q_ASSERT_X(isGovernmentSupported(), "Firm::payWages",
+                       "Firm is government supported");
+            // Not able to pay this worker so fire instead
         }
     }
     return amt_paid;                // so caller can update balance
@@ -331,6 +331,7 @@ void Firm::epilogue()
 
                     if (supplier != nullptr)
                     {
+                        qDebug() << "crediting" << excess << "to supplier";
                         supplier->credit(excess, this);
                         balance -= excess;
                         investment = excess;
@@ -444,6 +445,11 @@ void Firm::credit(double amount, Account *creditor, bool force)
     }
 }
 
+size_t Firm::getNumEmployees()
+{
+    return 0;  // FIX: IMPORTANT
+};
+
 double Firm::getProductivity()
 {
     return productivity;
@@ -474,10 +480,12 @@ double Firm::getSalesReceipts()
     return sales_receipts;
 }
 
+/*
 size_t Firm::getNumEmployees()
 {
     return static_cast<size_t> (employees.count());
 }
+*/
 
 int Firm::getNumHired()
 {
