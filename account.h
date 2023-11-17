@@ -24,12 +24,12 @@ QT_CHARTS_USE_NAMESPACE
 
 
 /*
- *  Only potentially user-determined parameters are listed here
+ *  Parameters should not be confused with properties.
  */
 
 enum class ParamType {
     procurement,
-    emp_rate,
+    emp_rate,       // unused (?) but leave in place for ordering
     prop_con,
     inc_tax_rate,
     inc_thresh,
@@ -174,6 +174,7 @@ public:
      * exists the returned pointer has the value nullptr.
      */
     static Domain *getDomain(const QString &name);
+    //static void editParameters(QListWidget *propertyList);
 
     void initialise();
 
@@ -500,7 +501,6 @@ public:
      * init() may be called at the start of each period
      */
     virtual void init() {
-        qDebug() << "***** Account::init() *****";
         last_triggered = -1;
     }
 

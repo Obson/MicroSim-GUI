@@ -1,7 +1,8 @@
 
 #include "mainwindow.h"
 #include "account.h"
-#include "newbehaviourldlg.h"
+#include "domainparametersdialog.h"
+//#include "newbehaviourldlg.h"
 
 #include <QtWidgets>
 #include <QMessageBox>
@@ -20,6 +21,7 @@
 #include <QUrl>
 #include <QDebug>
 
+#include "optionsdialog.h"
 #include "removemodeldlg.h"
 #include "version.h"
 #include "saveprofiledialog.h"
@@ -508,10 +510,9 @@ void MainWindow::createDomain()
 {
     qDebug() << "MainWindow::createDomain(): calling CreateDomainDlg";
     CreateDomainDlg dlg(this);
+
     if (dlg.exec() == QDialog::Accepted)
     {
-        //qDebug() << "MainWindow::createDomain(): Calling parameterwizard";
-        //wiz->exec();
         Domain::createDomain(
                     dlg.getDomainName(),
                     dlg.getCurrency(),
@@ -521,34 +522,26 @@ void MainWindow::createDomain()
     }
 }
 
+/*
+ * Remove one or more chart profiles (dialog)
+ */
 void MainWindow::remove()
 {
     RemoveModelDlg dlg(this);
     dlg.exec();
-
-    reloading = true;
-    //loadDomains(domainList);
-    reloading = false;
 }
 
+/*
+ * Call the dialog to review or edit the parameters for a domain
+ */
 void MainWindow::editParameters()
 {
-    /*
-     * This shoud all go in Domain
-     */
-#if 0
-    Q_ASSERT(selectedBehaviourItem != nullptr);
-    QString behaviourName = selectedBehaviourItem->text();
-    qDebug() << "MainWindow::editParameters(): model_name =" << behaviourName;
-    wiz->setCurrentDomain(behaviourName);
-    if (wiz->exec() == QDialog::Accepted)
+    DomainParametersDialog dlg(this);
+
+    if (dlg.exec() == QDialog::Accepted)
     {
-        // NEXT: ***** Transfer run() to Domain *****
-        // Behaviour *mod = currentBehaviour();
-        // mod->run();
+        Domain::drawCharts(propertyList);
     }
-    propertyChanged();
-#endif
 }
 
 /*
@@ -582,12 +575,12 @@ void MainWindow::aboutQt()
 
 void MainWindow::setOptions()
 {
-//    OptionsDialog dlg(this);
-//    dlg.setModal(true);
-//    if (dlg.exec() == QDialog::Accepted && _currentBehaviour != nullptr)
-//    {
-//        drawChart(true);
-//    }
+    OptionsDialog dlg(this);
+    dlg.setModal(true);
+    if (dlg.exec() == QDialog::Accepted && !Domain::domains.isEmpty())
+    {
+        Domain::drawCharts(propertyList);
+    }
 }
 
 void MainWindow::createStatusBar()
@@ -600,24 +593,17 @@ void MainWindow::createStatusBar()
     statusBar()->addPermanentWidget(productivityLabel);
     statusBar()->addPermanentWidget(infoLabel);
 
-    // infoLabel->setText(tr("No model has been selected"));
+    infoLabel->setText(tr("Obson economic modelling"));
 }
 
-//PROBABLY REDUNDANT
+/*
+ * This function is called (via a signal fromQListWidget propertyList)
+ * whenever a property is activated or deactivated
+ */
 void MainWindow::propertyChanged()
 {
-    qDebug() << "MainWindow::propertyChanged(): calling Domain::drawCharts";
     Domain::drawCharts(propertyList);
-//    qDebug() << "MainWindow::propertyChanged";
-//    // Allow the property to be changed even when there's no model selected.
-//    if (_currentBehaviour != nullptr && !reloading)
-//    {
-//        drawChart(false);   // no need to rerun
-//        if (!chartProfile.isEmpty()) {
-//            qDebug() << "MainWindow::propertyChanged(): setting profile_changed";
-//            profile_changed = true;
-//        }
-//    }
+    profile_changed = true;
 }
 
 void MainWindow::selectProfile(QString text)
@@ -648,7 +634,15 @@ void MainWindow::createDockWindows()
      * Create an unpolulated list widget in the dock widget
      */
     propertyList = new QListWidget(dock);
-    //propertyList->setFixedWidth(220);
+    propertyList->setFixedWidth(295);
+
+    /*
+     * When the  property is selected signal the propertyChanged function. When
+     * a property is clicked show its stats.
+     */
+    connect(propertyList, &QListWidget::itemChanged, this, &MainWindow::propertyChanged);
+    //connect(propertyList, &QListWidget::itemClicked, this, &MainWindow::updateStatsDialog);
+
 
     /*
      * Populate the property list, setting the text for each item according to
@@ -668,13 +662,6 @@ void MainWindow::createDockWindows()
 
         propertyList->addItem(item);
     }
-
-    /*
-     * When the  property is selected signal the propertyChanged function. When
-     * a property is clicked show its stats.
-     */
-    //connect(propertyList, &QListWidget::itemChanged, this, &MainWindow::propertyChanged);
-    //connect(propertyList, &QListWidget::itemClicked, this, &MainWindow::updateStatsDialog);
 
     /*
      * Add the property list widget to the dock and put the dock on the right
@@ -753,6 +740,7 @@ int MainWindow::createSubWindows()
             qDebug() << "setting up domain" << dom->getName();
             qDebug() << "Creating an MDI subwindow";
             QMdiSubWindow *w = new QMdiSubWindow();
+
             w->setWindowTitle(title);
             w->resize(470, 370);
             mdi.addSubWindow(w);
@@ -852,19 +840,19 @@ void MainWindow::changeProfile(QListWidgetItem *item)
     if (updatingProfileList) {
         return;
     }
-
+    qDebug() << "MainWindow::changeProfile(QListWidgetItem *item) called: profile_changed =" << profile_changed;
     reloading = true;
 
     // Allow old profile to be saved if changed
     if (profile_changed) {
         createProfile();
+        profile_changed = false;
+        qDebug()  << "profile_changed now set to false";
     }
 
     qDebug() << "Changing profile";
     chartProfile = item->text();
     qDebug() << "New profile is" << chartProfile;
-
-    profile_changed = false;    // i.e. _this_ profile hasn't been changed
 
     // Load settings for this profile and redraw the chart
     QSettings settings;
@@ -888,6 +876,11 @@ void MainWindow::changeProfile(QListWidgetItem *item)
 
     Domain::drawCharts(propertyList);
 
-    //drawChartNormal();
+    /*
+     * A spin-off from drawCharts is that profile_changed gets set. We only
+     * want it to be set in respnse to a user-initiated change, so we set it
+     * back to false
+     */
+    profile_changed = false;
 }
 

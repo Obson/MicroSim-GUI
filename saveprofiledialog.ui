@@ -6,19 +6,19 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>237</height>
+    <width>364</width>
+    <height>257</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Save Chart Settings</string>
+   <string>Profile Changed</string>
   </property>
   <widget class="QDialogButtonBox" name="buttonBox">
    <property name="geometry">
     <rect>
-     <x>0</x>
-     <y>180</y>
-     <width>401</width>
+     <x>30</x>
+     <y>210</y>
+     <width>301</width>
      <height>32</height>
     </rect>
    </property>
@@ -36,13 +36,13 @@
    <property name="geometry">
     <rect>
      <x>40</x>
-     <y>20</y>
+     <y>30</y>
      <width>321</width>
      <height>51</height>
     </rect>
    </property>
    <property name="text">
-    <string>You can save the current chart settings as a new profile or as an existing profile. Click Cancel to continue without saving the changes.</string>
+    <string>You can save the changes as a new profile or an existing one, or click Cancel to continue without saving the changes.</string>
    </property>
    <property name="alignment">
     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -55,21 +55,21 @@
    <property name="geometry">
     <rect>
      <x>40</x>
-     <y>90</y>
-     <width>141</width>
+     <y>110</y>
+     <width>191</width>
      <height>16</height>
     </rect>
    </property>
    <property name="text">
-    <string>Profile name:</string>
+    <string>Save changes as:</string>
    </property>
   </widget>
   <widget class="Line" name="line">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>150</y>
-     <width>321</width>
+     <x>0</x>
+     <y>180</y>
+     <width>381</width>
      <height>16</height>
     </rect>
    </property>
@@ -80,9 +80,9 @@
   <widget class="QComboBox" name="comboBox">
    <property name="geometry">
     <rect>
-     <x>36</x>
-     <y>110</y>
-     <width>331</width>
+     <x>30</x>
+     <y>140</y>
+     <width>301</width>
      <height>26</height>
     </rect>
    </property>

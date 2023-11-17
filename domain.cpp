@@ -8,6 +8,7 @@
 #include <QSettings>
 #include <QListWidgetItem>
 
+
 #define NUMBER_OF_BANKS 3
 #define CLEARING_FREQUENCY 10
 
@@ -19,7 +20,7 @@ QList<Domain*> Domain::domains;                         // static
 const QMap<ParamType,QString> Domain::parameterKeys     // static
 {
     {ParamType::procurement, "govt-procurement"},
-    {ParamType::emp_rate, "employment-rate"},
+    //{ParamType::emp_rate, "employment-rate"},         // probably redundant
     {ParamType::prop_con, "propensity-to-consume"},
     {ParamType::inc_tax_rate, "income-tax-rate"},
     {ParamType::inc_thresh, "income-threshold"},
@@ -94,10 +95,6 @@ Domain *Domain::createDomain(
 {
     Domain *dom = nullptr;
 
-    qDebug() << "Domain::createDomain("
-             << name << "," << currency << "," << currencyAbbrev
-             << ")";
-
     if (getDomain(name) == nullptr)
     {
         // A domain with given name is not in list. Create a new domain having
@@ -135,16 +132,8 @@ void Domain::initialise()
     {
         firm->init();
     }
-
-    /*
-    foreach(Worker *w, workers)
-    {
-        w->init();
-    }
-
-    workers.clear();
-    */
 }
+
 
 /*
  * This constructor is private and is only called via createDomain, which
@@ -217,17 +206,13 @@ int Domain::restoreDomains(QStringList &domainNameList)
 
     foreach (QString name, domainNameList)
     {
-        qDebug() << "restoring domain" << name;
+        //qDebug() << "restoring domain" << name;
         settings.beginGroup(name);
 
         QString currency = settings.value("Currency", "Units").toString();
         QString abbrev = settings.value("Abbrev", "CU").toString();
-
         Domain *dom = createDomain(name, currency, abbrev);
-        if (dom == nullptr)
-        {
-            qDebug() << "could not create domain" << name;
-        }
+        Q_ASSERT(dom != nullptr);
 
         /*
          * Note that this is driven by the parameters we expect (i.e. that are
@@ -237,11 +222,8 @@ int Domain::restoreDomains(QStringList &domainNameList)
         foreach (ParamType p, parameterKeys.keys())
         {
             QString key_string = parameterKeys.value(p);
-            qDebug() << "reading parameter" << key_string << "from settings";
             if (settings.contains(key_string))
             {
-                if (key_string == "reserve-rate")
-                    qDebug() << "setting reserve-rate (distribution) to" << settings.value(key_string).toInt();
                 dom->params[p] =  settings.value(key_string).toInt();
             }
             else
@@ -251,6 +233,7 @@ int Domain::restoreDomains(QStringList &domainNameList)
                            << dom->getName();
             }
         }
+
         /*
          * TODO: (Ignore compiler error message)
          * Error msg from compiler can be ignored. Domain *domain is  added to
@@ -295,7 +278,6 @@ void Domain::drawCharts(QListWidget *propertyList)
          */
         foreach(Domain *dom, domains)
         {
-            qDebug() << "About to iterate domain" << dom->getName() << ", period" << period;
             dom->iterate(period);
         }
     }
@@ -319,7 +301,6 @@ void Domain::addSeriesToChart()
     auto it = series.begin();
     while (it != series.end())
     {
-        qDebug() << "Adding series to chart for" << getName();
         chart->addSeries(it.value());
         ++it;
     }
@@ -663,11 +644,6 @@ void Domain::drawChart(QListWidget *propertyList)
 {
     qDebug() << "Domain::drawChart(...) called";
 
-    /*
-     * Since we may be redrawing the chart we must clear existing series (and
-     * axes?)
-     */
-
     chart->removeAllSeries();   // built-in chart series
     series.clear();             // our global copy, used to hold generated data points
 
@@ -675,8 +651,6 @@ void Domain::drawChart(QListWidget *propertyList)
     chart->legend()->show();
 
     chart->setTitle("<h2 style=\"text-align:center;\">" + getName() + "</h2>");
-
-    qDebug() << "Creating line series";
 
     Q_ASSERT(propertyList->count() > 0);
 
@@ -760,9 +734,6 @@ double Domain::getGini()
 
 void Domain::iterate(int period)
 {
-    qDebug() << "Starting iteration for period" << period
-             << "for domain" << getName();
-
     Q_ASSERT(period > last_period);
 
     last_period = period;
@@ -773,7 +744,7 @@ void Domain::iterate(int period)
          * Do any initialisation here
          */
         _gov->reset();
-        qDebug() << "Government reset";
+        // qDebug() << "Government reset";
     }
 
     // deductions are accumulated within but not across periods
@@ -847,15 +818,15 @@ void Domain::iterate(int period)
         {
             Property p = it.key();
             QLineSeries *s = series[p];
-            qDebug() << "Calling getPropertyValue" << static_cast<int>(p);
+            //qDebug() << "Calling getPropertyValue" << static_cast<int>(p);
             double value = getPropertyVal(p);
-            qDebug() << "getPropertyValue() returns" << value;
+            //qDebug() << "getPropertyValue() returns" << value;
             s->append(period, value);
 
 
-            qDebug() << "Appending (" << period << ","
-                     << static_cast<int>(value) << "to series"
-                     << static_cast<int>(p);
+            //qDebug() << "Appending (" << period << ","
+            //         << static_cast<int>(value) << "to series"
+            //         << static_cast<int>(p);
         }
 
 
@@ -903,7 +874,6 @@ void Domain::iterate(int period)
     {
         createFirm();
     }
-
 
     qDebug() << "Domain::iterate(): _name =" << _name << "  gini =" << getGini();
 
@@ -1109,10 +1079,14 @@ double Domain::getProcurement()
     return double(getParameterVal(ParamType::procurement));
 }
 
+/*
+ * This doesn't seem to be used for anything
+ *
 double Domain::getTargetEmpRate()
 {
     return double(getParameterVal(ParamType::emp_rate)) / 100;
 }
+*/
 
 double Domain::getStdWage()
 {

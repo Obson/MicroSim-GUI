@@ -35,6 +35,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     domain.cpp \
     createdomaindlg.cpp \
+    domainparametersdialog.cpp \
     main.cpp \
     mainwindow.cpp \
     newbehaviourldlg.cpp \
@@ -52,6 +53,7 @@ SOURCES += \
 
 HEADERS += \
     createdomaindlg.h \
+    domainparametersdialog.h \
     mainwindow.h \
     newbehaviourldlg.h \
     parameterwizard.h \
@@ -65,6 +67,7 @@ HEADERS += \
 
 FORMS += \
     createdomaindlg.ui \
+    domainparametersdialog.ui \
     newbehaviourdlg.ui \
     optionsdialog.ui \
     removemodeldlg.ui \
