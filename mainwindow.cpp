@@ -540,6 +540,34 @@ void MainWindow::editParameters()
 
     if (dlg.exec() == QDialog::Accepted)
     {
+        QSettings settings;
+
+
+        settings.beginGroup("Domains");
+        settings.beginGroup(dlg.getDomain());
+
+        settings.setValue("govt-procurement", dlg.getProcurement());
+        settings.setValue("propensity-to-consume", dlg.getPropConsumeInc());
+        settings.setValue("income-threshold", dlg.getIncTaxThresh());
+        settings.setValue("pre-tax-dedns-rate", dlg.getDedns());
+        settings.setValue("income-tax-rate", dlg.getIncTaxRate());
+        settings.setValue("sales-tax-rate", dlg.getSalesTaxRate());
+        settings.setValue("firm-creation-prop", dlg.getStartupProb());
+        settings.setValue("capex-recoup-periods", dlg.getRecoupPeriods());
+        settings.setValue("prop-invest", dlg.getPropInvest());
+        settings.setValue("unempl-benefit-rate", dlg.getUnempBen());
+        settings.setValue("boe-interest", dlg.getCBInterest());
+        settings.setValue("bus-interest", dlg.getClearingBankInterest());
+        settings.setValue("loan-prob", dlg.getLoanProb());
+
+        // TODO: Add missing values to Params dlg...
+        // reserve-rate (dlg.getDistrib())
+        // Propensity to consume out of savings
+        // Employment rate discontinued
+
+        settings.endGroup();
+        settings.endGroup();
+
         Domain::drawCharts(propertyList);
     }
 }

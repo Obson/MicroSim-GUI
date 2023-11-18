@@ -345,6 +345,9 @@
    </property>
   </widget>
   <widget class="QLabel" name="label_15">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>50</x>
@@ -358,6 +361,9 @@
    </property>
   </widget>
   <widget class="QSpinBox" name="sbStdWage">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>301</x>
@@ -368,6 +374,9 @@
    </property>
   </widget>
   <widget class="QLabel" name="label_16">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>50</x>
@@ -381,6 +390,9 @@
    </property>
   </widget>
   <widget class="QSpinBox" name="sbBasicInc">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>301</x>
@@ -394,6 +406,9 @@
    </property>
   </widget>
   <widget class="QLabel" name="label_17">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>50</x>
@@ -407,6 +422,9 @@
    </property>
   </widget>
   <widget class="QSpinBox" name="sbImportPref">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>301</x>
@@ -461,8 +479,8 @@
   <widget class="QLabel" name="label_7">
    <property name="geometry">
     <rect>
-     <x>60</x>
-     <y>30</y>
+     <x>54</x>
+     <y>26</y>
      <width>71</width>
      <height>16</height>
     </rect>

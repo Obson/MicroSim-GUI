@@ -17,13 +17,30 @@ public:
 
     void setDomain(QString name);
 
+    QString getDomain();
+
+    int getProcurement();
+    int getPropConsumeInc();
+    int getIncTaxRate();
+    int getIncTaxThresh();
+    int getSalesTaxRate();
+    int getStartupProb();
+    int getDedns();
+    int getUnempBen();
+    int getPropInvest();
+    int getDistrib();
+    int getCBInterest();
+    int getClearingBankInterest();
+    int getLoanProb();
+    int getRecoupPeriods();
+
 private:
     Ui::DomainParametersDialog *ui;
 
 
 public slots:
 
-    void getParameters();
+    void readParameters();
 };
 
 #endif // DOMAINPARAMETERSDIALOG_H

@@ -94,8 +94,8 @@ void Government::trigger(int period)
     // so we must do this on return)
     qDebug() << "Transferring" << _domain->getStdWage() * _domain->getUBR() << "to all workers";
     ben += payWorkers(_domain->getStdWage() * _domain->getUBR(),    // amount
-                      this,                                    // source
-                      Reason::for_benefits                     // reason
+                      this,                                         // source
+                      Reason::for_benefits                          // reason
                       );
     balance -= ben;
 }
