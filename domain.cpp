@@ -7,7 +7,7 @@
 #include "QtCore/qdebug.h"
 #include <QSettings>
 #include <QListWidgetItem>
-
+#include <QSettings>
 
 #define NUMBER_OF_BANKS 3
 #define CLEARING_FREQUENCY 10
@@ -34,6 +34,7 @@ const QMap<ParamType,QString> Domain::parameterKeys     // static
     {ParamType::bus_int, "bus-interest"},
     {ParamType::loan_prob, "loan-prob"},
     {ParamType::recoup, "capex-recoup-periods"},
+    {ParamType::std_wage, "standard-wage"},
 };
 
 QMap<QString,Property> Domain::propertyMap;  // static, can't be const as we have to initialise it
@@ -53,7 +54,7 @@ void Domain::initialisePropertyMap()                    // static
         propertyMap[tr("Consumption")] = Property::consumption;
         propertyMap[tr("Deficit (absolute)")] = Property::deficit;
         propertyMap[tr("Deficit as % GDP")] = Property::deficit_pc;
-        propertyMap[tr("Government receipts")] = Property::gov_recpts;
+        propertyMap[tr("Government receipts (cumulative)")] = Property::gov_recpts;
         propertyMap[tr("Govt direct support")] = Property::unbudgeted;
         propertyMap[tr("Govt exp excl benefits")] = Property::gov_exp;
         propertyMap[tr("Govt exp incl benefits")] = Property::gov_exp_plus;
@@ -271,14 +272,15 @@ void Domain::drawCharts(QListWidget *propertyList)
      */
     QSettings settings;
     int iterations = settings.value("iterations", 100).toInt();
-    for (int period = 0; period <= iterations; period++)
+    int start_period = settings.value("start-period").toInt();
+    for (int period = 0; period <= iterations + start_period; period++)
     {
         /*
          * Iterate each domain
          */
         foreach(Domain *dom, domains)
         {
-            dom->iterate(period);
+            dom->iterate(period, period < start_period);
         }
     }
 
@@ -294,7 +296,6 @@ void Domain::drawCharts(QListWidget *propertyList)
 
 }
 
-// ---------- End of statics -----------
 
 void Domain::addSeriesToChart()
 {
@@ -585,7 +586,8 @@ double Domain::getPropertyVal(Property p)
 
     /*
      * The following properties may need reinstating
-     */
+     *
+     *
 
 #if 0
     case Property::investment:
@@ -602,6 +604,7 @@ double Domain::getPropertyVal(Property p)
         _profit = _gdp - _wages - _inc_tax - _sales_tax;
         return _profit;
 #endif
+    */
 
     case Property::num_properties:
         Q_ASSERT(false);
@@ -638,11 +641,20 @@ void Domain::setChartView(QChartView *chartView)
 }
 
 /*
- * drawChart() simply sets up a chart but doesn't populate it. See drawCharts...
+ * drawChart() simply sets up a chart but doesn't populate it.
+ * See drawCharts...
  */
 void Domain::drawChart(QListWidget *propertyList)
 {
     qDebug() << "Domain::drawChart(...) called";
+
+    /*
+     * Note that the parameters may have been changed since the last time
+     * drawChart was called. However they should have been updated in
+     * params[ParamType] and should be retrieved from there rather than using
+     * specific instance-global values. (E.g. params[ParamType::std_wage
+     * rather than _std_wage, which has been discontinued).
+     */
 
     chart->removeAllSeries();   // built-in chart series
     series.clear();             // our global copy, used to hold generated data points
@@ -732,35 +744,59 @@ double Domain::getGini()
 
 // NEXT: IN PROGRESS...
 
-void Domain::iterate(int period)
+void Domain::iterate(int period, bool silent)
 {
     Q_ASSERT(period > last_period);
+
+    // -------------------------------------------
+    // Initialisation phase
+    // -------------------------------------------
 
     last_period = period;
 
     if (period == 0)
     {
         /*
-         * Do any initialisation here
+         * Reset government
          */
         _gov->reset();
-        // qDebug() << "Government reset";
+
+        // TODO: The government will also be initialised as a firm, so it would
+        // be better to remove the reset() function and overload init() instead
+
+        /*
+         * Initialise firms
+         */
+        for (int i = 0; i < firms.count(); i++)
+        {
+            firms[i]->init();
+
+        }
+
+        /*
+         * Initialise workers
+         */
+        for (int i = 0; i < workers.count(); i++)
+        {
+            workers[i]->init();
+        }
     }
 
-    // deductions are accumulated within but not across periods
-    _dedns = 0;
-
-    // Reset counters
-
+    /*
+     * Reset counters
+     */
     _num_hired = 0;
     _num_fired = 0;
+    _dedns = 0;             // TODO: CHECK THIS
 
     // -------------------------------------------
     // Trigger phase
     // -------------------------------------------
 
-    // Triggering government will direct payments to firms and benefits to
-    //  workers before they are triggered
+    /*
+     * Triggering government will direct payments to firms and benefits to
+     * workers before they are triggered
+     */
     _gov->trigger(period);
 
     // Triggered firms will pay deductions to government and wages to
@@ -768,16 +804,12 @@ void Domain::iterate(int period)
     // Workers receiving payment will pay income tax to the government
     for (int i = 0; i < firms.count(); i++)
     {
-        firms[i]->init();
-        firms[i]->trigger(period);  // FIX: _gov is a firm, so this will trigger it again
-        // if trigger is virtual (I don't think it is) or if _gov has been added to the
-        // list of firms.
+        firms[i]->trigger(period);
     }
 
     // Trigger workers to make purchases
     for (int i = 0; i < workers.count(); i++)
     {
-        workers[i]->init();
         workers[i]->trigger(period);
     }
 
@@ -821,7 +853,11 @@ void Domain::iterate(int period)
             //qDebug() << "Calling getPropertyValue" << static_cast<int>(p);
             double value = getPropertyVal(p);
             //qDebug() << "getPropertyValue() returns" << value;
-            s->append(period, value);
+
+            if (!silent)
+            {
+                s->append(period, value);
+            }
 
 
             //qDebug() << "Appending (" << period << ","
@@ -863,7 +899,7 @@ void Domain::iterate(int period)
     }
 
 
-    //return; // TEMPORARY, FOR TESTING
+    return; // TEMPORARY, FOR TESTING
 
     // -------------------------------------------
     // Exogenous changes
@@ -1064,7 +1100,6 @@ double Domain::getInvestment()
     return tot;
 }
 
-// TODO Replace getParameterVal(type) with params[type] throughout
 int Domain::getParameterVal(ParamType type)
 {
     return params[type];
@@ -1090,7 +1125,7 @@ double Domain::getTargetEmpRate()
 
 double Domain::getStdWage()
 {
-    return _std_wage;
+    return double(getParameterVal(ParamType::std_wage));
 }
 
 double Domain::getPropCon()

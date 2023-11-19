@@ -346,7 +346,7 @@
   </widget>
   <widget class="QLabel" name="label_15">
    <property name="enabled">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="geometry">
     <rect>
@@ -362,7 +362,7 @@
   </widget>
   <widget class="QSpinBox" name="sbStdWage">
    <property name="enabled">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="geometry">
     <rect>

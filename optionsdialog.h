@@ -12,17 +12,13 @@ class OptionsDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit OptionsDialog(QWidget *parent = 0);
+    explicit OptionsDialog(QWidget *parent = nullptr);
     ~OptionsDialog();
 
     int iterations();
-    int startups();
     int startPeriod();
-    int std_wage();
-    int population();
-    int gov_ind_pop();
 
-    void accept();
+    void accept() override;
 
 private:
     Ui::OptionsDialog *ui;

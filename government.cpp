@@ -15,6 +15,7 @@ void Government::reset()
     proc = 0;
     last_triggered = -1;
     balance = 0;
+    wages_paid = 0;
 }
 
 Government::Government(Domain *domain) : Bank(domain)
@@ -72,7 +73,6 @@ double Government::debit(Account *requester, double amount)
     return amount;
 }
 
-// NEXT: THIS IS SERIOUSLY OUT OF DATE...
 
 void Government::trigger(int period)
 {
@@ -82,22 +82,42 @@ void Government::trigger(int period)
 
     last_triggered = period;
 
-    // Direct purchases (procurement), adjusts balance automatically
+    /*
+     * Make government procurement purchases. We do this by paying firms
+     * currently selected at random (this could change) the amount specified
+     * in the parameters for this domain (check this). This will appear to
+     * the firms as a normal purchase and it will therefore attract sales tax.
+     * We may need a different mechanism for government contracts to allow
+     * them to be taxed differently. Note that in any case the government-as-
+     * firm should not pay tax since its receipts are in HPM. We should
+     * probably make a distinction between HPM and bank money. FIX THIS!
+     */
     double amt = _domain->getProcurement();
     qDebug() << "Transferring" << amt << "to random firm";
-    transferSafely(_domain->selectRandomFirm(), amt, this);
-    proc += amt;
-    exp += amt;     // include in expenditure not as a separate item as
-    // less confusing
 
-    // Benefits payments to all unemployed workers (doesn't adjust balance,
-    // so we must do this on return)
-    qDebug() << "Transferring" << _domain->getStdWage() * _domain->getUBR() << "to all workers";
-    ben += payWorkers(_domain->getStdWage() * _domain->getUBR(),    // amount
-                      this,                                         // source
-                      Reason::for_benefits                          // reason
-                      );
-    balance -= ben;
+    /*
+     * transferSafely() updates both balances (payer and payee)
+     */
+    transferSafely(_domain->selectRandomFirm(), amt, this);
+
+    proc += amt;    // procurement
+    exp += amt;     // govt expenditure
+
+    /*
+     * Make benefits payments to all unemployed workers
+     */
+    double amount = _domain->getStdWage() * _domain->getUBR();
+
+    qDebug() << "Transferring" << amount << "to all unemployed workers";
+
+    // ******* FIX THIS (amount is zero) ********
+
+    ben += payWorkers(amount, this, Reason::for_benefits);
+
+    /*
+     * payWorkers() does not update payer balance so we do this on return
+     */
+    balance -= ben; // govt balance
 }
 
 /*
@@ -110,16 +130,18 @@ size_t Government::getNumEmployees()
 bool Government::transferSafely(Account *recipient, double amount, Account *)
 {
     /*
-     * We no longer mark procurement transfers, which means they are
-     * automatically taxable. This may need changing.
+     * We no longer mark procurement transfers, which means they attract
+     * sales tax like any other purchases
      */
     if (recipient != nullptr) {
-        qDebug() << "crediting" << amount;
+        qDebug() << "Government making payment of" << amount;
         recipient->credit(amount, this, true);
         balance -= amount;
     }
 
-    // The government can always transfer any amount
+    /*
+     * The government can always transfer any amount
+     */
     return true;
 }
 
@@ -130,7 +152,7 @@ bool Government::transferSafely(Account *recipient, double amount, Account *)
 // Obviously, the government doesn't pay tax.
 void Government::credit(double amount, Account*creditor, bool)
 {
-    qDebug() << "Government::credit(" << amount;
+    qDebug() << "Government receiving payment of" << amount;
     Account::credit(amount);
     rec += amount;
 }
@@ -138,13 +160,17 @@ void Government::credit(double amount, Account*creditor, bool)
 /*
  * Note that a Government is also a Firm and therefor naintains a list of its
  * employees whose wages are paid in the normal way. Additionally, as
- * governmentit has access to the domain-wide list of Workers to which it pays
+ * government it has access to the domain-wide list of Workers to which it pays
  * benefits, pensions, etc., as necessary.
  */
 double Government::payWorkers(double amount, Account *source, Reason reason)
 {
+    qDebug() << "Government::payWorkers (" << amount << ", ...)";
     QVector<Worker*> workers = _domain->workers;
     int num_workers = workers.count();
+
+    qDebug() << num_workers << "workers to pay";
+
     double amt_paid = 0;
 
     for (int i = 0; i < num_workers; i++)

@@ -44,6 +44,9 @@ Firm *Worker::getEmployer()
     return employer;
 }
 
+/*
+ * Make a purchase
+ */
 void Worker::trigger(int period)
 {
     if (period > last_triggered)    // to prevent double counting
@@ -61,6 +64,8 @@ void Worker::trigger(int period)
         }
 
         if (purch > 0) {
+            qDebug() << "Worker::trigger() spending" << purch
+                     << "on purchases";
             if (transferSafely(_domain->selectRandomFirm(), purch, this)) {
                 purchases += purch;
             }

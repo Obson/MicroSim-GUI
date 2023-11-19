@@ -39,9 +39,8 @@ Firm::Firm(Domain *domain, bool state_supported) : Account(domain)
 void Firm::init()
 {
     /*
-     * Reset non-cumulatibe variables
+     * Reset non-cumulative variables
      */
-    /*
     wages_paid = 0;
     sales_tax_paid = 0;
     sales_receipts = 0;
@@ -49,7 +48,15 @@ void Firm::init()
     num_fired = 0;
     bonuses_paid = 0;
     investment= 0;
-    */
+
+
+    num_just_fired = 0;
+
+    _state_supported = false;
+
+    productivity = 1.0;
+    _dedns = 0.0;
+
 }
 
 bool Firm::isGovernmentSupported()
@@ -93,10 +100,7 @@ void Firm::trigger(int period)
             }
         }
 
-        /*
-         * wages_paid is not cumulative, but balance, of course, is
-         */
-        wages_paid = payWages();
+        wages_paid += payWages();
         balance -= wages_paid;
     }
 }
@@ -418,6 +422,7 @@ double Firm::hireSome(double wage, int number_to_hire)
 
 void Firm::credit(double amount, Account *creditor, bool force)
 {
+    qDebug() << "Firm::credit (" << amount << ", ...)";
     Account::credit(amount);
 
     // If state-supported the reason we are being credited must be that we have
@@ -438,6 +443,7 @@ void Firm::credit(double amount, Account *creditor, bool force)
         if (r > 0)
         {
             double t = (amount * r) / (r + 1.0);
+            qDebug() << "Firm::credit() paying sales tax" << t << "on" << amount;
             if (transferSafely(_domain->government(), t, this)) {
                 sales_tax_paid += t;
             }

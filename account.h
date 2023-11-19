@@ -44,6 +44,7 @@ enum class ParamType {
     boe_int,
     bus_int,
     loan_prob,
+    std_wage,
 };
 
 enum class Reason {
@@ -225,7 +226,7 @@ public:
     /*
      * This is the main driver function
      */
-    void iterate(int period);
+    void iterate(int period, bool silent = 0);
 
     Property getProperty(QString propertyName);
 
@@ -367,9 +368,12 @@ private:
     int _pop_size;
 
     double _scale;
-    double _std_wage;
+    // double _std_wage;
     double _gini;
 
+    /*
+     * Dynamic properties
+     */
     double  _exp, _bens, _rcpts, _gov_bal, _prod_bal, _wages, _consumption,
             _bonuses, _dedns, _inc_tax, _sales_tax, _dom_bal, _loan_prob,
             _amount_owed, _deficit, _pc_active, _bus_size, _proc_exp,

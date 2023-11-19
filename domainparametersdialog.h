@@ -33,6 +33,7 @@ public:
     int getClearingBankInterest();
     int getLoanProb();
     int getRecoupPeriods();
+    int getStdWage();
 
 private:
     Ui::DomainParametersDialog *ui;

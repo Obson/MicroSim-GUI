@@ -50,7 +50,7 @@ DomainParametersDialog::DomainParametersDialog(QWidget *parent) :
     // Ignore the compiler warning -- I've done it this way for consistency with
     // the SIGNAL macro as defined for QObject::connect...
     connect(ui->cbDomainName, SIGNAL(currentIndexChanged(const QString&)),
-            this, SLOT(getParameters()));
+            this, SLOT(readParameters()));
 
     /***
      * This is from the documentation for Signals and Slots
@@ -162,6 +162,10 @@ void DomainParametersDialog::readParameters()
                 ui->sbRecoup->setValue(val);
                 break;
 
+            case ParamType::std_wage:
+                ui->sbStdWage->setValue(val);
+                break;
+
             default:
 
                 // TO DO: Missing parameters
@@ -266,4 +270,8 @@ int DomainParametersDialog::getRecoupPeriods()
     return ui->sbRecoup->value();
 }
 
+int DomainParametersDialog::getStdWage()
+{
+    return ui->sbStdWage->value();
+}
 

@@ -538,32 +538,91 @@ void MainWindow::editParameters()
 {
     DomainParametersDialog dlg(this);
 
+    QString domainName = dlg.getDomain();
+    Domain *dom = Domain::getDomain(domainName);
+
+    int val;
+
     if (dlg.exec() == QDialog::Accepted)
     {
         QSettings settings;
-
-
+        /*
+         * Write the parameters back to settings and to the params list in
+         * Domain
+         */
         settings.beginGroup("Domains");
-        settings.beginGroup(dlg.getDomain());
+        settings.beginGroup(domainName);
 
-        settings.setValue("govt-procurement", dlg.getProcurement());
-        settings.setValue("propensity-to-consume", dlg.getPropConsumeInc());
-        settings.setValue("income-threshold", dlg.getIncTaxThresh());
-        settings.setValue("pre-tax-dedns-rate", dlg.getDedns());
-        settings.setValue("income-tax-rate", dlg.getIncTaxRate());
-        settings.setValue("sales-tax-rate", dlg.getSalesTaxRate());
-        settings.setValue("firm-creation-prop", dlg.getStartupProb());
-        settings.setValue("capex-recoup-periods", dlg.getRecoupPeriods());
-        settings.setValue("prop-invest", dlg.getPropInvest());
-        settings.setValue("unempl-benefit-rate", dlg.getUnempBen());
-        settings.setValue("boe-interest", dlg.getCBInterest());
-        settings.setValue("bus-interest", dlg.getClearingBankInterest());
-        settings.setValue("loan-prob", dlg.getLoanProb());
+        val = dlg.getProcurement();
+        settings.setValue("govt-procurement", val);
+        dom->params[ParamType::procurement] = val;
 
-        // TODO: Add missing values to Params dlg...
-        // reserve-rate (dlg.getDistrib())
-        // Propensity to consume out of savings
-        // Employment rate discontinued
+        /* TODO: propensity to consume out of ...
+         *
+         * At present we only have a generic  propensity to consume. It would
+         * be better to have both propensity to consume out of income and out
+         * of savings.
+         */
+        val = dlg.getPropConsumeInc();
+        settings.setValue("propensity-to-consume", val);
+        dom->params[ParamType::prop_con] = val;
+
+        val = dlg.getIncTaxThresh();
+        settings.setValue("income-threshold", val);
+        dom->params[ParamType::inc_thresh] = val;
+
+        val = dlg.getDedns();
+        settings.setValue("pre-tax-dedns-rate", val);
+        dom->params[ParamType::dedns] = val;
+
+        val = dlg.getIncTaxRate();
+        settings.setValue("income-tax-rate", val);
+        dom->params[ParamType::inc_tax_rate] = val;
+
+        val = dlg.getSalesTaxRate();
+        settings.setValue("sales-tax-rate", val);
+        dom->params[ParamType::sales_tax_rate] = val;
+
+        val = dlg.getStartupProb();
+        settings.setValue("firm-creation-prop", val);
+        dom->params[ParamType::firm_creation_prob] = val;
+
+        val = dlg.getRecoupPeriods();
+        settings.setValue("capex-recoup-periods", val);
+        dom->params[ParamType::recoup] = val;
+
+        val = dlg.getPropInvest();
+        settings.setValue("prop-invest", val);
+        dom->params[ParamType::prop_inv] = val;
+
+        val = dlg.getUnempBen();
+        settings.setValue("unempl-benefit-rate", val);
+        dom->params[ParamType::unemp_ben_rate] = val;
+
+        val = dlg.getCBInterest();
+        settings.setValue("boe-interest", val);
+        dom->params[ParamType::boe_int] = val;
+
+        val = dlg.getClearingBankInterest();
+        settings.setValue("bus-interest", val);
+        dom->params[ParamType::bus_int] = val;
+
+        val = dlg.getLoanProb();
+        settings.setValue("loan-prob", val);
+        dom->params[ParamType::loan_prob] = val;
+
+        val = dlg.getStdWage();
+        settings.setValue("standard-wage", val);
+        dom->params[ParamType::std_wage] = val;
+
+        /*
+         * TODO: Add missing values to Params dlg...
+         *
+         * reserve-rate (dlg.getDistrib())
+         * Propensity to consume out of savings
+         *
+         * Employment rate discontinued
+         */
 
         settings.endGroup();
         settings.endGroup();
@@ -868,7 +927,8 @@ void MainWindow::changeProfile(QListWidgetItem *item)
     if (updatingProfileList) {
         return;
     }
-    qDebug() << "MainWindow::changeProfile(QListWidgetItem *item) called: profile_changed =" << profile_changed;
+    qDebug() << "MainWindow::changeProfile(QListWidgetItem *item) called: profile_changed ="
+             << profile_changed;
     reloading = true;
 
     // Allow old profile to be saved if changed
