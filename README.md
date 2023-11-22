@@ -1,5 +1,7 @@
 # MicroSim
 
+Note: I have resurrected this project after a gap of about six years. The previous version worked but was very limited. I have not yet update the documenation, which is completely out of date and is best ignored!
+
 **MicroSim** is a micro-economic modelling program designed to complement SimX (which is a *macro*-economic modelling system). Like SimX, it provides its own graphics, but it can also output its results in the form of a CSV file which can be read into a spreadsheet for further analysis or formatting.
 
 ### Technicalities ###
