@@ -92,7 +92,6 @@ protected:
     void createProfile();
     void removeProfile();
     void saveSettingsAsProfile(QString name);
-    void reassignColours();
     void remove();
     void about();
     void aboutQt();
@@ -157,6 +156,7 @@ private:
     bool reloading = false;
     bool updatingProfileList = false;
     bool property_selected = false;
+    bool changing_profile = false;
 
     //QMap<QString,Domain::Property> propertyMap;
 

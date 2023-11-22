@@ -38,13 +38,14 @@ enum class ParamType {
     recoup,
     dedns,
     unemp_ben_rate,
-    active_pop,
+    pop,
     distrib,
     prop_inv,
     boe_int,
     bus_int,
     loan_prob,
     std_wage,
+    gov_size
 };
 
 enum class Reason {
@@ -148,9 +149,7 @@ public:
      * parameters.Must be public as the user wiil have to create domains
      * initially.
      */
-    static Domain *createDomain(const QString &name,
-                                const QString &currency,
-                                const QString &currencyAbbrev);
+    static Domain *createDomain(const QString &name);
 
     /*
      * List of all domains. When a new domain is created or restored it is
@@ -192,7 +191,7 @@ public:
     //int getPeriod();
 
     int getPopulation();
-    int getActivePop();             // target size of economically active population [active_pop]
+    // int getActivePop();             // target size of economically active population [active_pop]
     int getNumEmployed();
     int getNumEmployedBy(Firm *firm);
     int getNumUnemployed();
@@ -222,6 +221,11 @@ public:
     double getBusRate();            // retail lending rate
     double getCapexRecoupTime();    // number of periods to recoup capex
 
+    /*
+     * Nominal size of government is a parameter and should not be confused with actual government
+     * size (TBD), which is a property.
+     */
+    double getGovSize();            // nominal size of government as proportion of workers
 
     /*
      * This is the main driver function
@@ -381,15 +385,11 @@ private:
 
 
     /*
-     * This constructor creates a bare-bones domain having the required name,
-     * currency and currency abbreviation. If the restore argument has the
-     * value TRUE it will then (attempt to) populate the parameters from
-     * Settings; otherwise it will simply assign them sensible default values.
-     * Default values will also be assigned to any parameters that cannot be
-     * restored.
+     * This constructor creates a bare-bones domain having the required name.
+     * If the domain is listed in settings it will be restored from there;
+     * otherwise it will be loaded with default parameters.
      */
-    Domain(const QString &name, const QString &currency,
-           const QString &currencyAbbrev);
+    Domain(const QString &name);
 
     QChartView *_chartView;
     QChart *chart;
@@ -845,7 +845,7 @@ protected:
 
 public:
 
-    Government(Domain *domain);
+    Government(Domain *domain, int size);
 
     bool isGovernment() override { return true; }
     bool transferSafely(Account *recipient, double amount, Account*) override;

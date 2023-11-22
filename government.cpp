@@ -18,7 +18,7 @@ void Government::reset()
     wages_paid = 0;
 }
 
-Government::Government(Domain *domain) : Bank(domain)
+Government::Government(Domain *domain, int size) : Bank(domain)
 {
     /*
      * Government is derived from Bank, which is derived from Firm. This
@@ -32,7 +32,10 @@ Government::Government(Domain *domain) : Bank(domain)
      * for demo purposes later on.
      */
 
-    qDebug() << "Government::Government(...) called";
+    qDebug() << "Government::Government (...) called for domain"
+             << domain->getName() << "size =" << size;
+
+    hireSome(domain->getStdWage(), size);
     reset();
 }
 
@@ -76,7 +79,8 @@ double Government::debit(Account *requester, double amount)
 
 void Government::trigger(int period)
 {
-    qDebug() << "last_triggered =" << last_triggered << ", period =" << period;
+    qDebug() << "Government::trigger (" << period << "), last_triggered ="
+             << last_triggered;
 
     Q_ASSERT(period > last_triggered);
 
@@ -93,7 +97,8 @@ void Government::trigger(int period)
      * probably make a distinction between HPM and bank money. FIX THIS!
      */
     double amt = _domain->getProcurement();
-    qDebug() << "Transferring" << amt << "to random firm";
+    qDebug() << "Transferring" << amt
+             << "Currency units to random firm (procurement)";
 
     /*
      * transferSafely() updates both balances (payer and payee)
@@ -108,9 +113,8 @@ void Government::trigger(int period)
      */
     double amount = _domain->getStdWage() * _domain->getUBR();
 
-    qDebug() << "Transferring" << amount << "to all unemployed workers";
-
-    // ******* FIX THIS (amount is zero) ********
+    qDebug() << "Transferring" << amount
+             << "currency units to all unemployed workers as benefit";
 
     ben += payWorkers(amount, this, Reason::for_benefits);
 
@@ -165,11 +169,11 @@ void Government::credit(double amount, Account*creditor, bool)
  */
 double Government::payWorkers(double amount, Account *source, Reason reason)
 {
-    qDebug() << "Government::payWorkers (" << amount << ", ...)";
     QVector<Worker*> workers = _domain->workers;
     int num_workers = workers.count();
 
-    qDebug() << num_workers << "workers to pay";
+    qDebug() << "Government::payWorkers (" << amount << ", ...)"
+             << num_workers << "workers to pay";
 
     double amt_paid = 0;
 

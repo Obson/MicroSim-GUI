@@ -1,5 +1,6 @@
 #include "account.h"
 #include <QDebug>
+#include <QMessageBox>
 
 Worker::Worker(Domain *domain) : Account(domain)
 {
@@ -57,16 +58,19 @@ void Worker::trigger(int period)
         double thresh = _domain->getIncomeThreshold();
         double prop_con = _domain->getPropCon();
 
-        if (balance <= thresh) {
+        if (balance <= thresh)
+        {
             purch = balance;
-        } else {
+        }
+        else
+        {
             purch = ((balance - thresh) * prop_con) + thresh;
         }
 
-        if (purch > 0) {
-            qDebug() << "Worker::trigger() spending" << purch
-                     << "on purchases";
-            if (transferSafely(_domain->selectRandomFirm(), purch, this)) {
+        if (purch > 0)
+        {
+            if (transferSafely(_domain->selectRandomFirm(), purch, this))
+            {
                 purchases += purch;
             }
         }
@@ -91,8 +95,6 @@ void Worker::setAgreedWage(double wage)
 
 void Worker::credit(double amount, Account *creditor, bool)
 {
-    // qDebug() << "Worker::credit(): amount =" << amount;
-
     if (amount < 0)
     {
         Q_ASSERT(false);
@@ -100,10 +102,8 @@ void Worker::credit(double amount, Account *creditor, bool)
 
     Account::credit(amount);
 
-    if (isEmployedBy(creditor))
+    if (isEmployedBy(creditor))     // i.e. this is a payment of wages
     {
-        //qDebug() << "Worker::credit(): wages assumed";
-
         // Here we assume that if the creditor is our employer then we should
         // pay income tax. If the creditor isn't our employer but we're
         // receiving the payment in our capacity as Worker then it's probably
@@ -111,12 +111,6 @@ void Worker::credit(double amount, Account *creditor, bool)
         // flagged for deletion. Surprising but perfectly possible.
         double tax = amount * _domain->getIncTaxRate();
 
-        //qDebug() << "Worker::credit(): transferring tax" << tax << "to gov";
-
-        /*
-         * Sort this out by adding a government() function to Domain and
-         * making _gov private
-         */
         if (transferSafely(_domain->government(), tax, this))
         {
             wages += amount;
@@ -130,17 +124,16 @@ void Worker::credit(double amount, Account *creditor, bool)
             Q_ASSERT(false);
         }
     }
-    else if (creditor == _domain->government())
+    else if (creditor == _domain->government())     //i.e. benefits payment
     {
-        // qDebug() << "Worker::credit(): benefits assumed";
         benefits += amount;
     }
     else
     {
-        // qDebug() << "Worker::credit(): unknown reason";
+        QMessageBox msgBox;
+        msgBox.setText("Unknownreason for crediting worker");
         exit(100);
     }
-    // qDebug() << "Worker::credit(): done";
 }
 
 double Worker::getWagesReceived()

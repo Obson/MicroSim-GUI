@@ -43,7 +43,7 @@ DomainParametersDialog::DomainParametersDialog(QWidget *parent) :
 
     /*
      * Get the settings for the current domain and populate the rest of the
-     * parameters. This must happen whenever the comboboc value is changed
+     * parameters. This must happen whenever the combobox value is changed
      */
     readParameters();
 
@@ -138,6 +138,10 @@ void DomainParametersDialog::readParameters()
                 ui->sbBens->setValue(val);
                 break;
 
+            case ParamType::pop:
+                ui->sbPopulation->setValue(val);
+                break;
+
             case ParamType::distrib:
                 ui->sbPropInvest->setValue(val);
                 break;
@@ -166,10 +170,14 @@ void DomainParametersDialog::readParameters()
                 ui->sbStdWage->setValue(val);
                 break;
 
+            case ParamType::gov_size:
+                ui->sbGovSize->setValue(val);
+                break;
+
             default:
 
                 // TO DO: Missing parameters
-                // sbBasicInc, sbImportPref, sbropConsSav are not handled, no
+                // sbBasicInc, sbImportPref, sbPropConsSav are not handled, no
                 // paramType for standard wage (sbStdWage)
 
 
@@ -239,6 +247,11 @@ int DomainParametersDialog::getUnempBen()
     return ui->sbBens->value();
 }
 
+int DomainParametersDialog::getPopulation()
+{
+    return ui->sbPopulation->value();
+}
+
 int DomainParametersDialog::getPropInvest()
 {
     return ui->sbPropInvest->value();
@@ -273,5 +286,10 @@ int DomainParametersDialog::getRecoupPeriods()
 int DomainParametersDialog::getStdWage()
 {
     return ui->sbStdWage->value();
+}
+
+int DomainParametersDialog::getGovSize()
+{
+    return ui->sbGovSize->value();
 }
 

@@ -8,6 +8,7 @@
 #include <QSettings>
 #include <QListWidgetItem>
 #include <QSettings>
+#include <QMessageBox>
 
 #define NUMBER_OF_BANKS 3
 #define CLEARING_FREQUENCY 10
@@ -28,6 +29,7 @@ const QMap<ParamType,QString> Domain::parameterKeys     // static
     {ParamType::firm_creation_prob, "firm-creation-prob"},
     {ParamType::dedns, "pre-tax-dedns-rate"},
     {ParamType::unemp_ben_rate, "unempl-benefit-rate"},
+    {ParamType::pop, "population"},
     {ParamType::distrib, "reserve-rate"},
     {ParamType::prop_inv, "prop-invest"},
     {ParamType::boe_int, "boe-interest"},
@@ -35,6 +37,7 @@ const QMap<ParamType,QString> Domain::parameterKeys     // static
     {ParamType::loan_prob, "loan-prob"},
     {ParamType::recoup, "capex-recoup-periods"},
     {ParamType::std_wage, "standard-wage"},
+    {ParamType::gov_size, "government-size"},
 };
 
 QMap<QString,Property> Domain::propertyMap;  // static, can't be const as we have to initialise it
@@ -89,10 +92,7 @@ void Domain::initialisePropertyMap()                    // static
  * (i.e. is already on the list) it returns a nullptr and doesn't create a new
  * domain.
  */
-Domain *Domain::createDomain(
-        const QString &name,
-        const QString &currency,
-        const QString &currencyAbbrev)
+Domain *Domain::createDomain(const QString &name)
 {
     Domain *dom = nullptr;
 
@@ -101,7 +101,7 @@ Domain *Domain::createDomain(
         // A domain with given name is not in list. Create a new domain having
         // the required name and currency, and default parameters, and add it
         // to the end of the list
-        dom = new Domain(name, currency, currencyAbbrev);
+        dom = new Domain(name);
     }
 
     // Return a pointer to the domain or nullptr if it already exists
@@ -140,34 +140,83 @@ void Domain::initialise()
  * This constructor is private and is only called via createDomain, which
  * handles all associated admin.
  */
-Domain::Domain(const QString &name,
-        const QString &currency,
-        const QString &currencyAbbrev)
+Domain::Domain(const QString &name)
 {
-    qDebug() << "Domain::Domain("
-             << name
-             << ","
-             << currency
-             << ","
-             << currencyAbbrev
-             << ")";
+    qDebug() << "Domain::Domain(" << name << ")";
 
     /*
-     * Store the domain's name, currency and currency abbreviation
+     * Set the domain's parameters. Note that this is driven by the
+     * parameters we expect (i.e. that are listed in parameterKeys),
+     * Parameters don't have default values because we refer to them
+     * indirectly (we could change this but it would be a hassle) so
+     * if a key is missing from settings the parameter will not be set.
      */
+
+    QSettings settings;
+    settings.beginGroup("Domains");
+
+    QString group = settings.group();
+
+    QStringList keys = settings.childGroups();
+
+    if (keys.contains(name))
+    {
+        settings.beginGroup(name);
+    }
+    else
+    {
+        /*
+         * The default settings are stored in the group [Domains]\$$-DEFAULT-$$
+         * which must not be used as a domain name. Should build in a check,
+         * just in case
+         */
+        settings.beginGroup("Default");
+    }
+
     _name = name;
-    _currency = currency;
-    _abbrev = currencyAbbrev;
+    _currency = settings.value("Currency", "Units").toString();
+    _abbrev = settings.value("Abbrev", "CU").toString();
+
+    foreach (ParamType p, parameterKeys.keys())
+    {
+        QString key_string = parameterKeys.value(p);
+        if (settings.contains(key_string))
+        {
+            params[p] =  settings.value(key_string).toInt();
+        }
+        else
+        {
+            QMessageBox msgBox;
+            QString msgText;
+
+            msgText = "Parameter \"" + key_string
+                    + "\" is missing from settings for "
+                    + name;
+
+            msgBox.setText(msgText);
+            msgBox.exec();
+        }
+    }
+    settings.endGroup();        // <name> | $$-DEFAULT-$$
+    settings.endGroup();        // Domains
 
     /*
-     * Create a government
+     * Create a population of (unemployed) workers
      */
-    _gov = new Government(this);
+    int pop = getPopulation() / 10000;
+    for (int i = 0 ; i < pop; i++)
+    {
+        workers.append(new Worker(this));
+    }
+
+    /*
+     * Create a government with the required number of employees
+     */
+    _gov = new Government(this, (pop * static_cast<int>(getGovSize()) / 100));
 
     /*
      * Add firms
      */
-    QSettings settings;
     int n = settings.value("start-ups", 10).toInt();
     for (int i = 0; i < n; i++)
     {
@@ -188,10 +237,6 @@ Domain::Domain(const QString &name,
     }
 
     initialise();
-
-    qDebug() << "Domain" << getName() << "has" << firms.count()
-             << "firms and" << banks.count() << "banks";
-
 }
 
 /*
@@ -199,55 +244,10 @@ Domain::Domain(const QString &name,
  */
 int Domain::restoreDomains(QStringList &domainNameList)
 {
-    qDebug() << "Domain::restoreDomains(); There are currently" << domains.count() << "domains";
-
-    QSettings settings;
-
-    settings.beginGroup("Domains");
-
     foreach (QString name, domainNameList)
     {
-        //qDebug() << "restoring domain" << name;
-        settings.beginGroup(name);
-
-        QString currency = settings.value("Currency", "Units").toString();
-        QString abbrev = settings.value("Abbrev", "CU").toString();
-        Domain *dom = createDomain(name, currency, abbrev);
-        Q_ASSERT(dom != nullptr);
-
-        /*
-         * Note that this is driven by the parameters we expect (i.e. that are
-         * listed in parameterKeys), If a key is missing from settings we leave
-         * the default value that was set up in the constructor intact.
-         */
-        foreach (ParamType p, parameterKeys.keys())
-        {
-            QString key_string = parameterKeys.value(p);
-            if (settings.contains(key_string))
-            {
-                dom->params[p] =  settings.value(key_string).toInt();
-            }
-            else
-            {
-                qWarning() << "Parameter" << key_string
-                           << "is missing from settings for"
-                           << dom->getName();
-            }
-        }
-
-        /*
-         * TODO: (Ignore compiler error message)
-         * Error msg from compiler can be ignored. Domain *domain is  added to
-         * the domains list by the constructor, ensuring that a domain cannot
-         * be created without adding it to the list. However, for tidyness,
-         * when the program closes and the domains list is destroyed, we should
-         * destroy the listed domains explicitly.
-         */
-        settings.endGroup();
+        createDomain(name);
     }
-
-    settings.endGroup();    // end Domains group
-
     qDebug() << domains.count() << "domains created";
     return domains.count();
 }
@@ -258,11 +258,12 @@ void Domain::drawCharts(QListWidget *propertyList)
              << propertyList->count() << "properties";
 
     /*
-     * Draw an unpopulated chart for each domain, with series attached
+     * Draw an unpopulated chart for each domain, creating the necessary
+     * series in a QMap but not yet attaching them to the chart
      */
     foreach(Domain *dom, domains)
     {
-        qDebug() << "About to draw chart for domain" << dom->getName();
+        qDebug() << "Initialising domain" << dom->getName();
         dom->initialise();
         dom->drawChart(propertyList);
     }
@@ -273,11 +274,9 @@ void Domain::drawCharts(QListWidget *propertyList)
     QSettings settings;
     int iterations = settings.value("iterations", 100).toInt();
     int start_period = settings.value("start-period").toInt();
+
     for (int period = 0; period <= iterations + start_period; period++)
     {
-        /*
-         * Iterate each domain
-         */
         foreach(Domain *dom, domains)
         {
             dom->iterate(period, period < start_period);
@@ -285,12 +284,10 @@ void Domain::drawCharts(QListWidget *propertyList)
     }
 
     /*
-     * Now we need to add the populated series to the charts...
+     * Now add the populated series to each of the charts...
      */
     foreach(Domain *dom, domains)
     {
-        // NB we have the series in QMap *series somewhere. Make
-        // sure it's global
         dom->addSeriesToChart();
     }
 
@@ -681,7 +678,13 @@ void Domain::drawChart(QListWidget *propertyList)
         {
             QString series_name = item->text();
             QLineSeries *ser = new QLineSeries();
+
             ser->setName(series_name);
+
+            /*
+             * This just inserts the series into our list of series. It doesn't
+             * add it to the chart
+             */
             series.insert(static_cast<Property>(i), ser);
         }
     }
@@ -770,7 +773,6 @@ void Domain::iterate(int period, bool silent)
         for (int i = 0; i < firms.count(); i++)
         {
             firms[i]->init();
-
         }
 
         /*
@@ -836,70 +838,28 @@ void Domain::iterate(int period, bool silent)
     // Stats
     // -------------------------------------------
 
-    // Append the values from this iteration to the series
-    for (int i = 0; i < static_cast<int>(Property::num_properties); i++)
+    /*
+     * Append the values from this iteration to the series
+     */
+    for (auto it = series.begin(); it != series.end(); ++it)
     {
-        qDebug() << "Updating chart for" << getName() << ", property" << i;
+        Property p = it.key();
+        QLineSeries *s = series[p];
+        double value = getPropertyVal(p);
 
-        /*
-         * For active properties (only) we must get the current value and
-         * append it to the appropriate series against the current period
-         */
-
-        for (auto it = series.begin(); it != series.end(); ++it)
+        if (!silent)
         {
-            Property p = it.key();
-            QLineSeries *s = series[p];
-            //qDebug() << "Calling getPropertyValue" << static_cast<int>(p);
-            double value = getPropertyVal(p);
-            //qDebug() << "getPropertyValue() returns" << value;
+            s->append(period, value);
 
-            if (!silent)
-            {
-                s->append(period, value);
-            }
+            /*
+             * TODO: Record the maximum, minimum and average values of the
+             * property (non-silent entries only)
+             */
 
-
-            //qDebug() << "Appending (" << period << ","
-            //         << static_cast<int>(value) << "to series"
-            //         << static_cast<int>(p);
-        }
-
-
-
-        return; // TEMPORARY, FOR TESTING
-
-
-
-
-        Property prop = static_cast<Property>(i);   // convert i to a Property
-        double val = scale(prop);
-        series[prop]->append(period, val);
-        qDebug() << "property value is" << val;
-
-        if (i == 0)
-        {
-            max_val[i] = val;
-            min_val[i] = val;
-            sum[i] = val;
-        }
-        else
-        {
-            if (val > max_val[i])
-            {
-                max_val[i] = val;
-            }
-            else if (val < min_val[i])
-            {
-                min_val[i] = val;
-            }
-
-            sum[i] += val;
+            // ...
         }
     }
 
-
-    return; // TEMPORARY, FOR TESTING
 
     // -------------------------------------------
     // Exogenous changes
@@ -908,6 +868,7 @@ void Domain::iterate(int period, bool silent)
     // Create a new firm, possibly
     if (qrand() % 100 < getFCP())
     {
+        qDebug() << "Creating new firm";
         createFirm();
     }
 
@@ -1194,6 +1155,11 @@ double Domain::getBusRate()
 double Domain::getLoanProb()
 {
     return double(getParameterVal(ParamType::loan_prob)) / 100;
+}
+
+double Domain::getGovSize()
+{
+    return double(getParameterVal(ParamType::gov_size)) / 100;
 }
 
 #if 0

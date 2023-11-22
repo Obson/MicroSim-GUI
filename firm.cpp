@@ -422,7 +422,7 @@ double Firm::hireSome(double wage, int number_to_hire)
 
 void Firm::credit(double amount, Account *creditor, bool force)
 {
-    qDebug() << "Firm::credit (" << amount << ", ...)";
+    //qDebug() << "Firm::credit (" << amount << ", ...)";
     Account::credit(amount);
 
     // If state-supported the reason we are being credited must be that we have

@@ -28,12 +28,20 @@ public:
     int getDedns();
     int getUnempBen();
     int getPropInvest();
+    int getPopulation();
     int getDistrib();
     int getCBInterest();
     int getClearingBankInterest();
     int getLoanProb();
     int getRecoupPeriods();
     int getStdWage();
+
+    /*
+     * Government size is the proportion of employed workers that are employed
+     * by the government in nationalised industries, civil service, government
+     * services, etc.
+     */
+    int getGovSize();
 
 private:
     Ui::DomainParametersDialog *ui;

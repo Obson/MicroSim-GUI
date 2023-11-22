@@ -58,10 +58,14 @@ MainWindow::MainWindow()
         qDebug() << "No general settings -- saving defaults";
         settings.setValue("iterations", 100);
         settings.setValue("start-period", 0);
-        settings.setValue("startups", 10);
-        settings.setValue("nominal-population", 1000);
-        settings.setValue("unit-wage", 100);
-        settings.setValue("government-employees", 200); // approx tot pop / 5
+
+        /*
+         * These are now per-domain parameters
+         */
+        //settings.setValue("startups", 10);
+        //settings.setValue("nominal-population", 1000);
+        //settings.setValue("unit-wage", 100);
+        //settings.setValue("government-employees", 200); // approx tot pop / 5
     }
 
     /*
@@ -286,13 +290,6 @@ void MainWindow::createMenus()
     qDebug() << "Menus and tools created";
 }
 
-void MainWindow::reassignColours()  // redundant
-{
-    qDebug() << "MainWindow::reassignColours() called";
-//    propertyColours.clear();
-//    drawChartNormal();
-}
-
 void MainWindow::saveCSV()
 {
 #if 0   // this needs rewriting or removing
@@ -387,7 +384,7 @@ void MainWindow::errorMessage(QString msg)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    qDebug() << "MainWindow::closeEvent() called";
+    // qDebug() << "MainWindow::closeEvent() called";
 
     /*
      * Save current config to settings
@@ -428,12 +425,18 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::saveSettingsAsProfile(QString name)
 {
-    if (name.isEmpty()) {
-        if (chartProfile.isEmpty()) {
-            // TODO: There should be an error message here, unless this case is
-            // filtered out -- check.
+    if (name.isEmpty())
+    {
+        if (chartProfile.isEmpty())
+        {
+            /*
+             * TODO: There should be an error message here, unless this case is
+             * filtered out -- check.
+             */
             return;
-        } else {
+        }
+        else
+        {
             name = chartProfile;
         }
     }
@@ -441,13 +444,8 @@ void MainWindow::saveSettingsAsProfile(QString name)
     QSettings settings;
     settings.beginGroup("Profiles");
 
-    if (settings.childGroups().contains(name))
+    if (!settings.childGroups().contains(name))
     {
-        qDebug() << "Updating profile" << name;
-    }
-    else
-    {
-        qDebug() << "Creating new profile" << name;
         profileList->addItem(name);
         selectProfile(name);
     }
@@ -489,6 +487,7 @@ void MainWindow::removeProfile()
     // Reload profile list
     updatingProfileList = true;
     profileList->clear();
+
     QSettings settings;
     settings.beginGroup("Profiles");
     profileList->addItems(settings.childGroups());
@@ -513,12 +512,7 @@ void MainWindow::createDomain()
 
     if (dlg.exec() == QDialog::Accepted)
     {
-        Domain::createDomain(
-                    dlg.getDomainName(),
-                    dlg.getCurrency(),
-                    dlg.getCurrencyAbbrev()
-                    );
-
+        Domain::createDomain(dlg.getDomainName());
     }
 }
 
@@ -536,16 +530,20 @@ void MainWindow::remove()
  */
 void MainWindow::editParameters()
 {
+    qDebug() << "MainWindow::editParameters()";
+
     DomainParametersDialog dlg(this);
-
-    QString domainName = dlg.getDomain();
-    Domain *dom = Domain::getDomain(domainName);
-
-    int val;
 
     if (dlg.exec() == QDialog::Accepted)
     {
+        QString domainName = dlg.getDomain();
+        Domain *dom = Domain::getDomain(domainName);
+
+        qDebug() << "returned from DomainParametersDialog with domain name"
+                 << domainName;
+
         QSettings settings;
+        int val;
         /*
          * Write the parameters back to settings and to the params list in
          * Domain
@@ -599,6 +597,11 @@ void MainWindow::editParameters()
         settings.setValue("unempl-benefit-rate", val);
         dom->params[ParamType::unemp_ben_rate] = val;
 
+        val = dlg.getPopulation();
+        settings.setValue("population", val);
+        dom->params[ParamType::pop] = val;
+        qDebug() << "population =" << val;
+
         val = dlg.getCBInterest();
         settings.setValue("boe-interest", val);
         dom->params[ParamType::boe_int] = val;
@@ -614,6 +617,10 @@ void MainWindow::editParameters()
         val = dlg.getStdWage();
         settings.setValue("standard-wage", val);
         dom->params[ParamType::std_wage] = val;
+
+        val = dlg.getGovSize();
+        settings.setValue("government-size", val);
+        dom->params[ParamType::gov_size] = val;
 
         /*
          * TODO: Add missing values to Params dlg...
@@ -662,6 +669,7 @@ void MainWindow::aboutQt()
 
 void MainWindow::setOptions()
 {
+    qDebug() << "MainWindow::setOptions()";
     OptionsDialog dlg(this);
     dlg.setModal(true);
     if (dlg.exec() == QDialog::Accepted && !Domain::domains.isEmpty())
@@ -689,7 +697,11 @@ void MainWindow::createStatusBar()
  */
 void MainWindow::propertyChanged()
 {
-    Domain::drawCharts(propertyList);
+    qDebug() << "MainWindow::propertyChanged()";
+    if (!changing_profile)
+    {
+        Domain::drawCharts(propertyList);
+    }
     profile_changed = true;
 }
 
@@ -802,7 +814,6 @@ int MainWindow::createSubWindows()
      * Populate the list of domains from settings
      */
     QSettings settings;
-    qDebug() << "Creating list of domains";
     settings.beginGroup("Domains");
     domainNameList.append(settings.childGroups());
     settings.endGroup();
@@ -821,11 +832,8 @@ int MainWindow::createSubWindows()
          * to the MDI area, create a QChart and assign it to a new QChartView,
          * and set the chartview as the chartview for each domain
          */
-        qDebug() << "Creating MDI subwindows";
         foreach(Domain *dom, Domain::domains){
             QString title = dom->getName();
-            qDebug() << "setting up domain" << dom->getName();
-            qDebug() << "Creating an MDI subwindow";
             QMdiSubWindow *w = new QMdiSubWindow();
 
             w->setWindowTitle(title);
@@ -893,7 +901,7 @@ void MainWindow::drawChartNormal()
 int MainWindow::magnitude(double y)
 {
     int x = (y == 0.0 ? -INT_MAX : (static_cast<int>(log10(abs(y)))));
-    qDebug() << "MainWindow::magnitude(): magnitude of" << y << "is" << x;
+    // qDebug() << "MainWindow::magnitude(): magnitude of" << y << "is" << x;
     return x;
 }
 
@@ -930,17 +938,15 @@ void MainWindow::changeProfile(QListWidgetItem *item)
     qDebug() << "MainWindow::changeProfile(QListWidgetItem *item) called: profile_changed ="
              << profile_changed;
     reloading = true;
+    changing_profile = true;
 
     // Allow old profile to be saved if changed
     if (profile_changed) {
         createProfile();
         profile_changed = false;
-        qDebug()  << "profile_changed now set to false";
     }
 
-    qDebug() << "Changing profile";
     chartProfile = item->text();
-    qDebug() << "New profile is" << chartProfile;
 
     // Load settings for this profile and redraw the chart
     QSettings settings;
@@ -962,7 +968,19 @@ void MainWindow::changeProfile(QListWidgetItem *item)
 
     reloading = false;
 
+    /*
+     * NEXT: IMPORTANT
+     *
+     * When chaging profile, drawCharts apparently gets called once for each
+     * property in the new profile that is set. As we are going to call it
+     * here anyway, that is unnecessary. We should set a flag at the start of
+     * changeProfile that can be queried by propertyChanged, and if it is set
+     * drawCharts should not the called. The flag should be reset immediately
+     * after contral is returned from drawCharts here...
+     */
     Domain::drawCharts(propertyList);
+
+    changing_profile = false;
 
     /*
      * A spin-off from drawCharts is that profile_changed gets set. We only

@@ -88,8 +88,6 @@ int main(int argc, char *argv[])
     QSettings settings;
     settings.setFallbacksEnabled(false);
 
-    qDebug() << "Just testing";
-
     MainWindow mainwindow;
     //mainwindow.setWindowIcon(QIcon(":/obson.icns"));
     mainwindow.show();
