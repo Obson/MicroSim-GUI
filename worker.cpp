@@ -10,6 +10,7 @@ Worker::Worker(Domain *domain) : Account(domain)
 void Worker::init()
 {
     employer = nullptr;
+
     period_hired = -1;
     period_fired = 0;
     average_wages = 0;
@@ -64,7 +65,7 @@ void Worker::trigger(int period)
         }
         else
         {
-            purch = ((balance - thresh) * prop_con) + thresh;
+            purch = (((balance - thresh) * prop_con) / 100 ) + thresh;
         }
 
         if (purch > 0)
@@ -89,7 +90,7 @@ double Worker::agreedWage()
 
 void Worker::setAgreedWage(double wage)
 {
-    qDebug() << "Worker::setAgreedWage() called";
+    //qDebug() << "Worker::setAgreedWage() called";
     agreed_wage = wage;
 }
 
@@ -109,7 +110,7 @@ void Worker::credit(double amount, Account *creditor, bool)
         // receiving the payment in our capacity as Worker then it's probably
         // benefits or bonus. If not employed at all it must be bonus and we are
         // flagged for deletion. Surprising but perfectly possible.
-        double tax = amount * _domain->getIncTaxRate();
+        double tax = (amount * _domain->getIncTaxRate()) / 100;
 
         if (transferSafely(_domain->government(), tax, this))
         {

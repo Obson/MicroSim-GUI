@@ -582,7 +582,7 @@ void MainWindow::editParameters()
         dom->params[ParamType::sales_tax_rate] = val;
 
         val = dlg.getStartupProb();
-        settings.setValue("firm-creation-prop", val);
+        settings.setValue("firm-creation-prob", val);
         dom->params[ParamType::firm_creation_prob] = val;
 
         val = dlg.getRecoupPeriods();

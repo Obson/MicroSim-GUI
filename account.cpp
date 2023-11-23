@@ -41,11 +41,12 @@ bool Account::transferSafely(Account *recipient, double amount, Account *credito
     {
         // TODO: This needs to go into a log somewhere
         qDebug() << "Account::transferSafely(): done (insufficient funds or no recipient)";
+        // Q_ASSERT(false);
         return false;
     }
     else
     {
-        qDebug() << "crediting" << amount;
+        // qDebug() << "crediting" << amount;
         recipient->credit(amount, creditor);
         balance -= amount;
         return true;

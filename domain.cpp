@@ -125,10 +125,79 @@ Domain *Domain::getDomain(const QString &name)
 }
 
 
-void Domain::initialise()
+void Domain::reset()
 {
     qDebug() << "Initialising domain" << getName();
     last_period = -1;
+
+    int pop = getParameterVal(ParamType::pop) * 100; // for internal use. For
+                                                     // display, divide this by
+                                                     // 100 to get the result
+                                                     // in millions, or
+                                                     // multiply by 10,000 for
+                                                     // result in units
+
+    /*
+     * Remove old instances from the list of workers
+     */
+    for (int i = 0 ; i < workers.count(); i++)
+    {
+        delete(workers[i]);
+    }
+
+    workers.clear();
+
+    for (int i = 0 ; i < pop; i++)
+    {
+        workers.append(new Worker(this));
+    }
+
+    /*
+     * Remove old instances from list of firms (this will include _gov)
+     */
+    for (int i = 0 ; i < firms.count() ; i++)
+    {
+        delete(firms[i]);
+    }
+
+    firms.clear();
+
+    /*
+     * Create a government with the required number of employees
+     */
+    if (_gov != nullptr)
+    {
+        delete (_gov);
+    }
+    _gov = new Government(this, (pop * static_cast<int>(getGovSize()) / 100));
+
+    /*
+     * Add firms
+     */
+
+    QSettings settings;
+    int n = settings.value("start-ups", 10).toInt();
+    for (int i = 0; i < n; i++)
+    {
+        firms.append(new Firm(this));
+    }
+
+    /*
+     * Reomove old Bank instances and re-create
+     */
+    for (int i = 0; i < banks.count(); i++)
+    {
+        delete(banks[i]);
+    }
+
+    banks.clear();
+
+    for (int i = 0; i < NUMBER_OF_BANKS; i++)
+    {
+        banks.append(new Bank(this));
+    }
+
+
     foreach(Firm *firm, firms)
     {
         firm->init();
@@ -159,18 +228,21 @@ Domain::Domain(const QString &name)
 
     QStringList keys = settings.childGroups();
 
+    bool is_default;
+
     if (keys.contains(name))
     {
         settings.beginGroup(name);
+        is_default = false;
     }
     else
     {
         /*
-         * The default settings are stored in the group [Domains]\$$-DEFAULT-$$
-         * which must not be used as a domain name. Should build in a check,
-         * just in case
+         * The default settings are stored in the group [Default]
          */
-        settings.beginGroup("Default");
+        settings.endGroup();                // leave the Domains group
+        settings.beginGroup("Default");     // start the Default group
+        is_default = true;
     }
 
     _name = name;
@@ -197,46 +269,23 @@ Domain::Domain(const QString &name)
             msgBox.exec();
         }
     }
-    settings.endGroup();        // <name> | $$-DEFAULT-$$
-    settings.endGroup();        // Domains
-
-    /*
-     * Create a population of (unemployed) workers
-     */
-    int pop = getPopulation() / 10000;
-    for (int i = 0 ; i < pop; i++)
+    if (!is_default)
     {
-        workers.append(new Worker(this));
+        settings.endGroup();    // <name>
     }
+    settings.endGroup();        // Domains or Default
 
     /*
-     * Create a government with the required number of employees
+     * We separate out initialisation so we can reset everything before
+     * (re)drawing the charts.
      */
-    _gov = new Government(this, (pop * static_cast<int>(getGovSize()) / 100));
-
-    /*
-     * Add firms
-     */
-    int n = settings.value("start-ups", 10).toInt();
-    for (int i = 0; i < n; i++)
-    {
-        firms.append(new Firm(this));
-    }
+    _gov = nullptr; // so we don't try to delete it before it's created
+    reset();        // set initial conditiions
 
     /*
      * Add this domain to the list of domains
      */
     domains.append(this);
-
-    /*
-     * Create an arbitrary number of banks
-     */
-    for (int i = 0; i < NUMBER_OF_BANKS; i++)
-    {
-        banks.append(new Bank(this));
-    }
-
-    initialise();
 }
 
 /*
@@ -264,7 +313,7 @@ void Domain::drawCharts(QListWidget *propertyList)
     foreach(Domain *dom, domains)
     {
         qDebug() << "Initialising domain" << dom->getName();
-        dom->initialise();
+        dom->reset();
         dom->drawChart(propertyList);
     }
 
@@ -340,14 +389,19 @@ Firm *Domain::selectRandomFirm(Firm *exclude)
     Firm *res = nullptr;
     int n = firms.size();
 
-    if (n < 2)
+    if (n == 0)
     {
         res = nullptr;
     }
     else
     {
+        /*
+         * Warning: this could go on forever if there's only one firm and it's
+         * excluded. This shouldn't be possible normally.
+         */
         while ( (res = firms[ (qrand() % (firms.size() - 1)) ]) == exclude );
     }
+
     return res;
 }
 
@@ -549,9 +603,14 @@ double Domain::getPropertyVal(Property p)
         return _amount_owed;
 
     case Property::bus_size:
-        // We take the government firm into account here because _num_emps
-        // doesn't make a distinction
-        _bus_size = double(_num_emps)  / (_num_firms + 1);
+        _num_firms = 1;                             // government is a firm
+        _num_emps = _gov->employees.count();
+        foreach(Firm *f, firms)
+        {
+            ++_num_firms;
+            _num_emps += f->employees.count();
+        }
+        _bus_size = _num_emps  / _num_firms;
         return _bus_size;
 
     case Property::hundred:
@@ -886,9 +945,12 @@ const QString &Domain::getName() const
     return _name;
 }
 
+/*
+ * This refers to the property <population>, not the starting parameter
+ */
 int Domain::getPopulation()
 {
-    return _population;
+    return _population * 100;
 }
 
 
@@ -1070,9 +1132,9 @@ int Domain::getParameterVal(ParamType type)
  * Domain constants
  */
 
-double Domain::getProcurement()
+int Domain::getProcurement()
 {
-    return double(getParameterVal(ParamType::procurement));
+    return getParameterVal(ParamType::procurement);
 }
 
 /*
@@ -1080,86 +1142,89 @@ double Domain::getProcurement()
  *
 double Domain::getTargetEmpRate()
 {
-    return double(getParameterVal(ParamType::emp_rate)) / 100;
+    return getParameterVal(ParamType::emp_rate)) / 100;
 }
 */
 
-double Domain::getStdWage()
+int Domain::getStdWage()
 {
-    return double(getParameterVal(ParamType::std_wage));
+    return getParameterVal(ParamType::std_wage);
 }
 
-double Domain::getPropCon()
+int Domain::getPropCon()
 {
-    return double(getParameterVal(ParamType::prop_con)) / 100;
+    return getParameterVal(ParamType::prop_con);
 }
 
-double Domain::getIncomeThreshold()
+int Domain::getIncomeThreshold()
 {
-    return double(getParameterVal(ParamType::inc_thresh));
+    return getParameterVal(ParamType::inc_thresh);
 }
 
-double Domain::getIncTaxRate()
+int Domain::getIncTaxRate()
 {
-    return double(getParameterVal(ParamType::inc_tax_rate)) / 100;
+    return getParameterVal(ParamType::inc_tax_rate);
 }
 
-double Domain::getSalesTaxRate()
+int Domain::getSalesTaxRate()
 {
-    return double(getParameterVal(ParamType::sales_tax_rate)) / 100;
+    return getParameterVal(ParamType::sales_tax_rate);
 }
 
-double Domain::getPreTaxDedns()
+int Domain::getPreTaxDedns()
 {
-    return double(getParameterVal(ParamType::dedns)) / 100;
+    return getParameterVal(ParamType::dedns);
 }
 
-double Domain::getCapexRecoupTime()
+int Domain::getCapexRecoupTime()
 {
-    return double(getParameterVal(ParamType::recoup));
+    return getParameterVal(ParamType::recoup);
 }
 
-double Domain::getFCP()
+int Domain::getFCP()
 {
-    return double(getParameterVal(ParamType::firm_creation_prob)) / 100;
+    return getParameterVal(ParamType::firm_creation_prob);
 }
 
-double Domain::getUBR()
+int Domain::getUBR()
 {
-    return double(getParameterVal(ParamType::unemp_ben_rate)) / 100;
+    return getParameterVal(ParamType::unemp_ben_rate);
 }
 
 /*
  * Distribution rate is a percentage
  */
-double Domain::getDistributionRate()
+int Domain::getDistributionRate()
 {
     return params[ParamType::distrib];
 }
 
-double Domain::getPropInv()
+int Domain::getPropInv()
 {
-    return double(getParameterVal(ParamType::prop_inv)) / 100;
+    return getParameterVal(ParamType::prop_inv);
 }
 
-double Domain::getBoeRate()
+int Domain::getBoeRate()
 {
-    return double(getParameterVal(ParamType::boe_int)) / 100;
+    return getParameterVal(ParamType::boe_int);
 }
 
-double Domain::getBusRate()
+int Domain::getBusRate()
 {
-    return double(getParameterVal(ParamType::bus_int)) / 100;
+    return getParameterVal(ParamType::bus_int);
 }
 
-double Domain::getLoanProb()
+int Domain::getLoanProb()
 {
-    return double(getParameterVal(ParamType::loan_prob)) / 100;
+    return getParameterVal(ParamType::loan_prob);
 }
 
-double Domain::getGovSize()
+/*
+ * This returns the relative government size as a percentage
+ */
+int Domain::getGovSize()
 {
-    return double(getParameterVal(ParamType::gov_size)) / 100;
+    return getParameterVal(ParamType::gov_size);
 }
 
 #if 0

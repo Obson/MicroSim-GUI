@@ -48,15 +48,13 @@ void Firm::init()
     num_fired = 0;
     bonuses_paid = 0;
     investment= 0;
-
-
     num_just_fired = 0;
+    productivity = 1.0;
 
+    _dedns = 0.0;
     _state_supported = false;
 
-    productivity = 1.0;
-    _dedns = 0.0;
-
+    employees.clear();
 }
 
 bool Firm::isGovernmentSupported()
@@ -110,7 +108,7 @@ double Firm::payWages()
     double amt_paid = 0;
     num_just_fired = 0;
 
-    double dedns_rate = _domain->getPreTaxDedns();
+    int dedns_rate = _domain->getPreTaxDedns();
     int num_employees = static_cast<int> (employees.count());
 
     for (int i = 0; i < num_employees; i++)
@@ -118,12 +116,12 @@ double Firm::payWages()
         Worker *w = employees[i];
 
         double wage_due = w->agreed_wage;
-        double dedns = dedns_rate * wage_due;
+        double dedns = (dedns_rate * wage_due) / 100;
         double funds_available = getBalance();
 
         bool ok_to_pay = false;
 
-        if (funds_available - amt_paid < wage_due + dedns)
+        if (!isGovernment() && (funds_available - amt_paid < wage_due + dedns))
         {
             /*
              * The firm doesn't have enough money in its account to pay all
@@ -192,8 +190,8 @@ double Firm::payWages()
         }
         else
         {
-            Q_ASSERT_X(isGovernmentSupported(), "Firm::payWages",
-                       "Firm is government supported");
+            //Q_ASSERT_X(isGovernmentSupported(), "Firm::payWages",
+            //           "Firm is government supported");
             // Not able to pay this worker so fire instead
         }
     }
@@ -206,7 +204,6 @@ double Firm::payWages()
 void Firm::fire(Worker *w)
 {
     employees.removeOne(w);
-    _domain->unemployedWorkers.append(w);
     w->employer = nullptr;
     num_fired++;
 }
@@ -218,7 +215,6 @@ void Firm::fire(int ix)
 {
     Worker *w = employees.at(ix);
     employees.removeAt(ix);
-    _domain->unemployedWorkers.append(w);
     w->employer = nullptr;
     num_fired++;
 }
@@ -232,6 +228,7 @@ void Firm::fire(int ix)
 // hire new workers if funds permit.
 void Firm::epilogue()
 {
+    /*
     if (_state_supported) {
 
         // ***
@@ -244,6 +241,7 @@ void Firm::epilogue()
 
         return;
     }
+    */
 
     investment = 0;
 
@@ -258,19 +256,23 @@ void Firm::epilogue()
         // ensure they only get distributed to existing workers.
         int emps = employees.count();
         double amt_paid = 0;
-        if (emps > 0)
+        if (emps > 0 && bonuses > 0)
         {
             amt_paid = _domain->_gov->payWorkers(bonuses/emps, this, Reason::for_bonus);
         }
 
         // Adjust calculation if not all the bonus funds were used
-        if (amt_paid < bonuses)
+        if (amt_paid < bonuses && bonuses > 0)
         {
             investible += bonuses_paid;
         }
 
         balance -= amt_paid;
-        Q_ASSERT(balance >= 0);
+
+        if (!(isGovernment() || balance >= 0))
+        {
+            Q_ASSERT(isGovernment() || balance >= 0);
+        }
 
         bonuses_paid += amt_paid;
 
@@ -372,28 +374,24 @@ void Firm::epilogue()
     }
 }
 
+/*
+ * We no longer keep a separate list of unemployed workers.
+ */
 Worker *Firm::hire(double wage)
 {
-    Worker *w = nullptr;
-
-    if (!_domain->unemployedWorkers.isEmpty())
+    foreach (Worker *w, _domain->workers)
     {
-        /*
-         * Get the last worker on the unemployed list. Check the workers last
-         * agreed wage (etc) to see whether s/he would be likely to accept a
-         * job (TODO). If OK, transfer to firm's list of employees and update
-         * the new employee's details
-         */
-        w = _domain->unemployedWorkers.last();
-        _domain->unemployedWorkers.removeLast();
-        employees.append(w);
-        w->setAgreedWage(wage);
-        w->setEmployer(this);
-
-        num_hired += 1;
+        if (w->employer == nullptr) // unemployed
+        {
+            employees.append(w);
+            w->setAgreedWage(wage); // TODO: should check wage acceptable
+            w->setEmployer(this);
+            num_hired += 1;
+            return w;
+        }
     }
 
-    return w;
+    return nullptr;
 }
 
 /*
@@ -415,7 +413,7 @@ double Firm::hireSome(double wage, int number_to_hire)
             wages_due += w->agreed_wage;
         }
     }
-
+    qDebug() << employees.count() << "employees hired";
     return wages_due;
 }
 
@@ -439,10 +437,10 @@ void Firm::credit(double amount, Account *creditor, bool force)
         // not buyer, is responsible for paying sales tax and that payments
         // to a Firm are always for purchases and therefore subject to
         // sales tax.
-        double r = _domain->getSalesTaxRate();
+        int r = _domain->getSalesTaxRate();
         if (r > 0)
         {
-            double t = (amount * r) / (r + 1.0);
+            double t = (amount * r) / 100;
             qDebug() << "Firm::credit() paying sales tax" << t << "on" << amount;
             if (transferSafely(_domain->government(), t, this)) {
                 sales_tax_paid += t;

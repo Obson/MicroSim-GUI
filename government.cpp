@@ -16,6 +16,8 @@ void Government::reset()
     last_triggered = -1;
     balance = 0;
     wages_paid = 0;
+
+    employees.clear();
 }
 
 Government::Government(Domain *domain, int size) : Bank(domain)
@@ -97,8 +99,8 @@ void Government::trigger(int period)
      * probably make a distinction between HPM and bank money. FIX THIS!
      */
     double amt = _domain->getProcurement();
-    qDebug() << "Transferring" << amt
-             << "Currency units to random firm (procurement)";
+    qDebug() << "Transferring" << amt << _domain->_currency
+             << "to random firm for procurement";
 
     /*
      * transferSafely() updates both balances (payer and payee)
@@ -109,12 +111,13 @@ void Government::trigger(int period)
     exp += amt;     // govt expenditure
 
     /*
-     * Make benefits payments to all unemployed workers
+     * Make benefits payments to all unemployed workers. getUBR returns a
+     * percentage of standard wage
      */
-    double amount = _domain->getStdWage() * _domain->getUBR();
+    double amount = (_domain->getStdWage() * _domain->getUBR()) / 100;
 
-    qDebug() << "Transferring" << amount
-             << "currency units to all unemployed workers as benefit";
+    qDebug() << "Transferring" << amount << _domain->_currency
+             << "to all unemployed workers as benefit";
 
     ben += payWorkers(amount, this, Reason::for_benefits);
 
@@ -123,13 +126,6 @@ void Government::trigger(int period)
      */
     balance -= ben; // govt balance
 }
-
-/*
-size_t Government::getNumEmployees()
-{
-    return Bank::getNumEmployees();
-}
-*/
 
 bool Government::transferSafely(Account *recipient, double amount, Account *)
 {
@@ -154,9 +150,9 @@ bool Government::transferSafely(Account *recipient, double amount, Account *)
 // record as well. However we don't distinguish between income tax, sales
 // tax, and 'pre-tax deductions'. These are all accounted for elsewhere.
 // Obviously, the government doesn't pay tax.
-void Government::credit(double amount, Account*creditor, bool)
+void Government::credit(double amount, Account*, bool)
 {
-    qDebug() << "Government receiving payment of" << amount;
+    qDebug() << "Government receiving tax payment of" << amount;
     Account::credit(amount);
     rec += amount;
 }
@@ -169,8 +165,7 @@ void Government::credit(double amount, Account*creditor, bool)
  */
 double Government::payWorkers(double amount, Account *source, Reason reason)
 {
-    QVector<Worker*> workers = _domain->workers;
-    int num_workers = workers.count();
+    int num_workers = _domain->workers.count();
 
     qDebug() << "Government::payWorkers (" << amount << ", ...)"
              << num_workers << "workers to pay";
@@ -183,9 +178,9 @@ double Government::payWorkers(double amount, Account *source, Reason reason)
         {
         case Reason::for_benefits:
 
-            if (!workers[i]->isEmployed())
+            if (!_domain->workers[i]->isEmployed())
             {
-                workers[i]->credit(amount, source);
+                _domain->workers[i]->credit(amount, source);
                 amt_paid += amount;
             }
             break;
@@ -197,12 +192,12 @@ double Government::payWorkers(double amount, Account *source, Reason reason)
              * -----------------------------
              * Note that when paying bonuses we do not check that sufficient
              * funds are available -- it's up to the caller to ensure that the
-             * amount is correct. Any overpayment will simply create a negative
+             * amount is correct. Any overpayment will create a negative
              * balance in the caller's account.
              */
-            if (workers[i]->getEmployer() == source)
+            if (_domain->workers[i]->getEmployer() == source)
             {
-                workers[i]->credit(amount, source);
+                _domain->workers[i]->credit(amount, source);
                 amt_paid += amount;
             }
             break;

@@ -176,7 +176,7 @@ public:
     static Domain *getDomain(const QString &name);
     //static void editParameters(QListWidget *propertyList);
 
-    void initialise();
+    void reset();
 
     Firm *createFirm(bool state_supported = false);
     Firm *selectRandomFirm(Firm *exclude = nullptr);
@@ -203,29 +203,29 @@ public:
      * parameters. THIS NEEDS SORTING OUT!
      */
 
-    double getStdWage();            // standard wage (CUs per employee per period) [emp_rate?]
-    double getPropCon();            // propensity to consume (%) [prop_con]
-    double getProcurement();        // direct government expenditure
-    double getTargetEmpRate();      // target rate of employment (%)
-    double getDistributionRate();   // funds kept in reserve for next period (%)
-    double getIncomeThreshold();    // 100% of threshold is always spent [inc_thresh]
-    double getIncTaxRate();         // income tax rate (%) [inc_tax_rate]
-    double getSalesTaxRate();       // sales tax rate (%) [sales_tax_rate]
-    double getPreTaxDedns();        // pre-tax deductions (%)
-    double getFCP();                // firm creaton probability (%) [firm_creation_prob]
-    double getUBR();                // unemployment benefit rate (% of std wage) [unemp_ben_rate]
-    double getPropInv();            // propensity to invest [prop_inv]
+    int getStdWage();            // standard wage (CUs per employee per period) [emp_rate?]
+    int getPropCon();            // propensity to consume (%) [prop_con]
+    int getProcurement();        // direct government expenditure
+    int getTargetEmpRate();      // target rate of employment (%)
+    int getDistributionRate();   // funds kept in reserve for next period (%)
+    int getIncomeThreshold();    // 100% of threshold is always spent [inc_thresh]
+    int getIncTaxRate();         // income tax rate (%) [inc_tax_rate]
+    int getSalesTaxRate();       // sales tax rate (%) [sales_tax_rate]
+    int getPreTaxDedns();        // pre-tax deductions (%)
+    int getFCP();                // firm creaton probability (%) [firm_creation_prob]
+    int getUBR();                // unemployment benefit rate (% of std wage) [unemp_ben_rate]
+    int getPropInv();            // propensity to invest [prop_inv]
 
-    double getLoanProb();           // Probability of successful loan application
-    double getBoeRate();            // BoE lending rate
-    double getBusRate();            // retail lending rate
-    double getCapexRecoupTime();    // number of periods to recoup capex
+    int getLoanProb();           // Probability of successful loan application
+    int getBoeRate();            // BoE lending rate
+    int getBusRate();            // retail lending rate
+    int getCapexRecoupTime();    // number of periods to recoup capex
 
     /*
      * Nominal size of government is a parameter and should not be confused with actual government
      * size (TBD), which is a property.
      */
-    double getGovSize();            // nominal size of government as proportion of workers
+    int getGovSize();            // nominal size of government as proportion of workers
 
     /*
      * This is the main driver function
@@ -445,17 +445,8 @@ private:
     QVector<Worker*> workers;
 
     /*
-     * List of unemployed workers. When fired a worker is removed from the
-     * firms employee list and added to this list instead. Firms can
-     * recruit employees from this list. Workers are removed from this list
-     * when they are employed, but must not be deleted
-     */
-    QList<Worker*> unemployedWorkers;
-
-    /*
-     * When a worker is hired s/he is removed from the unemployedWorkers list
-     * and employer is updated. Note that individual firms keep their own lists
-     * of employees.
+     * Update the worker to show the new employer and add the worker to the
+     * employer's list of employees.
      */
     void hire(Worker *w, Firm *f);
 
@@ -836,10 +827,7 @@ protected:
      * We override the base method here so we can extract the balance for
      * statistics. I'm not sure what this means -- investigate!
      */
-
-    void credit(
-            double amount, Account *creditor = nullptr, bool force = false
-            ) override;
+    void credit(double amount, Account*, bool force = false) override;
 
     void reset();
 
