@@ -13,7 +13,7 @@ void Worker::init()
 
     period_hired = -1;
     period_fired = 0;
-    average_wages = 0;
+    //average_wages = 0;
 
     wages = 0;
     benefits = 0;
@@ -28,7 +28,7 @@ bool Worker::isEmployed()
 
 bool Worker::isEmployedBy(Account *emp)
 {
-    return (emp != nullptr && emp == employer);
+    return (emp == employer);
 }
 
 void Worker::setPeriodHired(int period)
@@ -96,14 +96,14 @@ void Worker::setAgreedWage(double wage)
 
 void Worker::credit(double amount, Account *creditor, bool)
 {
-    if (amount < 0)
+    if (amount < -0.1)
     {
         Q_ASSERT(false);
     }
 
-    Account::credit(amount);
+    Account::credit(amount);        // credit the account
 
-    if (isEmployedBy(creditor))     // i.e. this is a payment of wages
+    if (isEmployedBy(creditor))     // i.e. this is a payment of wages (or bonus)
     {
         // Here we assume that if the creditor is our employer then we should
         // pay income tax. If the creditor isn't our employer but we're
@@ -131,8 +131,12 @@ void Worker::credit(double amount, Account *creditor, bool)
     }
     else
     {
+        /*
+         * Could be a purchase by. There's no reson why this shouldn't be
+         * valid, but we need to check the logic...
+         */
         QMessageBox msgBox;
-        msgBox.setText("Unknownreason for crediting worker");
+        msgBox.setText("Unknown reason for crediting worker");
         exit(100);
     }
 }

@@ -37,8 +37,13 @@ Government::Government(Domain *domain, int size) : Bank(domain)
     qDebug() << "Government::Government (...) called for domain"
              << domain->getName() << "size =" << size;
 
-    hireSome(domain->getStdWage(), size);
     reset();
+
+    if (hireSome(domain->getStdWage(), size) < size)
+    {
+        qDebug() << "Government cannot hire " << size << "workers";
+        Q_ASSERT(false);
+    }
 }
 
 double Government::getExpenditure()
@@ -119,12 +124,9 @@ void Government::trigger(int period)
     qDebug() << "Transferring" << amount << _domain->_currency
              << "to all unemployed workers as benefit";
 
-    ben += payWorkers(amount, this, Reason::for_benefits);
-
-    /*
-     * payWorkers() does not update payer balance so we do this on return
-     */
-    balance -= ben; // govt balance
+    ben += payBenefits(amount);
+    // ben += payWorkers(amount, this, Reason::for_benefits);
+    //  balance -= ben; // govt balance
 }
 
 bool Government::transferSafely(Account *recipient, double amount, Account *)
@@ -152,18 +154,37 @@ bool Government::transferSafely(Account *recipient, double amount, Account *)
 // Obviously, the government doesn't pay tax.
 void Government::credit(double amount, Account*, bool)
 {
-    qDebug() << "Government receiving tax payment of" << amount;
+    //qDebug() << "Government receiving tax payment of" << amount;
     Account::credit(amount);
     rec += amount;
 }
 
+/*
+ * Government pays the same benefit amount to all unemployed workers
+ */
+double Government::payBenefits(double amount)
+{
+    double amt_paid = 0;
+    for (int i = 0; i < _domain->workers.count(); i++)
+    {
+        Worker *w = _domain->workers[i];
+        if (!w->isEmployed())
+        {
+            w->credit(amount);
+            amt_paid += amount;
+        }
+    }
+    return amt_paid;
+}
+
+#if 0
 /*
  * Note that a Government is also a Firm and therefor naintains a list of its
  * employees whose wages are paid in the normal way. Additionally, as
  * government it has access to the domain-wide list of Workers to which it pays
  * benefits, pensions, etc., as necessary.
  */
-double Government::payWorkers(double amount, Account *source, Reason reason)
+double Government::payBonuses(double amount)
 {
     int num_workers = _domain->workers.count();
 
@@ -206,7 +227,7 @@ double Government::payWorkers(double amount, Account *source, Reason reason)
 
     return amt_paid;
 }
-
+#endif
 
 
 

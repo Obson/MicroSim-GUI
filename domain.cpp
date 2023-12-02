@@ -57,6 +57,7 @@ void Domain::initialisePropertyMap()                    // static
         propertyMap[tr("Consumption")] = Property::consumption;
         propertyMap[tr("Deficit (absolute)")] = Property::deficit;
         propertyMap[tr("Deficit as % GDP")] = Property::deficit_pc;
+        propertyMap[tr("GINI coefficient")] = Property::gini;
         propertyMap[tr("Government receipts (cumulative)")] = Property::gov_recpts;
         propertyMap[tr("Govt direct support")] = Property::unbudgeted;
         propertyMap[tr("Govt exp excl benefits")] = Property::gov_exp;
@@ -356,7 +357,7 @@ void Domain::addSeriesToChart()
     /*
      * And add some stats to the status bar
      */
-    double gini = getGini();
+    //double gini = calculateGini(); // function not safe
     double prod = getProductivity();
 
     // We will need to re-instate these labels on the status bars
@@ -412,63 +413,6 @@ Firm *Domain::selectRandomFirm(Firm *exclude)
 Bank *Domain::selectRandomBank()
 {
     return banks[(qrand() % (banks.size() - 1))];   // *** CHECK THIS! ***
-}
-
-/*
- * If the property is scalable this function returns the scaled value; otherwise
- * it returns the value.
- */
-double Domain::scale(Property p)
-{
-    double val = getPropertyVal(p);
-
-    switch(p)
-    {
-    case Property::pc_emps:
-    case Property::pc_unemps:
-    case Property::pc_active:
-    case Property::deficit_pc:
-    case Property::hundred:
-    case Property::zero:
-    case Property::productivity:
-    case Property::rel_productivity:
-    case Property::num_properties:
-        return val;
-
-    case Property::pop_size:
-    case Property::gov_exp:
-    case Property::bens_paid:
-    case Property::gov_exp_plus:
-    case Property::unbudgeted:
-    case Property::gov_recpts:
-    case Property::deficit:
-    case Property::gov_bal:
-    case Property::num_firms:
-    case Property::num_emps:
-    case Property::num_unemps:
-    case Property::num_gov_emps:
-    case Property::num_hired:
-    case Property::num_fired:
-    case Property::prod_bal:
-    case Property::wages:
-    case Property::consumption:
-    case Property::bonuses:
-    case Property::dedns:
-    case Property::inc_tax:
-    case Property::sales_tax:
-    case Property::dom_bal:
-    case Property::amount_owed:
-    case Property::bus_size:
-    case Property::procurement:
-
-    // These are missing from Property -- may need re-instating
-    //
-    // case Property::investment:
-    // case Property::gdp:
-    // case Property::profit:
-
-        return val * _scale;
-    }
 }
 
 /*
@@ -578,6 +522,9 @@ double Domain::getPropertyVal(Property p)
 
     case Property::deficit_pc:
         return abs(_consumption) < 1.0 ? 0.0 : (_deficit * 100) / _consumption;
+
+    case Property::gini:
+        return calculateGini();
 
     case Property::bonuses:
         _bonuses = getBonusesPaid();
@@ -760,46 +707,96 @@ void Domain::drawChart(QListWidget *propertyList)
 }
 
 /*
- * This returns the Gini coefficient for the population based on each worker's
- * average wage
+ * This functiion now calculates the Gini coefficient as well as the standard
+ * deviation of average wages and the range r, defined so that about 99.7% of
+ * the population have average wages within ±r percent of the mean. We should
+ * probably store these variables as properties of the domain and the function
+ * should return void.
  */
-double Domain::getGini()
+double Domain::calculateGini()
 {
-    int pop = workers.count();
+    const int pop = workers.count();
 
-    double a = 0.0;
+    /*
+     * RMS variables
+     */
+    long int total = 0;
+    long int mean = 0;
+    double rms = 0.0;
 
-    int n[pop];         //
+    long int a = 0;
+
+    long int n[pop];
 
     for (int i = 0; i < pop; i++)
     {
         Worker *w = workers[i];
-        n[i] = w->getAverageWages();        // extend as required
+        n[i] = static_cast<int>(w->getAverageWages());        // extend as required
+
+        total += n[i];  // for RMS
+
+        //qDebug() << "n[" << i << "] =" << n[i];
+        Q_ASSERT(true);
     }
+
+    mean = total / pop;
 
     std::sort(n, n + pop);                  // ascending order
 
-    for (int i = 1; i < pop; i++)
+    int i;
+
+    /*
+     * Calculate RMS
+     */
+    for (i = 0; i < pop; i++)
     {
-       n[i] += n[i - 1];                    // make values cumulative
+        rms += (n[i - 1] - mean) ^2;
+    }
+    rms = sqrt(rms / pop);
+
+    for (i = 1; i < pop; i++)
+    {
+        n[i] += n[i - 1];                    // make values cumulative
     }
 
-    double cum_tot = n[pop - 1];
+    double inequality = mean > 0 ? ((rms * 3) / mean) : 0;
 
-    double a_tot = (cum_tot * pop) / 2.0;   // area A+B
+    long int cum_tot = n[pop - 1];
+
+    /*
+     * We don't really need cum_tot as well as total, but it's a good idea to
+     * keep it as a check during testing.
+     */
+    Q_ASSERT(cum_tot == total);
+
+    long int a_tot = static_cast<long int>((cum_tot * pop) / 2);        // area A+B
+
+    if (a_tot < 0)
+    {
+        qDebug() << "i =" << i << ", cum_tot =" << cum_tot << ", a_tot =" << a_tot;
+    }
 
     for (int i = 0; i < pop; i++)
     {
-        double diff = ((cum_tot * (i + 1)) / pop) - n[i];
+        long int diff = ((cum_tot * (i + 1)) / pop) - n[i];
         if (diff < 0) {
-            diff = -diff;
+            // diff = -diff;
             qDebug() << "Domain::gini(): negative diff (" << diff << ") at interval" << i;
         }
         a += diff;                          // area A
     }
 
-    qDebug() << "Domain::gini():  cum_tot =" << cum_tot << ",  pop =" << pop << ",  a =" << a << ",  a_tot =" << a_tot;
-    _gini = a / a_tot;
+    //qDebug() << "Domain::gini():  cum_tot =" << cum_tot << ",  pop =" << pop << ",  a =" << a << ",  a_tot =" << a_tot;
+    _gini = (round(double(a * 100) / double(a_tot)))/100;
+
+    if (_gini > 100 || _gini < 0)
+    {
+        qDebug() << "a =" << a << ", a_tot =" << a_tot << "gini =" << _gini;
+        Q_ASSERT(false);
+    }
+
+    qDebug() << "a =" << a << ", a_tot =" << a_tot << "gini =" << _gini << "RMS =" << rms << "range ±" << (inequality * 100) << "% of mean";
+
     return _gini;
 }
 
@@ -931,7 +928,7 @@ void Domain::iterate(int period, bool silent)
         createFirm();
     }
 
-    qDebug() << "Domain::iterate(): _name =" << _name << "  gini =" << getGini();
+    qDebug() << "Domain::iterate(): _name =" << _name << "  gini =" << calculateGini();
 
 }
 
@@ -957,12 +954,9 @@ int Domain::getPopulation()
 int Domain::getNumEmployed()
 {
     int n = 0;
-    for (int i = 0; i < workers.count(); i++)
+    for (int i = 0; i < firms.count(); i++)
     {
-        if (workers[i]->isEmployed())
-        {
-            n++;
-        }
+        n += firms[i]->employees.count();
     }
 
     return n;

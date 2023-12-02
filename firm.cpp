@@ -98,8 +98,11 @@ void Firm::trigger(int period)
             }
         }
 
-        wages_paid += payWages();
-        balance -= wages_paid;
+        if (employees.count() > 0)
+        {
+            wages_paid += payWages();
+            balance -= wages_paid;
+        }
     }
 }
 
@@ -121,13 +124,13 @@ double Firm::payWages()
 
         bool ok_to_pay = false;
 
-        if (!isGovernment() && (funds_available - amt_paid < wage_due + dedns))
+        if (!isGovernment() && (funds_available /* - amt_paid */ < wage_due /* + dedns */))
         {
             /*
              * The firm doesn't have enough money in its account to pay all
              * the wages due.
              */
-            double shortfall = wage_due + dedns - funds_available + amt_paid;
+            double shortfall = wage_due /* + dedns */ - funds_available /* + amt_paid */;
             if (isGovernmentSupported())
             {
                 /*
@@ -176,16 +179,16 @@ double Firm::payWages()
             /*
              * Pay the full amount of wages to the employee
              */
-            qDebug() << "crediting" << wage_due;
-            employees[i]->credit(wage_due, this);
+            // qDebug() << "crediting" << wage_due;
+            employees[i]->credit(wage_due - dedns, this);
 
             /*
              * Pay deductions straight back to the government.
              */
-            qDebug() << "crediting" << dedns;
+            // qDebug() << "crediting" << dedns;
             _domain->government()->credit(dedns, this);
 
-            amt_paid += wage_due + dedns;
+            // amt_paid += wage_due + dedns;
             _dedns += dedns;
         }
         else
@@ -193,10 +196,17 @@ double Firm::payWages()
             //Q_ASSERT_X(isGovernmentSupported(), "Firm::payWages",
             //           "Firm is government supported");
             // Not able to pay this worker so fire instead
+            fire(employees[i]);
         }
     }
     return amt_paid;                // so caller can update balance
 }
+
+//double Firm::payBonuses(double amount)
+//{
+//    qDebug() << "Firm::payBonuses (" << amount << ") called";
+//    Q_ASSERT(false);
+//}
 
 /*
  * This function is likely to be significantly slower than fire(int ix)
@@ -228,6 +238,11 @@ void Firm::fire(int ix)
 // hire new workers if funds permit.
 void Firm::epilogue()
 {
+    if (isGovernment())
+    {
+        return;
+    }
+
     /*
     if (_state_supported) {
 
@@ -249,32 +264,35 @@ void Firm::epilogue()
     {
         // We must keep in hand at least the amount needed to pay future wages
         double available = balance - wages_paid;   // now includes deductions
-        double investible = available * _domain->getPropInv();
-        double bonuses = (available - investible) * _domain->getDistributionRate();
+        double investible = (available * _domain->getPropInv()) / 100;
+        double bonus_funds = ((available - investible) * _domain->getDistributionRate()) / 100;
 
         // We distribute the funds as bonuses before hiring new workers to
         // ensure they only get distributed to existing workers.
         int emps = employees.count();
-        double amt_paid = 0;
-        if (emps > 0 && bonuses > 0)
+        int bonuses_paid = 0;
+        if (emps > 0 && bonus_funds > 0)
         {
-            amt_paid = _domain->_gov->payWorkers(bonuses/emps, this, Reason::for_bonus);
+            double bonus = bonus_funds / emps;
+            for (int i = 0 ; i < employees.count() ; i++)
+            {
+                employees[i]->credit(bonus, this);
+            }
+            //bonuses_paid = _domain->_gov->payBonuses(bonus_funds / emps);
         }
 
         // Adjust calculation if not all the bonus funds were used
-        if (amt_paid < bonuses && bonuses > 0)
+        if (bonuses_paid < bonus_funds)
         {
-            investible += bonuses_paid;
+            investible += (bonus_funds - bonuses_paid);
         }
 
-        balance -= amt_paid;
+        balance -= bonuses_paid;
 
         if (!(isGovernment() || balance >= 0))
         {
             Q_ASSERT(isGovernment() || balance >= 0);
         }
-
-        bonuses_paid += amt_paid;
 
         // How many more employees can we afford?
 
@@ -337,7 +355,7 @@ void Firm::epilogue()
 
                     if (supplier != nullptr)
                     {
-                        qDebug() << "crediting" << excess << "to supplier";
+                        //qDebug() << "crediting" << excess << "to supplier";
                         supplier->credit(excess, this);
                         balance -= excess;
                         investment = excess;
@@ -413,7 +431,7 @@ double Firm::hireSome(double wage, int number_to_hire)
             wages_due += w->agreed_wage;
         }
     }
-    qDebug() << employees.count() << "employees hired";
+    // qDebug() << employees.count() << "employees hired";
     return wages_due;
 }
 

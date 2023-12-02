@@ -64,6 +64,7 @@ static enum class Property
     consumption,
     deficit,
     deficit_pc,
+    gini,
     gov_recpts,
     unbudgeted,
     gov_exp,
@@ -236,7 +237,7 @@ public:
 
     // QList<Property> prop_list;          // to simplify iterations
 
-    double scale(Property p);
+    // double scale(Property p);
 
     enum class Opr
     {
@@ -295,7 +296,7 @@ public:
     /*
      * Return the gini coefficient based on the wages of all the workers.
      */
-    double getGini();
+    double calculateGini();
 
     /*
      * Internally we assume a population of 1000 workers but for presentation we
@@ -371,7 +372,7 @@ private:
     int _num_gov_emps;
     int _pop_size;
 
-    double _scale;
+    // double _scale;
     // double _std_wage;
     double _gini;
 
@@ -615,7 +616,7 @@ private:
     int period_fired;
 
     double agreed_wage;
-    double average_wages;
+    double average_wages = 0;
 
 protected:
 
@@ -730,6 +731,7 @@ public:
     void epilogue();
 
     double payWages();
+    //double payBonuses(double amount);
 
     double getWagesPaid();
     double getBonusesPaid();
@@ -839,7 +841,8 @@ public:
     bool transferSafely(Account *recipient, double amount, Account*) override;
     void trigger(int period) override;
 
-    double payWorkers(double amount, Account *source, Reason reason);
+    double payBenefits(double amount);
+    //double payBonuses(double amount);
 
     double getExpenditure();   // Gov expenditure in current period (excl benefits)
     double getUnbudgetedExp(); // Gov expenditure on demand from gov_firm
