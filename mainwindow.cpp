@@ -882,16 +882,6 @@ int MainWindow::getPeriod()
     return _period;
 }
 
-#if 0
-void MainWindow::drawChartRandomised()
-{
-    int seed = QTime(0,0,0).secsTo(QTime::currentTime());
-    qDebug() << "MainWindow::drawChartRandomised(): reseeding with" << seed;
-    qsrand(seed);
-    drawChart(true, true);
-}
-#endif
-
 void MainWindow::drawChartNormal()
 {
     qDebug() << "Calling Domain::drawCharts() from drawChartNormal";

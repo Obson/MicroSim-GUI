@@ -57,7 +57,11 @@ void Domain::initialisePropertyMap()                    // static
         propertyMap[tr("Consumption")] = Property::consumption;
         propertyMap[tr("Deficit (absolute)")] = Property::deficit;
         propertyMap[tr("Deficit as % GDP")] = Property::deficit_pc;
+
         propertyMap[tr("GINI coefficient")] = Property::gini;
+        propertyMap[tr("Mean wages")] = Property::mean;
+        propertyMap[tr("Wages spread (97 percentile)")] = Property::spread;
+
         propertyMap[tr("Government receipts (cumulative)")] = Property::gov_recpts;
         propertyMap[tr("Govt direct support")] = Property::unbudgeted;
         propertyMap[tr("Govt exp excl benefits")] = Property::gov_exp;
@@ -343,7 +347,6 @@ void Domain::drawCharts(QListWidget *propertyList)
 
 }
 
-
 void Domain::addSeriesToChart()
 {
     auto it = series.begin();
@@ -354,10 +357,10 @@ void Domain::addSeriesToChart()
     }
     chart->createDefaultAxes();
 
-    /*
-     * And add some stats to the status bar
+    /* TODO
+     *
+     * prod should be a dynamic variable (_prod) accessible as a property
      */
-    //double gini = calculateGini(); // function not safe
     double prod = getProductivity();
 
     // We will need to re-instate these labels on the status bars
@@ -478,6 +481,7 @@ double Domain::getPropertyVal(Property p)
 
     case Property::num_firms:
         _num_firms = firms.count();
+        //qDebug() << "_num_firms =" << _num_firms;
         return double(_num_firms);
 
     case Property::num_emps:
@@ -524,7 +528,13 @@ double Domain::getPropertyVal(Property p)
         return abs(_consumption) < 1.0 ? 0.0 : (_deficit * 100) / _consumption;
 
     case Property::gini:
-        return calculateGini();
+        return _gini;
+
+    case Property::mean:
+        return _mean;
+
+    case Property::spread:
+        return _spread;
 
     case Property::bonuses:
         _bonuses = getBonusesPaid();
@@ -555,8 +565,10 @@ double Domain::getPropertyVal(Property p)
         foreach(Firm *f, firms)
         {
             ++_num_firms;
+            qDebug() << "Firm has" << f->employees.count();
             _num_emps += f->employees.count();
         }
+        qDebug() << "_num_emps =" << _num_emps;
         _bus_size = _num_emps  / _num_firms;
         return _bus_size;
 
@@ -592,7 +604,6 @@ double Domain::getPropertyVal(Property p)
      *
      *
 
-#if 0
     case Property::investment:
         _investment = getInvestment();
         return _investment;
@@ -606,7 +617,6 @@ double Domain::getPropertyVal(Property p)
         // ***** I don't think we should be subtracting income tax here!
         _profit = _gdp - _wages - _inc_tax - _sales_tax;
         return _profit;
-#endif
     */
 
     case Property::num_properties:
@@ -685,121 +695,20 @@ void Domain::drawChart(QListWidget *propertyList)
             QString series_name = item->text();
             QLineSeries *ser = new QLineSeries();
 
+            Property p = propertyMap[series_name];
+
+
             ser->setName(series_name);
 
             /*
              * This just inserts the series into our list of series. It doesn't
              * add it to the chart
              */
-            series.insert(static_cast<Property>(i), ser);
+            //series.insert(static_cast<Property>(i), ser);
+            series.insert(p, ser);
         }
     }
-
-
-#if 0
-    double gini = getGini();
-    double prod = getProductivity();
-    inequalityLabel->setText(tr("Inequality: ") + QString::number(round(gini * 100)) + "%");
-    productivityLabel->setText(tr("Productivity: ") + QString::number(round(prod + 0.5)) + "%");
-
-    emit drawingCompleted();
-#endif
 }
-
-/*
- * This functiion now calculates the Gini coefficient as well as the standard
- * deviation of average wages and the range r, defined so that about 99.7% of
- * the population have average wages within ±r percent of the mean. We should
- * probably store these variables as properties of the domain and the function
- * should return void.
- */
-double Domain::calculateGini()
-{
-    const int pop = workers.count();
-
-    /*
-     * RMS variables
-     */
-    long int total = 0;
-    long int mean = 0;
-    double rms = 0.0;
-
-    long int a = 0;
-
-    long int n[pop];
-
-    for (int i = 0; i < pop; i++)
-    {
-        Worker *w = workers[i];
-        n[i] = static_cast<int>(w->getAverageWages());        // extend as required
-
-        total += n[i];  // for RMS
-
-        //qDebug() << "n[" << i << "] =" << n[i];
-        Q_ASSERT(true);
-    }
-
-    mean = total / pop;
-
-    std::sort(n, n + pop);                  // ascending order
-
-    int i;
-
-    /*
-     * Calculate RMS
-     */
-    for (i = 0; i < pop; i++)
-    {
-        rms += (n[i - 1] - mean) ^2;
-    }
-    rms = sqrt(rms / pop);
-
-    for (i = 1; i < pop; i++)
-    {
-        n[i] += n[i - 1];                    // make values cumulative
-    }
-
-    double inequality = mean > 0 ? ((rms * 3) / mean) : 0;
-
-    long int cum_tot = n[pop - 1];
-
-    /*
-     * We don't really need cum_tot as well as total, but it's a good idea to
-     * keep it as a check during testing.
-     */
-    Q_ASSERT(cum_tot == total);
-
-    long int a_tot = static_cast<long int>((cum_tot * pop) / 2);        // area A+B
-
-    if (a_tot < 0)
-    {
-        qDebug() << "i =" << i << ", cum_tot =" << cum_tot << ", a_tot =" << a_tot;
-    }
-
-    for (int i = 0; i < pop; i++)
-    {
-        long int diff = ((cum_tot * (i + 1)) / pop) - n[i];
-        if (diff < 0) {
-            // diff = -diff;
-            qDebug() << "Domain::gini(): negative diff (" << diff << ") at interval" << i;
-        }
-        a += diff;                          // area A
-    }
-
-    //qDebug() << "Domain::gini():  cum_tot =" << cum_tot << ",  pop =" << pop << ",  a =" << a << ",  a_tot =" << a_tot;
-    _gini = (round(double(a * 100) / double(a_tot)))/100;
-
-    if (_gini > 100 || _gini < 0)
-    {
-        qDebug() << "a =" << a << ", a_tot =" << a_tot << "gini =" << _gini;
-        Q_ASSERT(false);
-    }
-
-    qDebug() << "a =" << a << ", a_tot =" << a_tot << "gini =" << _gini << "RMS =" << rms << "range ±" << (inequality * 100) << "% of mean";
-
-    return _gini;
-}
-
 
 // NEXT: IN PROGRESS...
 
@@ -890,6 +799,75 @@ void Domain::iterate(int period, bool silent)
     }
 
 
+    /*
+     * Calculate statistics
+     */
+
+    const int pop = workers.count();
+
+    /*
+     * RMS variables
+     */
+    double total = 0;
+    double rms = 0;
+
+    double a = 0;
+
+    double n[pop];
+
+    for (int i = 0; i < pop; i++)
+    {
+        Worker *w = workers[i];
+        n[i] = w->getAverageWages();        // extend as required
+        Q_ASSERT(n[i] >= 0);
+
+        total += n[i];  // for RMS
+    }
+
+    _mean = double(total / pop);
+    Q_ASSERT(_mean >= 0.0);
+
+    std::sort(n, n + pop);                  // ascending order
+
+    int i;
+
+    /*
+     * Calculate RMS
+     */
+    for (i = 1; i < pop; i++)
+    {
+        double d = (n[i - 1] - _mean);
+        rms +=  d * d;
+    }
+    rms = sqrt(rms / pop);
+
+    for (i = 1; i < pop; i++)
+    {
+        n[i] += n[i - 1];                    // make values cumulative
+    }
+
+    _spread = _mean > 0 ? ((rms * 3) / _mean) : 0;
+
+    double a_tot = (total * pop) / 2;        // area A+B
+
+    for (int i = 1; i < pop; i++)
+    {
+        double diff = ((total * i) / pop) - n[i - 1];
+        Q_ASSERT(diff >= 0);
+        a += diff;                          // area A
+    }
+
+    _gini = (round(double(a * 100) / double(a_tot)))/100;
+
+    if (_gini > 100 || _gini < 0)
+    {
+        Q_ASSERT(_gini >= 0 && _gini <= 1);
+    }
+
+    //qDebug() << "a =" << a << ", a_tot =" << a_tot << "gini =" << _gini << "RMS =" << rms << "range ±" << (_spread * 100) << "% of mean";
+
+
+
     // -------------------------------------------
     // Stats
     // -------------------------------------------
@@ -926,9 +904,22 @@ void Domain::iterate(int period, bool silent)
     {
         qDebug() << "Creating new firm";
         createFirm();
+
+
+        qDebug() << "*** Number of firms =" << firms.count();
     }
 
-    qDebug() << "Domain::iterate(): _name =" << _name << "  gini =" << calculateGini();
+    /* TODO (IMPORTANT)
+     *
+     * Gini (and related variables) should only be calculated here. The
+     * function should be removed and the code transferred here. But note
+     * that it needs to be done before properties are added to the series,
+     * so some reorganisation will be needed.
+     */
+
+    {
+        qDebug() << "Domain::iterate(): _name =" << _name << "  gini =" << _gini;
+    }
 
 }
 

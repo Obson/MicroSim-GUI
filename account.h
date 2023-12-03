@@ -64,7 +64,11 @@ static enum class Property
     consumption,
     deficit,
     deficit_pc,
+
     gini,
+    mean,
+    spread,
+
     gov_recpts,
     unbudgeted,
     gov_exp,
@@ -296,7 +300,7 @@ public:
     /*
      * Return the gini coefficient based on the wages of all the workers.
      */
-    double calculateGini();
+    //double calculateGini();
 
     /*
      * Internally we assume a population of 1000 workers but for presentation we
@@ -374,7 +378,6 @@ private:
 
     // double _scale;
     // double _std_wage;
-    double _gini;
 
     /*
      * Dynamic properties
@@ -382,8 +385,8 @@ private:
     double  _exp, _bens, _rcpts, _gov_bal, _prod_bal, _wages, _consumption,
             _bonuses, _dedns, _inc_tax, _sales_tax, _dom_bal, _loan_prob,
             _amount_owed, _deficit, _pc_active, _bus_size, _proc_exp,
-            _productivity, _rel_productivity, _investment, _gdp, _profit;
-
+            _productivity, _rel_productivity, _investment, _gdp, _profit, _gini,
+            _mean, _spread;
 
     /*
      * This constructor creates a bare-bones domain having the required name.
