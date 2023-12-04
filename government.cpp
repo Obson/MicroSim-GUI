@@ -104,8 +104,8 @@ void Government::trigger(int period)
      * probably make a distinction between HPM and bank money. FIX THIS!
      */
     double amt = _domain->getProcurement();
-    qDebug() << "Transferring" << amt << _domain->_currency
-             << "to random firm for procurement";
+//    qDebug() << "Transferring" << amt << _domain->_currency
+//             << "to random firm for procurement";
 
     /*
      * transferSafely() updates both balances (payer and payee)
@@ -121,8 +121,8 @@ void Government::trigger(int period)
      */
     double amount = (_domain->getStdWage() * _domain->getUBR()) / 100;
 
-    qDebug() << "Transferring" << amount << _domain->_currency
-             << "to all unemployed workers as benefit";
+//    qDebug() << "Transferring" << amount << _domain->_currency
+//             << "to all unemployed workers as benefit";
 
     ben += payBenefits(amount);
     // ben += payWorkers(amount, this, Reason::for_benefits);

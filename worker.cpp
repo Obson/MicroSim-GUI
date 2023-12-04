@@ -148,7 +148,7 @@ double Worker::getWagesReceived()
 
 double Worker::getAverageWages()
 {
-    return average_wages;
+    return employer == nullptr ? 0 : average_wages;
 }
 
 double Worker::getBenefitsReceived()

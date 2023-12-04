@@ -565,7 +565,7 @@ double Domain::getPropertyVal(Property p)
         foreach(Firm *f, firms)
         {
             ++_num_firms;
-            qDebug() << "Firm has" << f->employees.count();
+            //qDebug() << "Firm has" << f->employees.count();
             _num_emps += f->employees.count();
         }
         qDebug() << "_num_emps =" << _num_emps;
@@ -798,16 +798,12 @@ void Domain::iterate(int period, bool silent)
         workers[i]->epilogue(period);
     }
 
-
     /*
-     * Calculate statistics
+     * Wage-related derived properties (Gini, spread and mean)
      */
 
     const int pop = workers.count();
 
-    /*
-     * RMS variables
-     */
     double total = 0;
     double rms = 0;
 
@@ -815,7 +811,9 @@ void Domain::iterate(int period, bool silent)
 
     double n[pop];
 
-    for (int i = 0; i < pop; i++)
+    int i;
+
+    for (i = 0; i < pop; i++)
     {
         Worker *w = workers[i];
         n[i] = w->getAverageWages();        // extend as required
@@ -827,45 +825,57 @@ void Domain::iterate(int period, bool silent)
     _mean = double(total / pop);
     Q_ASSERT(_mean >= 0.0);
 
-    std::sort(n, n + pop);                  // ascending order
+    if (period == 0)
+    {
+        _gini = 0;
+        _spread = 0;
+    }
+    else
+    {
+        std::sort(n, n + pop);                  // ascending order
 
-    int i;
+        for (i = 1; i < pop; i++)
+        {
+            double d = (n[i - 1] - _mean);
+            rms +=  d * d;
+        }
+        rms = sqrt(rms / pop);
+
+        for (i = 1; i < pop; i++)
+        {
+            n[i] += n[i - 1];                    // make values cumulative
+        }
+
+        _spread = _mean > 0 ? ((rms * 3) / _mean) : 0;
+
+        double a_tot = (total * pop) / 2;        // area A+B
+
+        for (int i = 1; i < pop; i++)
+        {
+            double diff = ((total * i) / pop) - n[i - 1];
+            Q_ASSERT(diff >= 0);
+            a += diff;                          // area A
+        }
+
+        _gini = (round(double(a * 100) / double(a_tot)))/100;
+
+        if (_gini > 100 || _gini < 0)
+        {
+            Q_ASSERT(_gini >= 0 && _gini <= 1);
+        }
+
+        qDebug() << "a =" << a << ", a_tot =" << a_tot << "gini =" << _gini
+                 << "RMS =" << rms << "range ±" << (_spread * 100)
+                 << "% of mean, mean =" << _mean;
+    }
+
 
     /*
-     * Calculate RMS
+     * TODO: Record the maximum, minimum and average values of the
+     * property (non-silent entries only)
      */
-    for (i = 1; i < pop; i++)
-    {
-        double d = (n[i - 1] - _mean);
-        rms +=  d * d;
-    }
-    rms = sqrt(rms / pop);
 
-    for (i = 1; i < pop; i++)
-    {
-        n[i] += n[i - 1];                    // make values cumulative
-    }
-
-    _spread = _mean > 0 ? ((rms * 3) / _mean) : 0;
-
-    double a_tot = (total * pop) / 2;        // area A+B
-
-    for (int i = 1; i < pop; i++)
-    {
-        double diff = ((total * i) / pop) - n[i - 1];
-        Q_ASSERT(diff >= 0);
-        a += diff;                          // area A
-    }
-
-    _gini = (round(double(a * 100) / double(a_tot)))/100;
-
-    if (_gini > 100 || _gini < 0)
-    {
-        Q_ASSERT(_gini >= 0 && _gini <= 1);
-    }
-
-    //qDebug() << "a =" << a << ", a_tot =" << a_tot << "gini =" << _gini << "RMS =" << rms << "range ±" << (_spread * 100) << "% of mean";
-
+    // ...
 
 
     // -------------------------------------------
@@ -884,13 +894,6 @@ void Domain::iterate(int period, bool silent)
         if (!silent)
         {
             s->append(period, value);
-
-            /*
-             * TODO: Record the maximum, minimum and average values of the
-             * property (non-silent entries only)
-             */
-
-            // ...
         }
     }
 
@@ -907,18 +910,6 @@ void Domain::iterate(int period, bool silent)
 
 
         qDebug() << "*** Number of firms =" << firms.count();
-    }
-
-    /* TODO (IMPORTANT)
-     *
-     * Gini (and related variables) should only be calculated here. The
-     * function should be removed and the code transferred here. But note
-     * that it needs to be done before properties are added to the series,
-     * so some reorganisation will be needed.
-     */
-
-    {
-        qDebug() << "Domain::iterate(): _name =" << _name << "  gini =" << _gini;
     }
 
 }
